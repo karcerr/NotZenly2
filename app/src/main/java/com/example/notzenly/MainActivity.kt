@@ -1,7 +1,6 @@
 package com.example.notzenly
 
 import android.os.Bundle
-import kotlinx.coroutines.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
@@ -9,7 +8,6 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.notzenly.databinding.ActivityMainBinding
-import java.time.LocalDateTime
 
 class MainActivity : AppCompatActivity() {
 
@@ -33,22 +31,5 @@ class MainActivity : AppCompatActivity() {
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
-        CoroutineScope(Dispatchers.Main).launch {
-            addUserTracking()
-        }
-    }
-
-    private suspend fun addUserTracking() {
-        // Perform database operation in a background thread
-        withContext(Dispatchers.IO) {
-            val userId = 1
-            val startTime = LocalDateTime.now()
-            val endTime = startTime.plusHours(1) // Adding an hour to the start time
-            val trackedRouteLength = 10.5 // in kilometers
-            val averageRouteSpeed = 30.0 // in km/h
-            val trackColor = "#FF0000" // Example color code
-
-            DatabaseManager.addUserTracking(userId, startTime, endTime, trackedRouteLength, averageRouteSpeed, trackColor)
-        }
     }
 }
