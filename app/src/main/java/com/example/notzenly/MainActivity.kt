@@ -2,26 +2,21 @@ package com.example.notzenly
 
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Bundle
 import android.preference.PreferenceManager
-
+import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-
+import com.example.notzenly.databinding.ActivityMainBinding
 import org.osmdroid.config.Configuration.*
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.views.MapView
-
-import android.os.Bundle
-import com.google.android.material.bottomnavigation.BottomNavigationView
-import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.setupActionBarWithNavController
-import androidx.navigation.ui.setupWithNavController
-import com.example.notzenly.databinding.ActivityMainBinding
 import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -42,13 +37,26 @@ class MainActivity : AppCompatActivity() {
         map = findViewById<MapView>(R.id.map)
         map.setTileSource(TileSourceFactory.MAPNIK)
         val mapController = map.controller
-        mapController.setZoom(9.5)
-        val startPoint = GeoPoint(48.8583, 2.2944);
-        mapController.setCenter(startPoint);
+        mapController.setZoom(11)
+
+        // Initialize location overlay
+        val mLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(this), map)
+        mLocationOverlay.enableMyLocation()
+        map.overlays.add(mLocationOverlay)
+
+        // Center the map on current location
+        mLocationOverlay.runOnFirstFix {
+            val myLocation = mLocationOverlay.myLocation
+            if (myLocation != null) {
+                runOnUiThread {
+                    mapController.setCenter(GeoPoint(myLocation))
+                }
+            }
+        }
     }
 
 
-    override fun onResume() {
+   /* override fun onResume() {
         super.onResume()
         map.onResume() //needed for compass, my location overlays, v6.0.0 and up
     }
@@ -56,7 +64,7 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         map.onPause()  //needed for compass, my location overlays, v6.0.0 and up
-    }
+    }*/
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -97,4 +105,3 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
-
