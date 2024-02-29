@@ -1,27 +1,22 @@
 package com.example.notzenly
 
 
+import android.content.Intent
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Bundle
-import android.preference.PreferenceManager
-import android.util.Log
+import android.provider.Settings
+import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.example.notzenly.databinding.ActivityMainBinding
-import org.osmdroid.config.Configuration.*
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+
+//import org.osmdroid.config.Configuration.*
 
 
 class MainActivity : AppCompatActivity() {
-
-    private lateinit var binding: ActivityMainBinding
-    private lateinit var map : MapView
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,42 +24,36 @@ class MainActivity : AppCompatActivity() {
         //Handling Permissions:
         val permissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_NETWORK_STATE)
         requestPermissionsIfNecessary(permissions)
-
-        getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
-
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        map = findViewById<MapView>(R.id.map)
-        map.setTileSource(TileSourceFactory.MAPNIK)
-        val mapController = map.controller
-        mapController.setZoom(11)
-
-        // Initialize location overlay
-        val mLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(this), map)
-        mLocationOverlay.enableMyLocation()
-        map.overlays.add(mLocationOverlay)
-
-        // Center the map on current location
-        mLocationOverlay.runOnFirstFix {
-            val myLocation = mLocationOverlay.myLocation
-            if (myLocation != null) {
-                runOnUiThread {
-                    mapController.setCenter(GeoPoint(myLocation))
-                }
+        setContentView(R.layout.activity_main)
+        if (!isLocationEnabled()) {
+            findViewById<Button>(R.id.btnGrantPermissionsAndEnableLocation).setOnClickListener {
+                requestLocation()
             }
+        } else {
+            startActivity(Intent(this, MapActivity::class.java))
+            finish()
         }
     }
 
 
-   /* override fun onResume() {
-        super.onResume()
-        map.onResume() //needed for compass, my location overlays, v6.0.0 and up
+    private fun requestLocation() {
+        // If permissions granted, check location status
+        if (isLocationEnabled()) {
+            startActivity(Intent(this, MapActivity::class.java))
+            finish()
+        } else {
+            showLocationSettings()
+        }
     }
 
-    override fun onPause() {
-        super.onPause()
-        map.onPause()  //needed for compass, my location overlays, v6.0.0 and up
-    }*/
+    private fun isLocationEnabled(): Boolean {
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+    }
+
+    private fun showLocationSettings() {
+        startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+    }
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -91,17 +80,17 @@ class MainActivity : AppCompatActivity() {
     private fun requestPermissionsIfNecessary(permissions: Array<String>) {
         val permissionsToRequest = ArrayList<String>();
         permissions.forEach { permission ->
-        if (ContextCompat.checkSelfPermission(this, permission)
+            if (ContextCompat.checkSelfPermission(this, permission)
                 != PackageManager.PERMISSION_GRANTED) {
-            // Permission is not granted
-            permissionsToRequest.add(permission);
-        }
+                // Permission is not granted
+                permissionsToRequest.add(permission);
+            }
         }
         if (permissionsToRequest.isNotEmpty()) {
             ActivityCompat.requestPermissions(
-                    this,
-                    permissionsToRequest.toTypedArray(),
-                    REQUEST_PERMISSIONS_REQUEST_CODE);
+                this,
+                permissionsToRequest.toTypedArray(),
+                REQUEST_PERMISSIONS_REQUEST_CODE);
         }
     }
 }
