@@ -14,11 +14,17 @@ class CustomIconOverlay(context: Context, private val location: GeoPoint, privat
         val projection = mapView?.projection
         val point = projection?.toPixels(location, null)
 
+        // Calculate the current rotation angle of the map view
+        val rotation = -(mapView?.mapOrientation ?: 0f) // Negative sign because osmdroid uses clockwise rotation
+
         // Draw the drawable at the specified location
         point?.let {
+            canvas.save()
+            canvas.rotate(rotation, it.x.toFloat(), it.y.toFloat())
             drawable.setBounds(it.x - drawable.intrinsicWidth / 2, it.y - drawable.intrinsicHeight / 2,
                 it.x + drawable.intrinsicWidth / 2, it.y + drawable.intrinsicHeight / 2)
             drawable.draw(canvas)
+            canvas.restore()
         }
     }
 }
