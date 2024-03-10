@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/login_background"
+                android:gravity="center"
+                android:padding="40dp">
+    <LinearLayout android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:gravity="center"
+                  android:orientation="vertical"
+                  android:id="@+id/login_layout">
+
+        <ImageView
+                android:layout_width="160dp"
+                android:layout_height="160dp"
+                android:src="@drawable/icon_account_circle"
+                android:importantForAccessibility="no">
+        </ImageView>
+        <EditText
+                android:id="@+id/username_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:hint="Логин"
+                android:textColorHint="#95FFFFFF"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:background="@drawable/rounded_corner"
+                android:padding="9dp"
+                android:inputType="text"
+                android:autofillHints="username"
+                android:fontFamily="@font/my_font"/>
+        <EditText
+                android:id="@+id/password_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:hint="Пароль"
+                android:textColorHint="#95FFFFFF"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:background="@drawable/rounded_corner"
+                android:padding="9dp"
+                android:inputType="textPassword"
+                android:autofillHints="password"
+                android:fontFamily="@font/my_font"/>
+        <Button
+                android:id="@+id/login_btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Войти"
+                android:layout_marginTop="16dp"
+                android:textSize="20sp"
+                android:fontFamily="@font/my_font"
+                android:background="@drawable/rounded_corner"
+        />
+        <Button
+                android:id="@+id/register_btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Зарегистрироваться"
+                android:layout_marginTop="16dp"
+                android:textSize="20sp"
+                android:fontFamily="@font/my_font"
+                android:background="?android:attr/selectableItemBackground"
+        />
+    </LinearLayout>
+
+
+
+    <!-- Просьба включить геолокацию, изначально невидима -->
+    <LinearLayout
+            android:id="@+id/enable_gps_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone">
+        <TextView
+                android:id="@+id/tvPermissionInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Для работы приложения необходим доступ к геолокации"
+                android:layout_marginTop="16dp"
+                android:textSize="20sp"
+                android:fontFamily="@font/my_font"
+                android:textColor="@color/white"
+                android:textAlignment="center"
+        />
+
+        <Button
+                android:id="@+id/EnableLocationbtn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:textSize="18sp"
+                android:fontFamily="@font/my_font"
+                android:textColor="@color/white"
+                android:background="@drawable/rounded_corner"
+                android:text="Включить геолокацию"
+        />
+    </LinearLayout>
+</RelativeLayout>
