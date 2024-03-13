@@ -45,6 +45,17 @@
                 android:inputType="textPassword"
                 android:autofillHints="password"
                 android:fontFamily="@font/my_font"/>
+        <TextView
+                android:id="@+id/error_message"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/my_font"
+                android:textColor="#FF0000"
+                android:text="@string/errorMessage"
+                android:textSize="20sp"
+                android:paddingTop="9dp"
+                android:visibility="gone"
+        />
         <Button
                 android:id="@+id/login_btn"
                 android:layout_width="match_parent"

@@ -5,6 +5,7 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.LocationManager
 import android.os.Bundle
 import android.provider.Settings
@@ -13,10 +14,15 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
+//import com.example.notzenly.RestAPI
 
 class LogInActivity : AppCompatActivity() {
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
@@ -26,6 +32,7 @@ class LogInActivity : AppCompatActivity() {
 
     lateinit var usernameInput : EditText
     lateinit var passwordInput : EditText
+    lateinit var errorText : TextView
     lateinit var loginBtn : Button
     lateinit var RegisterBtn : Button
     lateinit var loginLayout : LinearLayout
@@ -40,23 +47,62 @@ class LogInActivity : AppCompatActivity() {
             passwordInput = findViewById(R.id.password_input)
             loginBtn = findViewById(R.id.login_btn)
             RegisterBtn = findViewById(R.id.register_btn)
+            errorText = findViewById(R.id.error_message)
 
-
+            val restApi = RestAPI()
             loginBtn.setOnClickListener {
                 val username = usernameInput.text.toString()
-                val password = usernameInput.text.toString()
-                //Тут будет логика входа через REST API
-                //...
-                //Если удача, то:
-                hideLoginShowGpsOverlay()
+                val password = passwordInput.text.toString()
+                //Проверка, пусты ли поля:
+                if (username == "" || password == "") {
+                    errorText.text = "Введите логин и пароль"
+                    errorText.visibility = View.VISIBLE
+                    if (password == "") {
+                        passwordInput.setHintTextColor(Color.RED)
+                    }
+                    if (username == "") {
+                        usernameInput.setHintTextColor(Color.RED)
+                    }
+                } else {
+                    //Тут - логика входа через REST API
+                    CoroutineScope(Dispatchers.Main).launch {
+                        val result = restApi.loginUser(username, password)
+                        // Handle the result here
+                        if (result != null) { //null = login succesfull
+                            Log.d("com.example.notzenly", result)
+                        } else{
+                            //Если удача, то:
+                            hideLoginShowGpsOverlay()
+                        }
+                    }
+                }
             }
             RegisterBtn.setOnClickListener {
                 val username = usernameInput.text.toString()
-                val password = usernameInput.text.toString()
-                //Тут будет логика регистрации через REST API
-                //...
-                //Если удача, то:
-                hideLoginShowGpsOverlay()
+                val password = passwordInput.text.toString()
+                //Проверка, пусты ли поля:
+                if (username == "" || password == "") {
+                    errorText.text = "Введите логин и пароль"
+                    errorText.visibility = View.VISIBLE
+                    if (password == "") {
+                        passwordInput.setHintTextColor(Color.RED)
+                    }
+                    if (username == "") {
+                        usernameInput.setHintTextColor(Color.RED)
+                    }
+                } else {
+                    //Тут - логика входа через REST API
+                    CoroutineScope(Dispatchers.Main).launch {
+                        val result = restApi.registerUser(username, password)
+                        // Handle the result here
+                        if (result != null) { //null = registration succesfull
+                            Log.d("com.example.notzenly", result)
+                        } else{
+                            //Если удача, то:
+                            hideLoginShowGpsOverlay()
+                        }
+                    }
+                }
             }
         } else {
             hideLoginShowGpsOverlay()
@@ -84,23 +130,22 @@ class LogInActivity : AppCompatActivity() {
 
     private fun showLocationSettings() {
         startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-        Log.d("com.example.notzenly", "clicked?")
     }
 
     private fun requestPermissionsIfNecessary(permissions: Array<String>) {
-        val permissionsToRequest = ArrayList<String>();
+        val permissionsToRequest = ArrayList<String>()
         permissions.forEach { permission ->
             if (ContextCompat.checkSelfPermission(this, permission)
                 != PackageManager.PERMISSION_GRANTED) {
                 // Permission is not granted
-                permissionsToRequest.add(permission);
+                permissionsToRequest.add(permission)
             }
         }
         if (permissionsToRequest.isNotEmpty()) {
             ActivityCompat.requestPermissions(
                 this,
                 permissionsToRequest.toTypedArray(),
-                REQUEST_PERMISSIONS_REQUEST_CODE);
+                REQUEST_PERMISSIONS_REQUEST_CODE)
         } else{
             hasPermission = true
         }
