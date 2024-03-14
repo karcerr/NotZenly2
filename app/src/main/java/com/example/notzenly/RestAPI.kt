@@ -48,14 +48,22 @@ object ApiClient {
 class RestAPI {
     suspend fun loginUser(nickname: String, password: String): String? {
         return withContext(Dispatchers.IO) {
-            val loginCall = ApiClient.apiService.loginUser(UserRegistration(nickname, password))
-            val loginResponse = loginCall.execute()
-            if (loginResponse.isSuccessful) {
-                println("Login successful")
-                null
-            } else {
-                println("Login failed: ${loginResponse.errorBody()?.string()}")
-                loginResponse.errorBody()?.string()
+            try {
+                val loginCall = ApiClient.apiService.loginUser(UserRegistration(nickname, password))
+                val loginResponse = loginCall.execute()
+                if (loginResponse.isSuccessful) {
+                    println("Login successful")
+                    null
+                } else {
+                    println("Login failed: ${loginResponse.errorBody()?.string()}")
+                    loginResponse.errorBody()?.string()
+                }
+            } catch (e: HttpException) {
+                println("HTTP Exception: ${e.message()}")
+                e.message()
+            } catch (e: Exception) {
+                println("Error: ${e.message}")
+                e.message
             }
         }
     }

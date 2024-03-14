@@ -70,7 +70,7 @@ class LogInActivity : AppCompatActivity() {
                         // Handle the result here
                         if (result != null) { //null = login succesfull
                             Log.d("com.example.notzenly", result)
-                        } else{
+                        } else {
                             //Если удача, то:
                             hideLoginShowGpsOverlay()
                         }
@@ -97,7 +97,7 @@ class LogInActivity : AppCompatActivity() {
                         // Handle the result here
                         if (result != null) { //null = registration succesfull
                             Log.d("com.example.notzenly", result)
-                        } else{
+                        } else {
                             //Если удача, то:
                             hideLoginShowGpsOverlay()
                         }
