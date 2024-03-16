@@ -1,20 +1,36 @@
 package com.example.notzenly
 
 import android.graphics.drawable.Drawable
+import android.location.Location
 import android.os.Bundle
+import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
+import org.osmdroid.api.IMapController
 import org.osmdroid.config.Configuration.getInstance
+import org.osmdroid.events.MapListener
+import org.osmdroid.events.ScrollEvent
+import org.osmdroid.events.ZoomEvent
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
+import org.osmdroid.views.overlay.mylocation.IMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+
 
 class MapActivity: AppCompatActivity() {
     private lateinit var map : MapView
+    private lateinit var mapController: IMapController
+    private lateinit var centralizeButton: ImageButton
+    private lateinit var profileButton: ImageButton
+    private lateinit var messagesButton: ImageButton
+    private var scaleFactor = 15.0
+    private var isCentered = false
+    var customOverlay: CustomIconOverlay? = null
+    //private var lastY = -1f
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,9 +38,14 @@ class MapActivity: AppCompatActivity() {
         getInstance().load(this, getDefaultSharedPreferences(this))
         setContentView(R.layout.map_activity)
         map = findViewById(R.id.map)
+        centralizeButton = findViewById(R.id.center_button)
+        profileButton = findViewById(R.id.profile_button)
+        messagesButton = findViewById(R.id.messages_button)
+
         map.setTileSource(TileSourceFactory.MAPNIK)
-        val mapController = map.controller
-        mapController.setZoom(11.0)
+        mapController = map.controller
+
+        mapController.setZoom(scaleFactor)
         map.setMultiTouchControls(true) // needed for pinch zooms/rotates
         map.isTilesScaledToDpi = true // apparently helps with readability of labels
         map.zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER) //removes ugly "+" and "-" buttons
@@ -35,8 +56,31 @@ class MapActivity: AppCompatActivity() {
         map.overlays.add(mRotationGestureOverlay)
 
 
+        // Creating a GpsMyLocationProvider instance
+        val gpsMyLocationProvider = GpsMyLocationProvider(this)
+        // Setting the minimum time interval for location updates (in milliseconds)
+        gpsMyLocationProvider.locationUpdateMinTime = 1000 // 1 sec
+
+
         /* MyLocation overlay */
-        val mLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(this), map)
+        val mLocationOverlay = object:  MyLocationNewOverlay(gpsMyLocationProvider, map) {
+            override fun onLocationChanged(location: Location?, source: IMyLocationProvider?) {
+                super.onLocationChanged(location, source)
+
+                if (location != null) {
+                    runOnUiThread {
+                        val newLocation = GeoPoint(location)
+                        customOverlay?.setLocation(newLocation)
+                        if (location.hasSpeed()) {
+                            customOverlay?.setSpeed(location.speed)
+                        }
+                        if (isCentered) {
+                            centralizeMap(this)
+                        }
+                    }
+                }
+            }
+        }
         mLocationOverlay.enableMyLocation()
 
         // Center the map on current location, draw an image
@@ -44,17 +88,73 @@ class MapActivity: AppCompatActivity() {
             val myLocation = mLocationOverlay.myLocation
             if (myLocation != null) {
                 runOnUiThread {
-                    mapController.setCenter(GeoPoint(myLocation))
+                    centralizeMap(mLocationOverlay)
                     val drawable: Drawable = resources.getDrawable(R.drawable.placeholder_person, null)
                     val location = GeoPoint(mLocationOverlay.myLocation)
-                    val customOverlay = CustomIconOverlay(this, location, drawable)
-
+                    customOverlay = CustomIconOverlay(this, location, 0.0f, drawable)
                     map.overlays.add(customOverlay)
+                    }
+            }
+        }
+
+        centralizeButton.setOnClickListener{
+            centralizeMap(mLocationOverlay)
+        }
+        map.addMapListener(object : MapListener {
+            override fun onScroll(event: ScrollEvent?): Boolean {
+                // Map is being scrolled, set isCentered to false
+                isCentered = false
+                return true
+            }
+
+            override fun onZoom(event: ZoomEvent?): Boolean {
+                // Map is being zoomed, set isCentered to false
+                isCentered = false
+                return true
+            }
+        })
+    }
+
+    /* Пытался сделать зум по свайпу, не вышло
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        Log.d("scale_change_", event.toString())
+        when (event.actionMasked) {
+            MotionEvent.ACTION_UP -> {
+                lastY = -1f
+                Log.d("scale_change_2", lastY.toString())
+                return true
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (event.x > map.width * 0.8) {
+                    Log.d("scale_change_Factor", scaleFactor.toString())
+                    Log.d("scale_change_lastY", lastY.toString())
+                    Log.d("scale_change_newY", event.y.toString())
+
+                    if (lastY != -1f) {
+                        // Adjust scaleFactor based on the deltaY
+                        scaleFactor -= (event.y - lastY) * 0.001
+                        scaleFactor = scaleFactor.coerceIn(9.0, 13.0)
+                        mapController.setZoom(scaleFactor)
+                    }
+
+                    // Update the last Y position
+                    lastY = event.y
+                    return true
                 }
             }
         }
+        return super.onTouchEvent(event)
     }
-
+    */
+    private fun centralizeMap(mLocOverlay: MyLocationNewOverlay){
+        val myLocation = mLocOverlay.myLocation
+        if (myLocation != null) {
+            mapController.setCenter(GeoPoint(myLocation))
+            mapController.setZoom(scaleFactor)
+            map.mapOrientation = 0f
+            isCentered = true
+        }
+    }
     //Функции ниже "нужны" для my location overlays. Хотя вроде и без них работает
      override fun onResume() {
          super.onResume()

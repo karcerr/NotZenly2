@@ -63,6 +63,7 @@
                 android:text="Войти"
                 android:layout_marginTop="16dp"
                 android:textSize="20sp"
+                android:textColor="@color/white"
                 android:fontFamily="@font/my_font"
                 android:background="@drawable/rounded_corner"
         />
@@ -73,6 +74,7 @@
                 android:text="Зарегистрироваться"
                 android:layout_marginTop="16dp"
                 android:textSize="20sp"
+                android:textColor="@color/white"
                 android:fontFamily="@font/my_font"
                 android:background="?android:attr/selectableItemBackground"
         />

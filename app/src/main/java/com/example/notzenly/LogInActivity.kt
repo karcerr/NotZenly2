@@ -51,6 +51,7 @@ class LogInActivity : AppCompatActivity() {
 
             val restApi = RestAPI()
             loginBtn.setOnClickListener {
+                hideLoginShowGpsOverlay() // удалить это!!
                 val username = usernameInput.text.toString()
                 val password = passwordInput.text.toString()
                 //Проверка, пусты ли поля:
