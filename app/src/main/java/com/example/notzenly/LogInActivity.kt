@@ -22,8 +22,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-//import com.example.notzenly.RestAPI
-
 class LogInActivity : AppCompatActivity() {
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
     private val permissions = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -49,9 +47,19 @@ class LogInActivity : AppCompatActivity() {
             RegisterBtn = findViewById(R.id.register_btn)
             errorText = findViewById(R.id.error_message)
 
-            val restApi = RestAPI()
+            val api = API()
+            CoroutineScope(Dispatchers.Main).launch {
+                val connected = api.connectToServer()
+                if (connected) {
+                    Log.d("Tagme_custom_log", "Connected to the server")
+                } else {
+                    // Failed to connect to the server
+                    Log.d("Tagme_custom_log", "Failed to connect to the server")
+
+                }
+            }
             loginBtn.setOnClickListener {
-                hideLoginShowGpsOverlay() // удалить это!!
+                //hideLoginShowGpsOverlay() // удалить это!!
                 val username = usernameInput.text.toString()
                 val password = passwordInput.text.toString()
                 //Проверка, пусты ли поля:
@@ -65,15 +73,15 @@ class LogInActivity : AppCompatActivity() {
                         usernameInput.setHintTextColor(Color.RED)
                     }
                 } else {
-                    //Тут - логика входа через REST API
+                    //Тут - логика входа через API
                     CoroutineScope(Dispatchers.Main).launch {
-                        val result = restApi.loginUser(username, password)
+                        val result = api.loginUser(username, password)
                         // Handle the result here
                         if (result != null) { //null = login succesfull
-                            Log.d("com.example.notzenly", result)
+                            Log.d("com.example.notzenly", "login")
                         } else {
                             //Если удача, то:
-                            hideLoginShowGpsOverlay()
+                            //hideLoginShowGpsOverlay()
                         }
                     }
                 }
@@ -92,15 +100,15 @@ class LogInActivity : AppCompatActivity() {
                         usernameInput.setHintTextColor(Color.RED)
                     }
                 } else {
-                    //Тут - логика входа через REST API
+                    //Тут - логика регистрации через API
                     CoroutineScope(Dispatchers.Main).launch {
-                        val result = restApi.registerUser(username, password)
+                        val result = api.registerUser(username, password)
                         // Handle the result here
                         if (result != null) { //null = registration succesfull
-                            Log.d("com.example.notzenly", result)
+                            Log.d("com.example.notzenly", "register")
                         } else {
                             //Если удача, то:
-                            hideLoginShowGpsOverlay()
+                          //  hideLoginShowGpsOverlay()
                         }
                     }
                 }
