@@ -1,4 +1,3 @@
-package com.example.notzenly
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -8,6 +7,8 @@ import org.json.JSONObject
 class API {
     private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
+    private var token: String? = null
+    private var tokenReceived = false
 
     suspend fun connectToServer(): Boolean {
         return withContext(Dispatchers.IO) {
@@ -19,33 +20,52 @@ class API {
 
             val listener = object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
-                    // Connection opened
                     this@API.webSocket = webSocket
                     Log.d("Tagme_custom_log", "onOpen trigger: $response")
                 }
 
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                    // Connection failed
-                    // Handle failure here
                     Log.d("Tagme_custom_log", "onFailure trigger: $response")
                 }
 
                 override fun onMessage(webSocket: WebSocket, text: String) {
-                    // Handle response from the server
-                    // You may want to parse the JSON response here
-                    println("Received message from server: $text")
                     Log.d("Tagme_custom_log", "onMessage trigger: $text")
+                    val jsonObject = JSONObject(text)
+                    when (jsonObject.getString("action")) {
+                        "login" -> {
+                            when (jsonObject.getString("status")) {
+                                "success" -> {
+                                    token = jsonObject.getString("message")
+                                    tokenReceived = true
+                                    synchronized(this@API) {
+                                        (this@API as Object).notify()
+                                    }
+                                }
+                            }
+                        }
+                        "register" -> {
+                            when (jsonObject.getString("status")) {
+                                "success" -> {
+                                    token = jsonObject.getString("message")
+                                    tokenReceived = true
+                                    // Notify waiting coroutine about the token received
+                                    synchronized(this@API) {
+                                        (this@API as Object).notify()
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
             client.newWebSocket(request, listener)
 
-            // This line just to indicate that the function returns a result.
             true
         }
     }
 
-    suspend fun registerUser(username: String, password: String): Boolean {
+    suspend fun registerUser(username: String, password: String): String? {
         return withContext(Dispatchers.IO) {
             val requestData = JSONObject().apply {
                 put("action", "register")
@@ -55,25 +75,38 @@ class API {
 
             webSocket?.send(requestData.toString())
 
-            // This line just to indicate that the function returns a result.
-            true
+            waitForToken()
         }
     }
 
-    suspend fun loginUser(username: String, password: String): Boolean {
+    suspend fun loginUser(username: String, password: String): String? {
         return withContext(Dispatchers.IO) {
             val requestData = JSONObject().apply {
-                //put("action", "login")
+                put("action", "login")
                 put("username", username)
                 put("password", password)
             }
 
             webSocket?.send(requestData.toString())
 
-            // This line just to indicate that the function returns a result.
-            true
+            waitForToken()
         }
     }
 
-    // Add more functions for other endpoints/actions as needed
+    private suspend fun waitForToken(): String? {
+        return synchronized(this) {
+            val timeoutDuration = 5000 // 5 seconds
+            val startTime = System.currentTimeMillis()
+
+            while (!tokenReceived) {
+                val elapsedTime = System.currentTimeMillis() - startTime
+                if (elapsedTime >= timeoutDuration) {
+                    return@waitForToken null
+                }
+                (this as Object).wait(100)
+            }
+            tokenReceived = false
+            token
+        }
+    }
 }

@@ -1,6 +1,7 @@
 package com.example.notzenly
 
 
+import API
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -28,13 +29,13 @@ class LogInActivity : AppCompatActivity() {
     private var hasPermission = false
     private var isLoggedIn = false //это надо будет поменять (хранить в кеше sessID?)
 
-    lateinit var usernameInput : EditText
-    lateinit var passwordInput : EditText
-    lateinit var errorText : TextView
-    lateinit var loginBtn : Button
-    lateinit var RegisterBtn : Button
-    lateinit var loginLayout : LinearLayout
-    lateinit var enableGpsLayout : LinearLayout
+    private lateinit var usernameInput : EditText
+    private lateinit var passwordInput : EditText
+    private lateinit var errorText : TextView
+    private lateinit var loginBtn : Button
+    private lateinit var registerBtn : Button
+    private lateinit var loginLayout : LinearLayout
+    private lateinit var enableGpsLayout : LinearLayout
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.login_activity)
@@ -44,7 +45,7 @@ class LogInActivity : AppCompatActivity() {
             usernameInput = findViewById(R.id.username_input)
             passwordInput = findViewById(R.id.password_input)
             loginBtn = findViewById(R.id.login_btn)
-            RegisterBtn = findViewById(R.id.register_btn)
+            registerBtn = findViewById(R.id.register_btn)
             errorText = findViewById(R.id.error_message)
 
             val api = API()
@@ -53,16 +54,12 @@ class LogInActivity : AppCompatActivity() {
                 if (connected) {
                     Log.d("Tagme_custom_log", "Connected to the server")
                 } else {
-                    // Failed to connect to the server
                     Log.d("Tagme_custom_log", "Failed to connect to the server")
-
                 }
             }
             loginBtn.setOnClickListener {
-                //hideLoginShowGpsOverlay() // удалить это!!
                 val username = usernameInput.text.toString()
                 val password = passwordInput.text.toString()
-                //Проверка, пусты ли поля:
                 if (username == "" || password == "") {
                     errorText.text = "Введите логин и пароль"
                     errorText.visibility = View.VISIBLE
@@ -73,23 +70,20 @@ class LogInActivity : AppCompatActivity() {
                         usernameInput.setHintTextColor(Color.RED)
                     }
                 } else {
-                    //Тут - логика входа через API
                     CoroutineScope(Dispatchers.Main).launch {
-                        val result = api.loginUser(username, password)
-                        // Handle the result here
-                        if (result != null) { //null = login succesfull
-                            Log.d("com.example.notzenly", "login")
+                        val token = api.loginUser(username, password)
+
+                        if (token != null) {
+                            Log.d("Tagme_custom_log", token)
                         } else {
-                            //Если удача, то:
-                            //hideLoginShowGpsOverlay()
+                            Log.d("Tagme_custom_log", "null")
                         }
                     }
                 }
             }
-            RegisterBtn.setOnClickListener {
+            registerBtn.setOnClickListener {
                 val username = usernameInput.text.toString()
                 val password = passwordInput.text.toString()
-                //Проверка, пусты ли поля:
                 if (username == "" || password == "") {
                     errorText.text = "Введите логин и пароль"
                     errorText.visibility = View.VISIBLE
@@ -100,15 +94,13 @@ class LogInActivity : AppCompatActivity() {
                         usernameInput.setHintTextColor(Color.RED)
                     }
                 } else {
-                    //Тут - логика регистрации через API
                     CoroutineScope(Dispatchers.Main).launch {
-                        val result = api.registerUser(username, password)
-                        // Handle the result here
-                        if (result != null) { //null = registration succesfull
-                            Log.d("com.example.notzenly", "register")
+                        val token = api.registerUser(username, password)
+
+                        if (token != null) {
+                            Log.d("Tagme_custom_log", token)
                         } else {
-                            //Если удача, то:
-                          //  hideLoginShowGpsOverlay()
+                            Log.d("Tagme_custom_log", "null")
                         }
                     }
                 }
@@ -121,7 +113,6 @@ class LogInActivity : AppCompatActivity() {
 
     private fun requestLocation() {
         requestPermissionsIfNecessary(permissions)
-        // If permissions granted, check location status
         if (hasPermission) {
             if (isLocationEnabled()) {
                 startActivity(Intent(this, MapActivity::class.java))
@@ -146,7 +137,6 @@ class LogInActivity : AppCompatActivity() {
         permissions.forEach { permission ->
             if (ContextCompat.checkSelfPermission(this, permission)
                 != PackageManager.PERMISSION_GRANTED) {
-                // Permission is not granted
                 permissionsToRequest.add(permission)
             }
         }
@@ -160,7 +150,6 @@ class LogInActivity : AppCompatActivity() {
         }
     }
     private fun hideLoginShowGpsOverlay(){
-        //Handling Permissions:
         requestPermissionsIfNecessary(permissions)
 
         if (!isLocationEnabled() or !hasPermission) {

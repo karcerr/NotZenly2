@@ -5,6 +5,9 @@
                 android:background="@drawable/login_background"
                 android:gravity="center"
                 android:padding="40dp">
+
+
+    <!-- Просьба включить геолокацию, изначально невидима -->
     <LinearLayout android:layout_width="match_parent"
                   android:layout_height="wrap_content"
                   android:gravity="center"
@@ -79,10 +82,6 @@
                 android:background="?android:attr/selectableItemBackground"
         />
     </LinearLayout>
-
-
-
-    <!-- Просьба включить геолокацию, изначально невидима -->
     <LinearLayout
             android:id="@+id/enable_gps_layout"
             android:layout_width="match_parent"
