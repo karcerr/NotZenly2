@@ -48,7 +48,7 @@ class LogInActivity : AppCompatActivity() {
             registerBtn = findViewById(R.id.register_btn)
             errorText = findViewById(R.id.error_message)
 
-            val api = API()
+            val api = API.getInstance()
             CoroutineScope(Dispatchers.Main).launch {
                 val connected = api.connectToServer()
                 if (connected) {
@@ -71,12 +71,12 @@ class LogInActivity : AppCompatActivity() {
                     }
                 } else {
                     CoroutineScope(Dispatchers.Main).launch {
-                        val token = api.loginUser(username, password)
-
-                        if (token != null) {
-                            Log.d("Tagme_custom_log", token)
-                        } else {
-                            Log.d("Tagme_custom_log", "null")
+                        val answer = api.loginUser(username, password)
+                        if (answer != null) {
+                            if (answer.getString("status") == "success") {
+                                isLoggedIn = true
+                                hideLoginShowGpsOverlay()
+                            }
                         }
                     }
                 }
@@ -95,12 +95,12 @@ class LogInActivity : AppCompatActivity() {
                     }
                 } else {
                     CoroutineScope(Dispatchers.Main).launch {
-                        val token = api.registerUser(username, password)
-
-                        if (token != null) {
-                            Log.d("Tagme_custom_log", token)
-                        } else {
-                            Log.d("Tagme_custom_log", "null")
+                        val answer = api.registerUser(username, password)
+                        if (answer != null) {
+                            if (answer.getString("status") == "success") {
+                                isLoggedIn = true
+                                hideLoginShowGpsOverlay()
+                            }
                         }
                     }
                 }

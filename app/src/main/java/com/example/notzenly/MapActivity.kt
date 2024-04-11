@@ -1,11 +1,18 @@
 package com.example.notzenly
 
+import API
+import android.Manifest
+import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.location.Location
 import android.os.Bundle
 import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import kotlinx.coroutines.*
 import org.osmdroid.api.IMapController
 import org.osmdroid.config.Configuration.getInstance
 import org.osmdroid.events.MapListener
@@ -19,7 +26,7 @@ import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.IMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
-
+import kotlin.coroutines.resume
 
 class MapActivity: AppCompatActivity() {
     private lateinit var map : MapView
@@ -31,9 +38,16 @@ class MapActivity: AppCompatActivity() {
     private var isCentered = false
     var customOverlay: CustomIconOverlay? = null
     //private var lastY = -1f
+    //these are for constant sending location:
+    private val coroutineScope = CoroutineScope(Dispatchers.Main)
+    private lateinit var api: API
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        api = API.getInstance()
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         getInstance().load(this, getDefaultSharedPreferences(this))
         setContentView(R.layout.map_activity)
@@ -157,12 +171,74 @@ class MapActivity: AppCompatActivity() {
     }
     //Функции ниже "нужны" для my location overlays. Хотя вроде и без них работает
      override fun onResume() {
+
          super.onResume()
          map.onResume() //needed for compass, my location overlays, v6.0.0 and up
+         startSendingLocationUpdates()
      }
 
      override fun onPause() {
          super.onPause()
          map.onPause()  //needed for compass, my location overlays, v6.0.0 and up
+         stopSendingLocationUpdates()
      }
+    private fun startSendingLocationUpdates() {
+        coroutineScope.launch {
+            while (isActive) {
+                val location = getCurrentLocation() // Implement this to get the current location
+
+                location?.let {
+                    val latitude = it.latitude.toString()
+                    val longitude = it.longitude.toString()
+                    val accuracy = it.accuracy.toString()
+                    val speed = it.speed.toString()
+
+                    // Send location data to the server
+                    try {
+                        api.sendLocation(latitude, longitude, accuracy, speed)
+                    } catch (e: Exception) {
+                        // Handle any exceptions or errors here
+                        e.printStackTrace()
+                    }
+                }
+
+                delay(3000) // Delay for 3 seconds before sending the next location
+            }
+        }
+    }
+
+    private fun stopSendingLocationUpdates() {
+        coroutineScope.coroutineContext.cancelChildren()
+    }
+
+    private suspend fun getCurrentLocation(): Location? {
+        return withContext(Dispatchers.IO) {
+            if (ActivityCompat.checkSelfPermission(
+                    this@MapActivity,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                    this@MapActivity,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return@withContext null
+            }
+
+            return@withContext suspendCancellableCoroutine { continuation ->
+                fusedLocationClient.lastLocation
+                    .addOnSuccessListener { location ->
+                        continuation.resume(location)
+                    }
+                    .addOnFailureListener {
+                        continuation.resume(null)
+                    }
+            }
+        }
+    }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        coroutineScope.cancel() // Cancel the coroutine scope on activity destroy
+    }
 }
