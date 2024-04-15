@@ -37,21 +37,47 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="16dp"
                 android:background="@null"
-                android:src="@drawable/profile_button"/>
+                android:src="@drawable/profile_button"
+                android:contentDescription="Profile"/>
 
         <ImageButton
                 android:id="@+id/center_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@null"
-                android:src="@drawable/center_on_me_icon"/>
+                android:src="@drawable/center_on_me_icon"
+                android:contentDescription="Centralize"/>
         <ImageButton
                 android:id="@+id/messages_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:background="@null"
-                android:src="@drawable/messages_button"/>
+                android:src="@drawable/messages_button"
+                android:contentDescription="Message"/>
     </LinearLayout>
+    <!-- Messages Fragment Overlay -->
+    <fragment
+            android:id="@+id/messagesFragment"
+            android:name="tagme.MessagesFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/buttonsOverlay"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Profile Fragment Overlay -->
+    <fragment
+            android:id="@+id/profileFragment"
+            android:name="tagme.ProfileFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/buttonsOverlay"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

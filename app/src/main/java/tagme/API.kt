@@ -1,3 +1,5 @@
+package tagme
+
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -9,7 +11,9 @@ class API {
     private var webSocket: WebSocket? = null
     private var answerReceived = false
     private var answer = JSONObject()
-    private var token: String? = null
+    var token: String? = null
+    private val friendsData = mutableListOf<FriendData>()
+
     suspend fun connectToServer(): Boolean {
         return withContext(Dispatchers.IO) {
             val url = "ws://141.8.193.201:8765"  // WebSocket server URL
@@ -33,11 +37,15 @@ class API {
                     answerReceived = true
                     val jsonObject = JSONObject(text)
                     answer = jsonObject
-                    if (((answer.getString("action") == "login") || (answer.getString("action") == "register"))
-                        && (answer.getString("status") == "success")) {
-                            token = answer.getString("message")
-                            Log.d("Tagme_custom_log", "token was recieved wow!")
+                    when (answer.getString("action")) {
+                        "login", "register" -> when (answer.getString("status")) {
+                            "success" -> token = answer.getString("message")
                         }
+                        "get locations" -> when (answer.getString("status")) {
+                            "success" -> parseFriendsData(answer.getString("message"))
+                        }
+                    }
+
                     synchronized(this@API) {
                         (this@API as Object).notify()
                     }
@@ -93,6 +101,18 @@ class API {
             waitForServerAnswer()
         }
     }
+    suspend fun getLocations(): JSONObject? {
+        return withContext(Dispatchers.IO) {
+            val requestData = JSONObject().apply {
+                put("action", "get locations")
+                put("token", token)
+            }
+
+            webSocket?.send(requestData.toString())
+
+            waitForServerAnswer()
+        }
+    }
 
     private suspend fun waitForServerAnswer(): JSONObject? {
         return synchronized(this) {
@@ -110,6 +130,32 @@ class API {
             answer
         }
     }
+    private fun parseFriendsData(jsonString: String){
+        val result = JSONObject(jsonString).getJSONArray("result")
+
+        for (i in 0 until result.length()) {
+            val friendObject = result.getJSONObject(i)
+            val nickname = friendObject.getString("nickname")
+            val latitude = friendObject.getDouble("latitude")
+            val longitude = friendObject.getDouble("longitude")
+            val accuracy = friendObject.getDouble("accuracy")
+            val speed = friendObject.getDouble("speed")
+            //val timestamp = friendObject.get("timestamp")
+
+            friendsData.add(FriendData(nickname, latitude, longitude, accuracy, speed.toFloat()))
+        }
+    }
+    fun getFriendsData(): MutableList<FriendData> {
+        return friendsData
+    }
+    data class FriendData(
+        val nickname: String,
+        val latitude: Double,
+        val longitude: Double,
+        val accuracy: Double,
+        val speed: Float
+        // val timestamp: Timestamp
+    )
     companion object {
         // Singleton instance
         @Volatile

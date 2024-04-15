@@ -13,6 +13,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "NotZenly"
+rootProject.name = "TagMe"
 include(":app")
  

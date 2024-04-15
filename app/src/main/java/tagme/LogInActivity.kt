@@ -1,7 +1,6 @@
-package com.example.notzenly
+package tagme
 
 
-import API
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -19,6 +18,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.example.tagme.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -27,7 +27,7 @@ class LogInActivity : AppCompatActivity() {
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
     private val permissions = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
     private var hasPermission = false
-    private var isLoggedIn = false //это надо будет поменять (хранить в кеше sessID?)
+    private var isLoggedIn = false
 
     private lateinit var usernameInput : EditText
     private lateinit var passwordInput : EditText

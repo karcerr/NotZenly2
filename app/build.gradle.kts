@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.notzenly"
+    namespace = "com.example.tagme"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.notzenly"
+        applicationId = "com.example.tagme"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
