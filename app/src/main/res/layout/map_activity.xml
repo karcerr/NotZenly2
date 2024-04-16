@@ -39,7 +39,6 @@
                 android:background="@null"
                 android:src="@drawable/profile_button"
                 android:contentDescription="Profile"/>
-
         <ImageButton
                 android:id="@+id/center_button"
                 android:layout_width="wrap_content"
@@ -57,24 +56,22 @@
                 android:contentDescription="Message"/>
     </LinearLayout>
     <!-- Messages Fragment Overlay -->
-    <fragment
-            android:id="@+id/messagesFragment"
+    <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/messages_fragment"
             android:name="tagme.MessagesFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="gone"
             app:layout_constraintBottom_toTopOf="@id/buttonsOverlay"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
     <!-- Profile Fragment Overlay -->
-    <fragment
-            android:id="@+id/profileFragment"
+    <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/profile_fragment"
             android:name="tagme.ProfileFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="gone"
             app:layout_constraintBottom_toTopOf="@id/buttonsOverlay"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

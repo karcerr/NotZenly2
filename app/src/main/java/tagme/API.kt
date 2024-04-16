@@ -1,17 +1,24 @@
 package tagme
-
+import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import org.json.JSONObject
 
-class API {
+class API private constructor(context: Context){
+    private val sharedPreferences: SharedPreferences = context.getSharedPreferences("API_PREFS", Context.MODE_PRIVATE)
+
     private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
     private var answerReceived = false
     private var answer = JSONObject()
-    var token: String? = null
+    var token: String?
+        get() = sharedPreferences.getString("TOKEN", null)
+        set(value) {
+            sharedPreferences.edit().putString("TOKEN", value).apply()
+        }
     private val friendsData = mutableListOf<FriendData>()
 
     suspend fun connectToServer(): Boolean {
@@ -85,6 +92,18 @@ class API {
             waitForServerAnswer()
         }
     }
+    suspend fun loginToken(): JSONObject? {
+        return withContext(Dispatchers.IO) {
+            val requestData = JSONObject().apply {
+                put("action", "validate token")
+                put("token", token)
+            }
+
+            webSocket?.send(requestData.toString())
+
+            waitForServerAnswer()
+        }
+    }
     suspend fun sendLocation(latitude: String, longitude: String, accuracy: String, speed: String): JSONObject? {
         return withContext(Dispatchers.IO) {
             val requestData = JSONObject().apply {
@@ -106,6 +125,19 @@ class API {
             val requestData = JSONObject().apply {
                 put("action", "get locations")
                 put("token", token)
+            }
+
+            webSocket?.send(requestData.toString())
+
+            waitForServerAnswer()
+        }
+    }
+    suspend fun sendFriendRequest(username: String): JSONObject? {
+        return withContext(Dispatchers.IO) {
+            val requestData = JSONObject().apply {
+                put("action", "add friend")
+                put("token", token)
+                put("nickname", username)
             }
 
             webSocket?.send(requestData.toString())
@@ -135,26 +167,39 @@ class API {
 
         for (i in 0 until result.length()) {
             val friendObject = result.getJSONObject(i)
+            val id = friendObject.getInt("user_id")
             val nickname = friendObject.getString("nickname")
+
             val latitude = friendObject.getDouble("latitude")
             val longitude = friendObject.getDouble("longitude")
             val accuracy = friendObject.getDouble("accuracy")
             val speed = friendObject.getDouble("speed")
             //val timestamp = friendObject.get("timestamp")
 
-            friendsData.add(FriendData(nickname, latitude, longitude, accuracy, speed.toFloat()))
+            val existingFriend = friendsData.find { it.nickname == nickname }
+            if (existingFriend != null) {
+                existingFriend.latitude = latitude
+                existingFriend.longitude = longitude
+                existingFriend.accuracy = accuracy
+                existingFriend.speed = speed.toFloat()
+            } else {
+                friendsData.add(FriendData(id, nickname, null, latitude, longitude, accuracy, speed.toFloat()))
+            }
         }
     }
     fun getFriendsData(): MutableList<FriendData> {
         return friendsData
     }
     data class FriendData(
-        val nickname: String,
-        val latitude: Double,
-        val longitude: Double,
-        val accuracy: Double,
-        val speed: Float
-        // val timestamp: Timestamp
+        val userId: Int,
+        var nickname: String,
+
+        var profilePicture: ByteArray?,
+        var latitude: Double,
+        var longitude: Double,
+        var accuracy: Double,
+        var speed: Float
+        // var timestamp: Timestamp
     )
     companion object {
         // Singleton instance
@@ -162,9 +207,9 @@ class API {
         private var instance: API? = null
 
         // Function to get the singleton instance
-        fun getInstance(): API {
+        fun getInstance(context: Context): API {
             return instance ?: synchronized(this) {
-                instance ?: API().also { instance = it }
+                instance ?: API(context.applicationContext).also { instance = it }
             }
         }
     }

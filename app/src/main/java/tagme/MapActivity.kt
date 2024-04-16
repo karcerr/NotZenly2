@@ -5,9 +5,14 @@ import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.location.Location
 import android.os.Bundle
+import android.transition.Slide
+import android.view.Gravity
 import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentContainerView
+import androidx.fragment.app.FragmentManager
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import com.example.tagme.R
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -28,27 +33,32 @@ import org.osmdroid.views.overlay.mylocation.IMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import kotlin.coroutines.resume
 
+
 class MapActivity: AppCompatActivity() {
     private lateinit var map : MapView
     private lateinit var mapController: IMapController
     private lateinit var centralizeButton: ImageButton
     private lateinit var profileButton: ImageButton
     private lateinit var messagesButton: ImageButton
+    private lateinit var profileFragment: Fragment
+    private lateinit var messagesFragment: Fragment
     private var scaleFactor = 15.0
     private var isCentered = false
     private var customOverlaySelf: CustomIconOverlay? = null
     //private var lastY = -1f
     //these are for constant sending location:
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
-    private lateinit var api: API
+    lateinit var api: API
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     //these are for storing friends and drawing overlays:
     private val friendOverlays: MutableMap<String, CustomIconOverlay> = mutableMapOf()
-
+    private lateinit var fragmentManager : FragmentManager
+    private lateinit var profileFragmentContainer: FragmentContainerView
+    private var isTransactionShowing = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        api = API.getInstance()
+        api = API.getInstance(applicationContext)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         getInstance().load(this, getDefaultSharedPreferences(this))
@@ -57,6 +67,15 @@ class MapActivity: AppCompatActivity() {
         centralizeButton = findViewById(R.id.center_button)
         profileButton = findViewById(R.id.profile_button)
         messagesButton = findViewById(R.id.messages_button)
+        // Initialize and hide fragments
+        fragmentManager = supportFragmentManager
+        messagesFragment = fragmentManager.findFragmentById(R.id.messages_fragment)!!
+        profileFragment = fragmentManager.findFragmentById(R.id.profile_fragment)!!
+        val transaction = fragmentManager.beginTransaction()
+        transaction.hide(profileFragment)
+        transaction.hide(messagesFragment)
+        transaction.commit()
+
 
         map.setTileSource(TileSourceFactory.MAPNIK)
         mapController = map.controller
@@ -105,7 +124,7 @@ class MapActivity: AppCompatActivity() {
             if (myLocation != null) {
                 runOnUiThread {
                     centralizeMap(mLocationOverlay)
-                    val drawable: Drawable = resources.getDrawable(R.drawable.placeholder_person, null)
+                    val drawable: Drawable = resources.getDrawable(R.drawable.person_placeholder, null)
                     val location = GeoPoint(mLocationOverlay.myLocation)
                     customOverlaySelf = CustomIconOverlay(this, location, 0.0f, drawable)
                     map.overlays.add(customOverlaySelf)
@@ -116,6 +135,14 @@ class MapActivity: AppCompatActivity() {
         centralizeButton.setOnClickListener{
             centralizeMap(mLocationOverlay)
         }
+        profileButton.setOnClickListener {
+            toggleFragmentVisibility(profileFragment)
+        }
+        messagesButton.setOnClickListener {
+            toggleFragmentVisibility(messagesFragment)
+        }
+
+
         map.addMapListener(object : MapListener {
             override fun onScroll(event: ScrollEvent?): Boolean {
                 // Map is being scrolled, set isCentered to false
@@ -130,6 +157,24 @@ class MapActivity: AppCompatActivity() {
             }
         })
     }
+    private fun toggleFragmentVisibility(fragment: Fragment) {
+        val transaction = fragmentManager.beginTransaction()
+        transaction.setCustomAnimations(R.anim.slide_up, 0, 0, R.anim.slide_down)
+        if (fragment.isAdded) {
+            if (fragment.isVisible) {
+                fragment.exitTransition = Slide(Gravity.BOTTOM)
+                transaction.hide(fragment)
+            } else {
+                transaction.addToBackStack(null)
+                transaction.show(fragment)
+            }
+        } else {
+            transaction.add(R.id.map, fragment, "profile_fragment")
+            transaction.addToBackStack(null)
+        }
+        transaction.commit()
+    }
+
 
     /* Пытался сделать зум по свайпу, не вышло
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -173,7 +218,6 @@ class MapActivity: AppCompatActivity() {
     }
     //Функции ниже "нужны" для my location overlays. Хотя вроде и без них работает
      override fun onResume() {
-
          super.onResume()
          map.onResume() //needed for compass, my location overlays, v6.0.0 and up
          startSendingLocationUpdates()
@@ -258,7 +302,7 @@ class MapActivity: AppCompatActivity() {
                 overlay.setLocation(GeoPoint(friend.latitude, friend.longitude))
             } else {
                 // Add new overlay
-                val friendDrawable: Drawable = resources.getDrawable(R.drawable.placeholder_person, null)
+                val friendDrawable: Drawable = resources.getDrawable(R.drawable.person_placeholder, null)
                 val friendLocation = GeoPoint(friend.latitude, friend.longitude)
                 val newOverlay = CustomIconOverlay(this, friendLocation, friend.speed, friendDrawable)
                 friendOverlays[friend.nickname] = newOverlay

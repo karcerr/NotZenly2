@@ -27,7 +27,6 @@ class LogInActivity : AppCompatActivity() {
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
     private val permissions = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
     private var hasPermission = false
-    private var isLoggedIn = false
 
     private lateinit var usernameInput : EditText
     private lateinit var passwordInput : EditText
@@ -41,75 +40,79 @@ class LogInActivity : AppCompatActivity() {
         setContentView(R.layout.login_activity)
         loginLayout = findViewById(R.id.login_layout)
         enableGpsLayout = findViewById(R.id.enable_gps_layout)
-        if(!isLoggedIn) {
-            usernameInput = findViewById(R.id.username_input)
-            passwordInput = findViewById(R.id.password_input)
-            loginBtn = findViewById(R.id.login_btn)
-            registerBtn = findViewById(R.id.register_btn)
-            errorText = findViewById(R.id.error_message)
+        usernameInput = findViewById(R.id.username_input)
+        passwordInput = findViewById(R.id.password_input)
+        loginBtn = findViewById(R.id.login_btn)
+        registerBtn = findViewById(R.id.register_btn)
+        errorText = findViewById(R.id.error_message)
 
-            val api = API.getInstance()
-            CoroutineScope(Dispatchers.Main).launch {
-                val connected = api.connectToServer()
-                if (connected) {
-                    Log.d("Tagme_custom_log", "Connected to the server")
-                } else {
-                    Log.d("Tagme_custom_log", "Failed to connect to the server")
-                }
-            }
-            loginBtn.setOnClickListener {
-                val username = usernameInput.text.toString()
-                val password = passwordInput.text.toString()
-                if (username == "" || password == "") {
-                    errorText.text = "Введите логин и пароль"
-                    errorText.visibility = View.VISIBLE
-                    if (password == "") {
-                        passwordInput.setHintTextColor(Color.RED)
-                    }
-                    if (username == "") {
-                        usernameInput.setHintTextColor(Color.RED)
-                    }
-                } else {
+        val api = API.getInstance(applicationContext)
+        CoroutineScope(Dispatchers.Main).launch {
+            val connected = api.connectToServer()
+            if (connected) {
+                Log.d("Tagme_custom_log", "Connected to the server")
+                if (api.token != null) {
                     CoroutineScope(Dispatchers.Main).launch {
-                        val answer = api.loginUser(username, password)
+                        val answer = api.loginToken()
                         if (answer != null) {
                             if (answer.getString("status") == "success") {
-                                isLoggedIn = true
                                 hideLoginShowGpsOverlay()
+                                Log.d("Tagme_custom_log", "Logged in via token")
                             }
                         }
                     }
                 }
+            } else {
+                Log.d("Tagme_custom_log", "Failed to connect to the server")
             }
-            registerBtn.setOnClickListener {
-                val username = usernameInput.text.toString()
-                val password = passwordInput.text.toString()
-                if (username == "" || password == "") {
-                    errorText.text = "Введите логин и пароль"
-                    errorText.visibility = View.VISIBLE
-                    if (password == "") {
-                        passwordInput.setHintTextColor(Color.RED)
-                    }
-                    if (username == "") {
-                        usernameInput.setHintTextColor(Color.RED)
-                    }
-                } else {
-                    CoroutineScope(Dispatchers.Main).launch {
-                        val answer = api.registerUser(username, password)
-                        if (answer != null) {
-                            if (answer.getString("status") == "success") {
-                                isLoggedIn = true
-                                hideLoginShowGpsOverlay()
-                            }
+        }
+        loginBtn.setOnClickListener {
+            val username = usernameInput.text.toString()
+            val password = passwordInput.text.toString()
+            if (username == "" || password == "") {
+                errorText.text = "Введите логин и пароль"
+                errorText.visibility = View.VISIBLE
+                if (password == "") {
+                    passwordInput.setHintTextColor(Color.RED)
+                }
+                if (username == "") {
+                    usernameInput.setHintTextColor(Color.RED)
+                }
+            } else {
+                CoroutineScope(Dispatchers.Main).launch {
+                    val answer = api.loginUser(username, password)
+                    if (answer != null) {
+                        if (answer.getString("status") == "success") {
+                            hideLoginShowGpsOverlay()
                         }
                     }
                 }
             }
-        } else {
-            hideLoginShowGpsOverlay()
+        }
+        registerBtn.setOnClickListener {
+            val username = usernameInput.text.toString()
+            val password = passwordInput.text.toString()
+            if (username == "" || password == "") {
+                errorText.text = "Введите логин и пароль"
+                errorText.visibility = View.VISIBLE
+                if (password == "") {
+                    passwordInput.setHintTextColor(Color.RED)
+                }
+                if (username == "") {
+                    usernameInput.setHintTextColor(Color.RED)
+                }
+            } else {
+                CoroutineScope(Dispatchers.Main).launch {
+                    val answer = api.registerUser(username, password)
+                    if (answer != null) {
+                        if (answer.getString("status") == "success") {
+                            hideLoginShowGpsOverlay()
+                        }
+                    }
+                }
+            }
         }
     }
-
 
     private fun requestLocation() {
         requestPermissionsIfNecessary(permissions)
