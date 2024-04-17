@@ -172,7 +172,7 @@ class API private constructor(context: Context){
             val requestData = JSONObject().apply {
                 put("action", "accept request")
                 put("token", token)
-                put("id", id)
+                put("user2_id", id)
             }
             webSocket?.send(requestData.toString())
 
@@ -184,7 +184,7 @@ class API private constructor(context: Context){
             val requestData = JSONObject().apply {
                 put("action", "deny request")
                 put("token", token)
-                put("id", id)
+                put("user2_id", id)
             }
             webSocket?.send(requestData.toString())
 
@@ -196,7 +196,7 @@ class API private constructor(context: Context){
             val requestData = JSONObject().apply {
                 put("action", "cancel request")
                 put("token", token)
-                put("id", id)
+                put("user2_id", id)
             }
             webSocket?.send(requestData.toString())
 
