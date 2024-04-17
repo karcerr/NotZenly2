@@ -19,7 +19,8 @@ class API private constructor(context: Context){
         set(value) {
             sharedPreferences.edit().putString("TOKEN", value).apply()
         }
-    private val friendsData = mutableListOf<FriendData>()
+    private val friendsLocationsData = mutableListOf<FriendLocationsData>()
+    private val friendsRequestsData = mutableListOf<FriendRequestsData>()
 
     suspend fun connectToServer(): Boolean {
         return withContext(Dispatchers.IO) {
@@ -49,7 +50,10 @@ class API private constructor(context: Context){
                             "success" -> token = answer.getString("message")
                         }
                         "get locations" -> when (answer.getString("status")) {
-                            "success" -> parseFriendsData(answer.getString("message"))
+                            "success" -> parseFriendLocationsData(answer.getString("message"))
+                        }
+                        "get friend requests" -> when (answer.getString("status")) {
+                            "success" -> parseFriendRequestsData(answer.getString("message"))
                         }
                     }
 
@@ -145,10 +149,22 @@ class API private constructor(context: Context){
             waitForServerAnswer()
         }
     }
+    suspend fun getFriendRequests(): JSONObject? {
+        return withContext(Dispatchers.IO) {
+            val requestData = JSONObject().apply {
+                put("action", "get friend requests")
+                put("token", token)
+            }
+
+            webSocket?.send(requestData.toString())
+
+            waitForServerAnswer()
+        }
+    }
 
     private suspend fun waitForServerAnswer(): JSONObject? {
         return synchronized(this) {
-            val timeoutDuration = 1000 //
+            val timeoutDuration = 1000
             val startTime = System.currentTimeMillis()
 
             while (!answerReceived) {
@@ -162,7 +178,7 @@ class API private constructor(context: Context){
             answer
         }
     }
-    private fun parseFriendsData(jsonString: String){
+    private fun parseFriendLocationsData(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
 
         for (i in 0 until result.length()) {
@@ -176,31 +192,61 @@ class API private constructor(context: Context){
             val speed = friendObject.getDouble("speed")
             //val timestamp = friendObject.get("timestamp")
 
-            val existingFriend = friendsData.find { it.nickname == nickname }
+            val existingFriend = friendsLocationsData.find { it.userData.userId == id }
             if (existingFriend != null) {
+                existingFriend.userData = UserData(id, nickname, null)
                 existingFriend.latitude = latitude
                 existingFriend.longitude = longitude
                 existingFriend.accuracy = accuracy
                 existingFriend.speed = speed.toFloat()
             } else {
-                friendsData.add(FriendData(id, nickname, null, latitude, longitude, accuracy, speed.toFloat()))
+                friendsLocationsData.add(FriendLocationsData(UserData(id, nickname, null), latitude, longitude, accuracy, speed.toFloat()))
             }
         }
     }
-    fun getFriendsData(): MutableList<FriendData> {
-        return friendsData
+    private fun parseFriendRequestsData(jsonString: String){
+        val result = JSONObject(jsonString).getJSONArray("result")
+
+        for (i in 0 until result.length()) {
+            val requestObject = result.getJSONObject(i)
+            val id = requestObject.getInt("user_id")
+            val nickname = requestObject.getString("nickname")
+            val relation = requestObject.getString("relation")
+
+            val existingFriend = friendsRequestsData.find { it.userData.userId == id }
+            if (existingFriend != null) {
+                existingFriend.userData = UserData(id, nickname, null)
+                existingFriend.relation = relation
+            } else {
+                friendsRequestsData.add(FriendRequestsData(UserData(id, nickname, null), relation))
+            }
+        }
     }
-    data class FriendData(
+
+    fun getFriendLocationsData(): MutableList<FriendLocationsData> {
+        return friendsLocationsData
+    }
+    fun getFriendRequestsData(): MutableList<FriendRequestsData> {
+        return friendsRequestsData
+    }
+    data class UserData(
         val userId: Int,
         var nickname: String,
-
-        var profilePicture: ByteArray?,
+        var profilePicture: ByteArray?
+    )
+    data class FriendLocationsData(
+        var userData: UserData,
         var latitude: Double,
         var longitude: Double,
         var accuracy: Double,
         var speed: Float
         // var timestamp: Timestamp
     )
+    data class FriendRequestsData(
+        var userData: UserData,
+        var relation: String
+    )
+
     companion object {
         // Singleton instance
         @Volatile

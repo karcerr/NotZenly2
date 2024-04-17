@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 
 class ProfileFragment : Fragment() {
     private lateinit var friendAdapter: FriendAdapter
+    private lateinit var friendRequestAdapter: FriendRequestAdapter
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -63,15 +64,24 @@ class ProfileFragment : Fragment() {
                 }
             }
         }
-        val recyclerView: RecyclerView = view.findViewById(R.id.friends_recycler_view)
-        friendAdapter = FriendAdapter(api.getFriendsData())
-        recyclerView.adapter = friendAdapter
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        CoroutineScope(Dispatchers.Main).launch {
+            val answer = api.getFriendRequests()
+        }
+        val friendRecyclerView: RecyclerView = view.findViewById(R.id.friends_recycler_view)
+        friendAdapter = FriendAdapter(api.getFriendLocationsData())
+        friendRecyclerView.adapter = friendAdapter
+        friendRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+
+        val friendRequestsRecyclerView: RecyclerView = view.findViewById(R.id.friend_requests_recycler_view)
+        friendRequestAdapter = FriendRequestAdapter(api.getFriendRequestsData())
+        friendRequestsRecyclerView.adapter = friendRequestAdapter
+        friendRequestsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+
+
         return view
     }
 }
-class FriendAdapter(private val friendList: List<API.FriendData>) : RecyclerView.Adapter<FriendAdapter.FriendViewHolder>() {
-
+class FriendAdapter(private val friendList: List<API.FriendLocationsData>) : RecyclerView.Adapter<FriendAdapter.FriendViewHolder>() {
     inner class FriendViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTextView: TextView = itemView.findViewById(R.id.friend_name)
         val pictureImageView: ImageView = itemView.findViewById(R.id.friend_picture)
@@ -85,9 +95,9 @@ class FriendAdapter(private val friendList: List<API.FriendData>) : RecyclerView
     override fun onBindViewHolder(holder: FriendViewHolder, position: Int) {
         val friend = friendList[position]
 
-        holder.nameTextView.text = friend.nickname
+        holder.nameTextView.text = friend.userData.nickname
         // Set profile picture if available, otherwise set placeholder
-        friend.profilePicture?.let {
+        friend.userData.profilePicture?.let {
             val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
             holder.pictureImageView.setImageBitmap(bitmap)
         } ?: holder.pictureImageView.setImageResource(R.drawable.person_placeholder)
@@ -95,5 +105,70 @@ class FriendAdapter(private val friendList: List<API.FriendData>) : RecyclerView
 
     override fun getItemCount(): Int {
         return friendList.size
+    }
+}
+class FriendRequestAdapter(private val requestList: List<API.FriendRequestsData>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    inner class IncomingFriendRequestViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val nameTextView: TextView = itemView.findViewById(R.id.friend_name)
+        val pictureImageView: ImageView = itemView.findViewById(R.id.friend_picture)
+    }
+
+    inner class OutgoingFriendRequestViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val nameTextView: TextView = itemView.findViewById(R.id.friend_name)
+        val pictureImageView: ImageView = itemView.findViewById(R.id.friend_picture)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return when (viewType) {
+            VIEW_TYPE_INCOMING -> {
+                val view = LayoutInflater.from(parent.context).inflate(R.layout.incoming_friend_request_item, parent, false)
+                IncomingFriendRequestViewHolder(view)
+            }
+            VIEW_TYPE_OUTGOING -> {
+                val view = LayoutInflater.from(parent.context).inflate(R.layout.outgoing_friend_request_item, parent, false)
+                OutgoingFriendRequestViewHolder(view)
+            }
+            else -> throw IllegalArgumentException("Invalid view type")
+        }
+    }
+
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        val requestee = requestList[position]
+        when (holder.itemViewType) {
+            VIEW_TYPE_INCOMING -> {
+                val incomingHolder = holder as IncomingFriendRequestViewHolder
+                incomingHolder.nameTextView.text = requestee.userData.nickname
+                // Set profile picture if available, otherwise set placeholder
+                requestee.userData.profilePicture?.let {
+                    val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
+                    incomingHolder.pictureImageView.setImageBitmap(bitmap)
+                } ?: incomingHolder.pictureImageView.setImageResource(R.drawable.person_placeholder)
+            }
+            VIEW_TYPE_OUTGOING -> {
+                val outgoingHolder = holder as OutgoingFriendRequestViewHolder
+                outgoingHolder.nameTextView.text = requestee.userData.nickname
+                // Set profile picture if available, otherwise set placeholder
+                requestee.userData.profilePicture?.let {
+                    val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
+                    outgoingHolder.pictureImageView.setImageBitmap(bitmap)
+                } ?: outgoingHolder.pictureImageView.setImageResource(R.drawable.person_placeholder)
+            }
+        }
+    }
+
+    override fun getItemCount(): Int {
+        return requestList.size
+    }
+    override fun getItemViewType(position: Int): Int {
+        val friend = requestList[position]
+        return if (friend.relation == "incoming") {
+            VIEW_TYPE_INCOMING
+        } else {
+            VIEW_TYPE_OUTGOING
+        }
+    }
+    companion object {
+        private const val VIEW_TYPE_INCOMING = 0
+        private const val VIEW_TYPE_OUTGOING = 1
     }
 }

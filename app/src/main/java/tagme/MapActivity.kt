@@ -250,7 +250,7 @@ class MapActivity: AppCompatActivity() {
                 }
 
                 delay(3000) // Delay for 3 seconds before sending the next location
-                val friendsData = api.getFriendsData()
+                val friendsData = api.getFriendLocationsData()
 
                 // Update friend overlays
                 updateFriendOverlays(friendsData)
@@ -286,9 +286,9 @@ class MapActivity: AppCompatActivity() {
             }
         }
     }
-    private fun updateFriendOverlays(friendsData: List<API.FriendData>) {
+    private fun updateFriendOverlays(friendsData: List<API.FriendLocationsData>) {
         // Remove outdated friend overlays
-        val outdatedNicknames = friendOverlays.keys - friendsData.map { it.nickname }
+        val outdatedNicknames = friendOverlays.keys - friendsData.map { it.userData.nickname }
         outdatedNicknames.forEach { nickname ->
             val overlay = friendOverlays.remove(nickname)
             map.overlays.remove(overlay)
@@ -296,7 +296,7 @@ class MapActivity: AppCompatActivity() {
 
         // Update or add friend overlays
         friendsData.forEach { friend ->
-            val overlay = friendOverlays[friend.nickname]
+            val overlay = friendOverlays[friend.userData.nickname]
             if (overlay != null) {
                 // Update existing overlay
                 overlay.setLocation(GeoPoint(friend.latitude, friend.longitude))
@@ -305,7 +305,7 @@ class MapActivity: AppCompatActivity() {
                 val friendDrawable: Drawable = resources.getDrawable(R.drawable.person_placeholder, null)
                 val friendLocation = GeoPoint(friend.latitude, friend.longitude)
                 val newOverlay = CustomIconOverlay(this, friendLocation, friend.speed, friendDrawable)
-                friendOverlays[friend.nickname] = newOverlay
+                friendOverlays[friend.userData.nickname] = newOverlay
                 map.overlays.add(newOverlay)
             }
         }
