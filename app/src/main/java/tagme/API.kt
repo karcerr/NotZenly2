@@ -19,6 +19,11 @@ class API private constructor(context: Context){
         set(value) {
             sharedPreferences.edit().putString("TOKEN", value).apply()
         }
+    var myNickname: String?
+        get() = sharedPreferences.getString("NICKNAME", null)
+        set(value) {
+            sharedPreferences.edit().putString("NICKNAME", value).apply()
+        }
     private val friendsLocationsData = mutableListOf<FriendLocationsData>()
     private val friendsRequestsData = mutableListOf<FriendRequestsData>()
 
@@ -47,7 +52,9 @@ class API private constructor(context: Context){
                     answer = jsonObject
                     when (answer.getString("action")) {
                         "login", "register" -> when (answer.getString("status")) {
-                            "success" -> token = answer.getString("message")
+                            "success" -> {
+                                token = answer.getString("message")
+                            }
                         }
                         "get locations" -> when (answer.getString("status")) {
                             "success" -> parseFriendLocationsData(answer.getString("message"))
@@ -76,7 +83,7 @@ class API private constructor(context: Context){
                 put("username", username)
                 put("password", password)
             }
-
+            myNickname = username
             webSocket?.send(requestData.toString())
 
             waitForServerAnswer()
@@ -90,7 +97,7 @@ class API private constructor(context: Context){
                 put("username", username)
                 put("password", password)
             }
-
+            myNickname = username
             webSocket?.send(requestData.toString())
 
             waitForServerAnswer()
@@ -102,7 +109,6 @@ class API private constructor(context: Context){
                 put("action", "validate token")
                 put("token", token)
             }
-
             webSocket?.send(requestData.toString())
 
             waitForServerAnswer()
@@ -156,6 +162,42 @@ class API private constructor(context: Context){
                 put("token", token)
             }
 
+            webSocket?.send(requestData.toString())
+
+            waitForServerAnswer()
+        }
+    }
+    suspend fun acceptFriendRequest(id: Int): JSONObject? {
+        return withContext(Dispatchers.IO) {
+            val requestData = JSONObject().apply {
+                put("action", "accept request")
+                put("token", token)
+                put("id", id)
+            }
+            webSocket?.send(requestData.toString())
+
+            waitForServerAnswer()
+        }
+    }
+    suspend fun denyFriendRequest(id: Int): JSONObject? {
+        return withContext(Dispatchers.IO) {
+            val requestData = JSONObject().apply {
+                put("action", "deny request")
+                put("token", token)
+                put("id", id)
+            }
+            webSocket?.send(requestData.toString())
+
+            waitForServerAnswer()
+        }
+    }
+    suspend fun cancelFriendRequest(id: Int): JSONObject? {
+        return withContext(Dispatchers.IO) {
+            val requestData = JSONObject().apply {
+                put("action", "cancel request")
+                put("token", token)
+                put("id", id)
+            }
             webSocket?.send(requestData.toString())
 
             waitForServerAnswer()

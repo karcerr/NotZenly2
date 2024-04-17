@@ -1,15 +1,13 @@
 package tagme
 
+import android.content.Context
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.TextView
+import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -21,6 +19,7 @@ import kotlinx.coroutines.launch
 class ProfileFragment : Fragment() {
     private lateinit var friendAdapter: FriendAdapter
     private lateinit var friendRequestAdapter: FriendRequestAdapter
+    private lateinit var api: API
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -30,8 +29,9 @@ class ProfileFragment : Fragment() {
 
         val addFriendButton = view.findViewById<Button>(R.id.add_friend_button)
         val addFriendWindow = view.findViewById<View>(R.id.add_friend_window)
+        val nicknameText = view.findViewById<TextView>(R.id.nickname_text)
         val darkOverlay = view.findViewById<View>(R.id.dark_overlay)
-        val api = (requireActivity() as MapActivity).api
+        api = (requireActivity() as MapActivity).api
         val sendRequestButton = view.findViewById<Button>(R.id.send_request_button)
         val statusText = view.findViewById<TextView>(R.id.status_text)
 
@@ -64,24 +64,38 @@ class ProfileFragment : Fragment() {
                 }
             }
         }
+        nicknameText.text = api.myNickname
         CoroutineScope(Dispatchers.Main).launch {
-            val answer = api.getFriendRequests()
+            api.getFriendRequests()
+        }
+        val myLinearLayoutManager = object : LinearLayoutManager(context) {
+            override fun canScrollVertically(): Boolean {
+                return false
+            }
         }
         val friendRecyclerView: RecyclerView = view.findViewById(R.id.friends_recycler_view)
-        friendAdapter = FriendAdapter(api.getFriendLocationsData())
+        friendAdapter = FriendAdapter(api.getFriendLocationsData(), api)
         friendRecyclerView.adapter = friendAdapter
-        friendRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        friendRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
 
         val friendRequestsRecyclerView: RecyclerView = view.findViewById(R.id.friend_requests_recycler_view)
-        friendRequestAdapter = FriendRequestAdapter(api.getFriendRequestsData())
+        friendRequestAdapter = FriendRequestAdapter(api.getFriendRequestsData(), api)
         friendRequestsRecyclerView.adapter = friendRequestAdapter
-        friendRequestsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        friendRequestsRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
 
 
         return view
     }
 }
-class FriendAdapter(private val friendList: List<API.FriendLocationsData>) : RecyclerView.Adapter<FriendAdapter.FriendViewHolder>() {
+class MyLinearLayoutManager(context: Context) : LinearLayoutManager(context) {
+    override fun canScrollVertically(): Boolean {
+        return false
+    }
+}
+class FriendAdapter(
+    private val friendList: List<API.FriendLocationsData>,
+    private val api: API
+) : RecyclerView.Adapter<FriendAdapter.FriendViewHolder>() {
     inner class FriendViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTextView: TextView = itemView.findViewById(R.id.friend_name)
         val pictureImageView: ImageView = itemView.findViewById(R.id.friend_picture)
@@ -107,15 +121,20 @@ class FriendAdapter(private val friendList: List<API.FriendLocationsData>) : Rec
         return friendList.size
     }
 }
-class FriendRequestAdapter(private val requestList: List<API.FriendRequestsData>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-    inner class IncomingFriendRequestViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+class FriendRequestAdapter(
+    private val requestList: List<API.FriendRequestsData>,
+    private val api: API
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {    inner class IncomingFriendRequestViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTextView: TextView = itemView.findViewById(R.id.friend_name)
         val pictureImageView: ImageView = itemView.findViewById(R.id.friend_picture)
+        val acceptButton: ImageButton = itemView.findViewById(R.id.accept_button)
+        val denyButton: ImageButton = itemView.findViewById(R.id.deny_button)
     }
 
     inner class OutgoingFriendRequestViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTextView: TextView = itemView.findViewById(R.id.friend_name)
         val pictureImageView: ImageView = itemView.findViewById(R.id.friend_picture)
+        val cancelButton: ImageButton = itemView.findViewById(R.id.cancel_button)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -138,20 +157,41 @@ class FriendRequestAdapter(private val requestList: List<API.FriendRequestsData>
             VIEW_TYPE_INCOMING -> {
                 val incomingHolder = holder as IncomingFriendRequestViewHolder
                 incomingHolder.nameTextView.text = requestee.userData.nickname
-                // Set profile picture if available, otherwise set placeholder
                 requestee.userData.profilePicture?.let {
                     val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
                     incomingHolder.pictureImageView.setImageBitmap(bitmap)
                 } ?: incomingHolder.pictureImageView.setImageResource(R.drawable.person_placeholder)
+                incomingHolder.acceptButton.tag = requestee.userData.userId
+                incomingHolder.denyButton.tag = requestee.userData.userId
+
+                incomingHolder.acceptButton.setOnClickListener { view ->
+                    val userId = view.tag as Int
+                    CoroutineScope(Dispatchers.Main).launch {
+                        api.acceptFriendRequest(userId)
+                    }
+                }
+                incomingHolder.denyButton.setOnClickListener { view ->
+                    val userId = view.tag as Int
+                    CoroutineScope(Dispatchers.Main).launch {
+                        api.denyFriendRequest(userId)
+                    }
+                }
             }
             VIEW_TYPE_OUTGOING -> {
                 val outgoingHolder = holder as OutgoingFriendRequestViewHolder
                 outgoingHolder.nameTextView.text = requestee.userData.nickname
-                // Set profile picture if available, otherwise set placeholder
                 requestee.userData.profilePicture?.let {
                     val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
                     outgoingHolder.pictureImageView.setImageBitmap(bitmap)
                 } ?: outgoingHolder.pictureImageView.setImageResource(R.drawable.person_placeholder)
+                outgoingHolder.cancelButton.tag = requestee.userData.userId
+
+                outgoingHolder.cancelButton.setOnClickListener { view ->
+                    val userId = view.tag as Int
+                    CoroutineScope(Dispatchers.Main).launch {
+                        api.cancelFriendRequest(userId)
+                    }
+                }
             }
         }
     }
