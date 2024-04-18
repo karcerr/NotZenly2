@@ -18,8 +18,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class ProfileFragment : Fragment() {
-    private lateinit var friendAdapter: FriendAdapter
-    private lateinit var friendRequestAdapter: FriendRequestAdapter
+    lateinit var friendAdapter: FriendAdapter
+    lateinit var friendRequestAdapter: FriendRequestAdapter
     private lateinit var api: API
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -27,11 +27,12 @@ class ProfileFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_profile, container, false)
-
+        val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         val addFriendButton = view.findViewById<Button>(R.id.add_friend_button)
         val addFriendWindow = view.findViewById<View>(R.id.add_friend_window)
         val nicknameText = view.findViewById<TextView>(R.id.nickname_text)
         val darkOverlay = view.findViewById<View>(R.id.dark_overlay)
+        val requestInput = view.findViewById<EditText>(R.id.nickname_edit_text)
         api = (requireActivity() as MapActivity).api
         val sendRequestButton = view.findViewById<Button>(R.id.send_request_button)
         val statusText = view.findViewById<TextView>(R.id.status_text)
@@ -55,11 +56,10 @@ class ProfileFragment : Fragment() {
         darkOverlay.setOnClickListener {
             addFriendWindow.visibility = View.GONE
             darkOverlay.visibility = View.GONE
-            val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
         }
         sendRequestButton.setOnClickListener{
-            val nickname = view.findViewById<EditText>(R.id.nickname_edit_text).text.toString()
+            val nickname = requestInput.text.toString()
             CoroutineScope(Dispatchers.Main).launch {
                 val answer = api.sendFriendRequest(nickname)
                 if (answer != null) {
@@ -67,6 +67,8 @@ class ProfileFragment : Fragment() {
                     if (answer.getString("status") == "success") {
                         statusText.setTextColor(Color.GREEN)
                         statusText.text = "Friend request was sent!"
+                        requestInput.setText("")
+                        inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
                         api.getFriendRequests()
                         val updatedRequests = api.getFriendRequestsData()
                         friendRequestAdapter.updateData(updatedRequests)

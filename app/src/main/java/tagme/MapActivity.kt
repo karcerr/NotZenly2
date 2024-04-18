@@ -11,7 +11,6 @@ import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.FragmentManager
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import com.example.tagme.R
@@ -53,8 +52,7 @@ class MapActivity: AppCompatActivity() {
     //these are for storing friends and drawing overlays:
     private val friendOverlays: MutableMap<String, CustomIconOverlay> = mutableMapOf()
     private lateinit var fragmentManager : FragmentManager
-    private lateinit var profileFragmentContainer: FragmentContainerView
-    private var isTransactionShowing = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -126,7 +124,7 @@ class MapActivity: AppCompatActivity() {
                     centralizeMap(mLocationOverlay)
                     val drawable: Drawable = resources.getDrawable(R.drawable.person_placeholder, null)
                     val location = GeoPoint(mLocationOverlay.myLocation)
-                    customOverlaySelf = CustomIconOverlay(this, location, 0.0f, drawable)
+                    customOverlaySelf = CustomIconOverlay(this, location, 0.0f, drawable, "Я", R.font.my_font)
                     map.overlays.add(customOverlaySelf)
                     }
             }
@@ -136,10 +134,19 @@ class MapActivity: AppCompatActivity() {
             centralizeMap(mLocationOverlay)
         }
         profileButton.setOnClickListener {
+
+            coroutineScope.launch {
+                api.getFriendRequests()
+                val updatedRequests = api.getFriendRequestsData()
+                val updatedFriends = api.getFriendLocationsData()
+                (profileFragment as ProfileFragment).friendRequestAdapter.updateData(updatedRequests)
+                (profileFragment as ProfileFragment).friendAdapter.updateData(updatedFriends)
+            }
             toggleFragmentVisibility(profileFragment)
         }
         messagesButton.setOnClickListener {
             toggleFragmentVisibility(messagesFragment)
+            //Тут будет загрузка сообщений
         }
 
 
@@ -302,7 +309,7 @@ class MapActivity: AppCompatActivity() {
                 // Add new overlay
                 val friendDrawable: Drawable = resources.getDrawable(R.drawable.person_placeholder, null)
                 val friendLocation = GeoPoint(friend.latitude, friend.longitude)
-                val newOverlay = CustomIconOverlay(this, friendLocation, friend.speed, friendDrawable)
+                val newOverlay = CustomIconOverlay(this, friendLocation, friend.speed, friendDrawable, friend.userData.nickname, R.font.my_font)
                 friendOverlays[friend.userData.nickname] = newOverlay
                 map.overlays.add(newOverlay)
             }
