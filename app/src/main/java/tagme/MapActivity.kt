@@ -244,15 +244,13 @@ class MapActivity: AppCompatActivity() {
                         api.sendLocation(latitude, longitude, accuracy, speed)
                         api.getLocations()
                     } catch (e: Exception) {
-                        // Handle any exceptions or errors here
                         e.printStackTrace()
                     }
                 }
 
-                delay(3000) // Delay for 3 seconds before sending the next location
+                delay(3000)
                 val friendsData = api.getFriendLocationsData()
 
-                // Update friend overlays
                 updateFriendOverlays(friendsData)
             }
         }

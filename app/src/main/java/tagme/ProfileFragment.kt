@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -34,7 +35,19 @@ class ProfileFragment : Fragment() {
         api = (requireActivity() as MapActivity).api
         val sendRequestButton = view.findViewById<Button>(R.id.send_request_button)
         val statusText = view.findViewById<TextView>(R.id.status_text)
+        nicknameText.text = api.myNickname
+        CoroutineScope(Dispatchers.Main).launch {
+            api.getFriendRequests()
+        }
+        val friendRecyclerView: RecyclerView = view.findViewById(R.id.friends_recycler_view)
+        friendAdapter = FriendAdapter(api.getFriendLocationsData(), api)
+        friendRecyclerView.adapter = friendAdapter
+        friendRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
 
+        val friendRequestsRecyclerView: RecyclerView = view.findViewById(R.id.friend_requests_recycler_view)
+        friendRequestAdapter = FriendRequestAdapter(api.getFriendRequestsData(), api, friendAdapter)
+        friendRequestsRecyclerView.adapter = friendRequestAdapter
+        friendRequestsRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
         addFriendButton.setOnClickListener {
             addFriendWindow.visibility = View.VISIBLE
             darkOverlay.visibility = View.VISIBLE
@@ -42,6 +55,8 @@ class ProfileFragment : Fragment() {
         darkOverlay.setOnClickListener {
             addFriendWindow.visibility = View.GONE
             darkOverlay.visibility = View.GONE
+            val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
         }
         sendRequestButton.setOnClickListener{
             val nickname = view.findViewById<EditText>(R.id.nickname_edit_text).text.toString()
@@ -52,6 +67,9 @@ class ProfileFragment : Fragment() {
                     if (answer.getString("status") == "success") {
                         statusText.setTextColor(Color.GREEN)
                         statusText.text = "Friend request was sent!"
+                        api.getFriendRequests()
+                        val updatedRequests = api.getFriendRequestsData()
+                        friendRequestAdapter.updateData(updatedRequests)
                     } else {
                         statusText.setTextColor(Color.RED)
                         if (message == "no user") {
@@ -64,24 +82,6 @@ class ProfileFragment : Fragment() {
                 }
             }
         }
-        nicknameText.text = api.myNickname
-        CoroutineScope(Dispatchers.Main).launch {
-            api.getFriendRequests()
-        }
-        val myLinearLayoutManager = object : LinearLayoutManager(context) {
-            override fun canScrollVertically(): Boolean {
-                return false
-            }
-        }
-        val friendRecyclerView: RecyclerView = view.findViewById(R.id.friends_recycler_view)
-        friendAdapter = FriendAdapter(api.getFriendLocationsData(), api)
-        friendRecyclerView.adapter = friendAdapter
-        friendRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
-
-        val friendRequestsRecyclerView: RecyclerView = view.findViewById(R.id.friend_requests_recycler_view)
-        friendRequestAdapter = FriendRequestAdapter(api.getFriendRequestsData(), api)
-        friendRequestsRecyclerView.adapter = friendRequestAdapter
-        friendRequestsRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
 
 
         return view
@@ -93,17 +93,25 @@ class MyLinearLayoutManager(context: Context) : LinearLayoutManager(context) {
     }
 }
 class FriendAdapter(
-    private val friendList: List<API.FriendLocationsData>,
+    private var friendList: MutableList<API.FriendLocationsData>,
     private val api: API
 ) : RecyclerView.Adapter<FriendAdapter.FriendViewHolder>() {
     inner class FriendViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTextView: TextView = itemView.findViewById(R.id.friend_name)
         val pictureImageView: ImageView = itemView.findViewById(R.id.friend_picture)
     }
-
+    fun updateData(newFriendList: MutableList<API.FriendLocationsData>) {
+        friendList = newFriendList
+        notifyDataSetChanged()
+    }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FriendViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.friend_item, parent, false)
         return FriendViewHolder(view)
+    }
+    private fun removeItem(position: Int) {
+        friendList.removeAt(position)
+        notifyItemRemoved(position)
+        notifyItemRangeChanged(position, friendList.size)
     }
 
     override fun onBindViewHolder(holder: FriendViewHolder, position: Int) {
@@ -122,8 +130,9 @@ class FriendAdapter(
     }
 }
 class FriendRequestAdapter(
-    private val requestList: List<API.FriendRequestsData>,
-    private val api: API
+    private var requestList: MutableList<API.FriendRequestsData>,
+    private val api: API,
+    private val friendAdapter: FriendAdapter
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {    inner class IncomingFriendRequestViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTextView: TextView = itemView.findViewById(R.id.friend_name)
         val pictureImageView: ImageView = itemView.findViewById(R.id.friend_picture)
@@ -150,6 +159,15 @@ class FriendRequestAdapter(
             else -> throw IllegalArgumentException("Invalid view type")
         }
     }
+    fun updateData(newRequestList: MutableList<API.FriendRequestsData>) {
+        requestList = newRequestList
+        notifyDataSetChanged()
+    }
+    private fun removeItem(position: Int) {
+        requestList.removeAt(position)
+        notifyItemRemoved(position)
+        notifyItemRangeChanged(position, requestList.size)
+    }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val requestee = requestList[position]
@@ -167,13 +185,25 @@ class FriendRequestAdapter(
                 incomingHolder.acceptButton.setOnClickListener { view ->
                     val userId = view.tag as Int
                     CoroutineScope(Dispatchers.Main).launch {
-                        api.acceptFriendRequest(userId)
+                        val answer = api.acceptFriendRequest(userId)
+                        if (answer != null) {
+                            if (answer.getString("status") == "success") {
+                                removeItem(holder.adapterPosition)
+                                friendAdapter.updateData(api.getFriendLocationsData())
+                            }
+                        }
                     }
                 }
                 incomingHolder.denyButton.setOnClickListener { view ->
                     val userId = view.tag as Int
                     CoroutineScope(Dispatchers.Main).launch {
-                        api.denyFriendRequest(userId)
+                        val answer = api.denyFriendRequest(userId)
+                        if (answer != null) {
+                            if (answer.getString("status") == "success") {
+                                removeItem(holder.adapterPosition)
+                                friendAdapter.updateData(api.getFriendLocationsData())
+                            }
+                        }
                     }
                 }
             }
@@ -189,7 +219,13 @@ class FriendRequestAdapter(
                 outgoingHolder.cancelButton.setOnClickListener { view ->
                     val userId = view.tag as Int
                     CoroutineScope(Dispatchers.Main).launch {
-                        api.cancelFriendRequest(userId)
+                        val answer = api.cancelFriendRequest(userId)
+                        if (answer != null) {
+                            if (answer.getString("status") == "success") {
+                                removeItem(holder.adapterPosition)
+                                friendAdapter.updateData(api.getFriendLocationsData())
+                            }
+                        }
                     }
                 }
             }
