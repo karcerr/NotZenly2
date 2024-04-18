@@ -139,7 +139,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:visibility="gone"
-            android:backgroundTint="#409D2EFF"
+            android:backgroundTint="#559D2EFF"
             android:background="@drawable/rounded_corner"
             android:layout_gravity="center"
             android:padding="15dp"

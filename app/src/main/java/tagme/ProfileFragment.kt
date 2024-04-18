@@ -65,10 +65,12 @@ class ProfileFragment : Fragment() {
                 if (answer != null) {
                     val message = answer.getString("message")
                     if (answer.getString("status") == "success") {
-                        statusText.setTextColor(Color.GREEN)
-                        statusText.text = "Friend request was sent!"
+                        statusText.visibility = View.GONE
                         requestInput.setText("")
                         inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
+                        darkOverlay.visibility = View.GONE
+                        addFriendWindow.visibility = View.GONE
+                        Toast.makeText(requireContext(), "Friend request was sent!", Toast.LENGTH_SHORT).show()
                         api.getFriendRequests()
                         val updatedRequests = api.getFriendRequestsData()
                         friendRequestAdapter.updateData(updatedRequests)
@@ -191,7 +193,9 @@ class FriendRequestAdapter(
                         if (answer != null) {
                             if (answer.getString("status") == "success") {
                                 removeItem(holder.adapterPosition)
-                                friendAdapter.updateData(api.getFriendLocationsData())
+                                api.getLocations()
+                                val updatedFriends = api.getFriendLocationsData()
+                                friendAdapter.updateData(updatedFriends)
                             }
                         }
                     }

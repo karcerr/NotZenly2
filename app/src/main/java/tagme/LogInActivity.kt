@@ -111,6 +111,9 @@ class LogInActivity : AppCompatActivity() {
                     if (answer != null) {
                         if (answer.getString("status") == "success") {
                             hideLoginShowGpsOverlay()
+                        } else {
+                            errorText.visibility = View.VISIBLE
+                            errorText.text = answer.getString("message")
                         }
                     }
                 }
