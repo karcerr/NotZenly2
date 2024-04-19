@@ -4,7 +4,7 @@
          android:layout_width="match_parent"
          android:layout_height="match_parent">
 
-<ScrollView
+<androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@drawable/login_background">
@@ -113,7 +113,7 @@
         />
 
     </LinearLayout>
-</ScrollView>
+</androidx.core.widget.NestedScrollView>
 <View
         android:id="@+id/dark_overlay"
         android:layout_width="match_parent"
