@@ -39,14 +39,15 @@ class ProfileFragment : Fragment() {
         nicknameText.text = api.myNickname
         CoroutineScope(Dispatchers.Main).launch {
             api.getFriendRequests()
+            api.getFriends()
         }
         val friendRecyclerView: RecyclerView = view.findViewById(R.id.friends_recycler_view)
-        friendAdapter = FriendAdapter(api.getFriendLocationsData(), api)
+        friendAdapter = FriendAdapter(api.getFriendsData(), api)
         friendRecyclerView.adapter = friendAdapter
         friendRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
 
         val friendRequestsRecyclerView: RecyclerView = view.findViewById(R.id.friend_requests_recycler_view)
-        friendRequestAdapter = FriendRequestAdapter(api.getFriendRequestsData(), api, friendAdapter)
+        friendRequestAdapter = FriendRequestAdapter(api.getFriendRequestData(), api, friendAdapter)
         friendRequestsRecyclerView.adapter = friendRequestAdapter
         friendRequestsRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
         addFriendButton.setOnClickListener {
@@ -72,7 +73,7 @@ class ProfileFragment : Fragment() {
                         addFriendWindow.visibility = View.GONE
                         Toast.makeText(requireContext(), "Friend request was sent!", Toast.LENGTH_SHORT).show()
                         api.getFriendRequests()
-                        val updatedRequests = api.getFriendRequestsData()
+                        val updatedRequests = api.getFriendRequestData()
                         friendRequestAdapter.updateData(updatedRequests)
                     } else {
                         statusText.setTextColor(Color.RED)
@@ -97,14 +98,14 @@ class MyLinearLayoutManager(context: Context) : LinearLayoutManager(context) {
     }
 }
 class FriendAdapter(
-    private var friendList: MutableList<API.FriendLocationsData>,
+    private var friendList: MutableList<API.FriendData>,
     private val api: API
 ) : RecyclerView.Adapter<FriendAdapter.FriendViewHolder>() {
     inner class FriendViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTextView: TextView = itemView.findViewById(R.id.friend_name)
         val pictureImageView: ImageView = itemView.findViewById(R.id.friend_picture)
     }
-    fun updateData(newFriendList: MutableList<API.FriendLocationsData>) {
+    fun updateData(newFriendList: MutableList<API.FriendData>) {
         friendList = newFriendList
         notifyDataSetChanged()
     }
@@ -123,7 +124,7 @@ class FriendAdapter(
 
         holder.nameTextView.text = friend.userData.nickname
         // Set profile picture if available, otherwise set placeholder
-        friend.userData.profilePicture?.let {
+        friend.userData.profilePicture.pfpData?.let {
             val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
             holder.pictureImageView.setImageBitmap(bitmap)
         } ?: holder.pictureImageView.setImageResource(R.drawable.person_placeholder)
@@ -134,7 +135,7 @@ class FriendAdapter(
     }
 }
 class FriendRequestAdapter(
-    private var requestList: MutableList<API.FriendRequestsData>,
+    private var requestList: MutableList<API.FriendRequestData>,
     private val api: API,
     private val friendAdapter: FriendAdapter
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {    inner class IncomingFriendRequestViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -163,7 +164,7 @@ class FriendRequestAdapter(
             else -> throw IllegalArgumentException("Invalid view type")
         }
     }
-    fun updateData(newRequestList: MutableList<API.FriendRequestsData>) {
+    fun updateData(newRequestList: MutableList<API.FriendRequestData>) {
         requestList = newRequestList
         notifyDataSetChanged()
     }
@@ -179,7 +180,7 @@ class FriendRequestAdapter(
             VIEW_TYPE_INCOMING -> {
                 val incomingHolder = holder as IncomingFriendRequestViewHolder
                 incomingHolder.nameTextView.text = requestee.userData.nickname
-                requestee.userData.profilePicture?.let {
+                requestee.userData.profilePicture.pfpData?.let {
                     val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
                     incomingHolder.pictureImageView.setImageBitmap(bitmap)
                 } ?: incomingHolder.pictureImageView.setImageResource(R.drawable.person_placeholder)
@@ -193,8 +194,8 @@ class FriendRequestAdapter(
                         if (answer != null) {
                             if (answer.getString("status") == "success") {
                                 removeItem(holder.adapterPosition)
-                                api.getLocations()
-                                val updatedFriends = api.getFriendLocationsData()
+                                api.getFriends()
+                                val updatedFriends = api.getFriendsData()
                                 friendAdapter.updateData(updatedFriends)
                             }
                         }
@@ -207,7 +208,7 @@ class FriendRequestAdapter(
                         if (answer != null) {
                             if (answer.getString("status") == "success") {
                                 removeItem(holder.adapterPosition)
-                                friendAdapter.updateData(api.getFriendLocationsData())
+                                friendAdapter.updateData(api.getFriendsData())
                             }
                         }
                     }
@@ -216,7 +217,7 @@ class FriendRequestAdapter(
             VIEW_TYPE_OUTGOING -> {
                 val outgoingHolder = holder as OutgoingFriendRequestViewHolder
                 outgoingHolder.nameTextView.text = requestee.userData.nickname
-                requestee.userData.profilePicture?.let {
+                requestee.userData.profilePicture.pfpData?.let {
                     val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
                     outgoingHolder.pictureImageView.setImageBitmap(bitmap)
                 } ?: outgoingHolder.pictureImageView.setImageResource(R.drawable.person_placeholder)
@@ -229,7 +230,7 @@ class FriendRequestAdapter(
                         if (answer != null) {
                             if (answer.getString("status") == "success") {
                                 removeItem(holder.adapterPosition)
-                                friendAdapter.updateData(api.getFriendLocationsData())
+                                friendAdapter.updateData(api.getFriendsData())
                             }
                         }
                     }

@@ -58,7 +58,7 @@
     <!-- Messages Fragment Overlay -->
     <androidx.fragment.app.FragmentContainerView
             android:id="@+id/messages_fragment"
-            android:name="tagme.MessagesFragment"
+            android:name="tagme.ConversationsFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_constraintBottom_toTopOf="@id/buttonsOverlay"

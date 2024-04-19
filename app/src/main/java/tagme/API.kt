@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import org.json.JSONObject
+import java.sql.Timestamp
 
 class API private constructor(context: Context){
     private val sharedPreferences: SharedPreferences = context.getSharedPreferences("API_PREFS", Context.MODE_PRIVATE)
@@ -24,8 +25,9 @@ class API private constructor(context: Context){
         set(value) {
             sharedPreferences.edit().putString("NICKNAME", value).apply()
         }
-    private val friendsLocationsData = mutableListOf<FriendLocationsData>()
-    private val friendsRequestsData = mutableListOf<FriendRequestsData>()
+    private val friendsData = mutableListOf<FriendData>()
+    private val friendsRequestsData = mutableListOf<FriendRequestData>()
+    private val conversationsData = mutableListOf<ConversationData>()
 
     suspend fun connectToServer(): Boolean {
         return withContext(Dispatchers.IO) {
@@ -60,7 +62,10 @@ class API private constructor(context: Context){
                             "success" -> parseFriendLocationsData(answer.getString("message"))
                         }
                         "get friend requests" -> when (answer.getString("status")) {
-                            "success" -> parseFriendRequestsData(answer.getString("message"))
+                            "success" -> parseFriendRequestData(answer.getString("message"))
+                        }
+                        "get friends" -> when (answer.getString("status")) {
+                            "success" -> parseFriendsData(answer.getString("message"))
                         }
                     }
 
@@ -134,6 +139,30 @@ class API private constructor(context: Context){
         return withContext(Dispatchers.IO) {
             val requestData = JSONObject().apply {
                 put("action", "get locations")
+                put("token", token)
+            }
+
+            webSocket?.send(requestData.toString())
+
+            waitForServerAnswer()
+        }
+    }
+    suspend fun getFriends(): JSONObject? {
+        return withContext(Dispatchers.IO) {
+            val requestData = JSONObject().apply {
+                put("action", "get friends")
+                put("token", token)
+            }
+
+            webSocket?.send(requestData.toString())
+
+            waitForServerAnswer()
+        }
+    }
+    suspend fun getConversations(): JSONObject? {
+        return withContext(Dispatchers.IO) {
+            val requestData = JSONObject().apply {
+                put("action", "get conversations")
                 put("token", token)
             }
 
@@ -220,13 +249,26 @@ class API private constructor(context: Context){
             answer
         }
     }
-    private fun parseFriendLocationsData(jsonString: String){
+    private fun parseFriendsData(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
 
         for (i in 0 until result.length()) {
             val friendObject = result.getJSONObject(i)
             val id = friendObject.getInt("user_id")
             val nickname = friendObject.getString("nickname")
+            val pictureId = friendObject.optInt("picture_id", 0)
+            val existingFriend = friendsData.find { it.userData.userId == id }
+            if (existingFriend == null) {
+                friendsData.add(FriendData(UserData(id, nickname, PictureData(pictureId, null)), null))
+            }
+        }
+    }
+    private fun parseFriendLocationsData(jsonString: String){
+        val result = JSONObject(jsonString).getJSONArray("result")
+
+        for (i in 0 until result.length()) {
+            val friendObject = result.getJSONObject(i)
+            val id = friendObject.getInt("user_id")
 
             val latitude = friendObject.getDouble("latitude")
             val longitude = friendObject.getDouble("longitude")
@@ -234,59 +276,87 @@ class API private constructor(context: Context){
             val speed = friendObject.getDouble("speed")
             //val timestamp = friendObject.get("timestamp")
 
-            val existingFriend = friendsLocationsData.find { it.userData.userId == id }
+            val existingFriend = friendsData.find { it.userData.userId == id }
             if (existingFriend != null) {
-                existingFriend.userData = UserData(id, nickname, null)
-                existingFriend.latitude = latitude
-                existingFriend.longitude = longitude
-                existingFriend.accuracy = accuracy
-                existingFriend.speed = speed.toFloat()
-            } else {
-                friendsLocationsData.add(FriendLocationsData(UserData(id, nickname, null), latitude, longitude, accuracy, speed.toFloat()))
+                existingFriend.location = LocationData(latitude,longitude,accuracy,speed.toFloat(), null)
             }
         }
     }
-    private fun parseFriendRequestsData(jsonString: String){
+    private fun parseFriendRequestData(jsonString: String) {
         val result = JSONObject(jsonString).getJSONArray("result")
+        val userIdsInResult = HashSet<Int>() // Store user ids present in the result
 
+        // Parse result JSON and update or add FriendRequestData
         for (i in 0 until result.length()) {
             val requestObject = result.getJSONObject(i)
             val id = requestObject.getInt("user_id")
             val nickname = requestObject.getString("nickname")
             val relation = requestObject.getString("relation")
+            val pictureId = requestObject.optInt("picture_id", 0)
 
-            val existingFriend = friendsRequestsData.find { it.userData.userId == id }
-            if (existingFriend != null) {
-                existingFriend.userData = UserData(id, nickname, null)
-                existingFriend.relation = relation
+            userIdsInResult.add(id)
+
+            val existingFriendRequest = friendsRequestsData.find { it.userData.userId == id }
+            if (existingFriendRequest != null) {
+                existingFriendRequest.userData = UserData(id, nickname, PictureData(pictureId, null))
+                existingFriendRequest.relation = relation
             } else {
-                friendsRequestsData.add(FriendRequestsData(UserData(id, nickname, null), relation))
+                friendsRequestsData.add(FriendRequestData(UserData(id, nickname, PictureData(pictureId, null)), relation))
+            }
+        }
+
+        val iterator = friendsRequestsData.iterator()
+        while (iterator.hasNext()) {
+            val friendRequest = iterator.next()
+            if (friendRequest.userData.userId !in userIdsInResult) {
+                iterator.remove()
             }
         }
     }
 
-    fun getFriendLocationsData(): MutableList<FriendLocationsData> {
-        return friendsLocationsData
+
+    fun getFriendsData(): MutableList<FriendData> {
+        return friendsData
     }
-    fun getFriendRequestsData(): MutableList<FriendRequestsData> {
+    fun getFriendRequestData(): MutableList<FriendRequestData> {
         return friendsRequestsData
     }
-    data class UserData(
-        val userId: Int,
-        var nickname: String,
-        var profilePicture: ByteArray?
-    )
-    data class FriendLocationsData(
-        var userData: UserData,
+    fun getConversationsData(): MutableList<ConversationData> {
+        return conversationsData
+    }
+    data class LocationData(
         var latitude: Double,
         var longitude: Double,
         var accuracy: Double,
-        var speed: Float
-        // var timestamp: Timestamp
+        var speed: Float,
+         var timestamp: Timestamp?
     )
-    data class FriendRequestsData(
+    data class UserData(
+        val userId: Int,
+        var nickname: String,
+        var profilePicture: PictureData
+    )
+    data class PictureData(
+        val pictureId: Int,
+        var pfpData: ByteArray?
+    )
+
+    data class FriendData(
+        val userData: UserData,
+        var location: LocationData?
+    )
+
+    data class FriendRequestData(
         var userData: UserData,
         var relation: String
+    )
+    data class ConversationData(
+        var userData: UserData,
+        var lastMessage: MessageData?
+    )data class MessageData(
+        val text: String?,
+        val image: ByteArray?,
+        val timestamp: Timestamp
     )
 
     companion object {

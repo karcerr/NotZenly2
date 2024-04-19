@@ -1,0 +1,40 @@
+<!-- friend_item.xml -->
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+    <ImageView
+            android:id="@+id/friend_picture"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/person_placeholder"
+            android:layout_margin="8dp"/>
+    <LinearLayout
+            android:id="@+id/main_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+        <TextView
+                android:id="@+id/friend_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:paddingTop="6dp"
+                android:text="There will be displayed the nickname"
+                android:fontFamily="@font/my_font"
+                android:layout_gravity="center_vertical"/>
+        <TextView
+                android:id="@+id/last_message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:paddingTop="6dp"
+                android:text="There will be displayed your last message!"
+                android:fontFamily="@font/my_font"
+                android:layout_gravity="center_vertical"/>
+
+    </LinearLayout>
+</LinearLayout>

@@ -134,11 +134,11 @@ class MapActivity: AppCompatActivity() {
             centralizeMap(mLocationOverlay)
         }
         profileButton.setOnClickListener {
-
             coroutineScope.launch {
                 api.getFriendRequests()
-                val updatedRequests = api.getFriendRequestsData()
-                val updatedFriends = api.getFriendLocationsData()
+                api.getFriends()
+                val updatedRequests = api.getFriendRequestData()
+                val updatedFriends = api.getFriendsData()
                 (profileFragment as ProfileFragment).friendRequestAdapter.updateData(updatedRequests)
                 (profileFragment as ProfileFragment).friendAdapter.updateData(updatedFriends)
             }
@@ -254,10 +254,9 @@ class MapActivity: AppCompatActivity() {
                         e.printStackTrace()
                     }
                 }
-
                 delay(3000)
-                val friendsData = api.getFriendLocationsData()
-
+                api.getFriends()
+                val friendsData = api.getFriendsData()
                 updateFriendOverlays(friendsData)
             }
         }
@@ -291,7 +290,7 @@ class MapActivity: AppCompatActivity() {
             }
         }
     }
-    private fun updateFriendOverlays(friendsData: List<API.FriendLocationsData>) {
+    private fun updateFriendOverlays(friendsData: List<API.FriendData>) {
         // Remove outdated friend overlays
         val outdatedNicknames = friendOverlays.keys - friendsData.map { it.userData.nickname }
         outdatedNicknames.forEach { nickname ->
@@ -301,17 +300,26 @@ class MapActivity: AppCompatActivity() {
 
         // Update or add friend overlays
         friendsData.forEach { friend ->
-            val overlay = friendOverlays[friend.userData.nickname]
-            if (overlay != null) {
-                // Update existing overlay
-                overlay.setLocation(GeoPoint(friend.latitude, friend.longitude))
-            } else {
-                // Add new overlay
-                val friendDrawable: Drawable = resources.getDrawable(R.drawable.person_placeholder, null)
-                val friendLocation = GeoPoint(friend.latitude, friend.longitude)
-                val newOverlay = CustomIconOverlay(this, friendLocation, friend.speed, friendDrawable, friend.userData.nickname, R.font.my_font)
-                friendOverlays[friend.userData.nickname] = newOverlay
-                map.overlays.add(newOverlay)
+            if (friend.location != null) {
+                val overlay = friendOverlays[friend.userData.nickname]
+                if (overlay != null) {
+                    // Update existing overlay
+                    overlay.setLocation(GeoPoint(friend.location!!.latitude, friend.location!!.longitude))
+                } else {
+                    // Add new overlay
+                    val friendDrawable: Drawable = resources.getDrawable(R.drawable.person_placeholder, null)
+                    val friendLocation = GeoPoint(friend.location!!.latitude, friend.location!!.longitude)
+                    val newOverlay = CustomIconOverlay(
+                        this,
+                        friendLocation,
+                        friend.location!!.speed,
+                        friendDrawable,
+                        friend.userData.nickname,
+                        R.font.my_font
+                    )
+                    friendOverlays[friend.userData.nickname] = newOverlay
+                    map.overlays.add(newOverlay)
+                }
             }
         }
     }
