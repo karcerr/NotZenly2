@@ -67,6 +67,9 @@ class API private constructor(context: Context){
                         "get friends" -> when (answer.getString("status")) {
                             "success" -> parseFriendsData(answer.getString("message"))
                         }
+                        "get conversations" -> when (answer.getString("status")) {
+                            "success" -> parseConversationsData(answer.getString("message"))
+                        }
                     }
 
                     synchronized(this@API) {
@@ -267,18 +270,35 @@ class API private constructor(context: Context){
         val result = JSONObject(jsonString).getJSONArray("result")
 
         for (i in 0 until result.length()) {
-            val friendObject = result.getJSONObject(i)
-            val id = friendObject.getInt("user_id")
-
-            val latitude = friendObject.getDouble("latitude")
-            val longitude = friendObject.getDouble("longitude")
-            val accuracy = friendObject.getDouble("accuracy")
-            val speed = friendObject.getDouble("speed")
+            val locationObject = result.getJSONObject(i)
+            val id = locationObject.getInt("user_id")
+            val latitude = locationObject.getDouble("latitude")
+            val longitude = locationObject.getDouble("longitude")
+            val accuracy = locationObject.getDouble("accuracy")
+            val speed = locationObject.getDouble("speed")
             //val timestamp = friendObject.get("timestamp")
 
             val existingFriend = friendsData.find { it.userData.userId == id }
             if (existingFriend != null) {
                 existingFriend.location = LocationData(latitude,longitude,accuracy,speed.toFloat(), null)
+            }
+        }
+    }
+    private fun parseConversationsData(jsonString: String){
+        val result = JSONObject(jsonString).getJSONArray("result")
+        for (i in 0 until result.length()) {
+            val conversationObject = result.getJSONObject(i)
+            val user_id = conversationObject.getInt("user_id")
+            val conversation_id = conversationObject.getInt("conversation_id")
+            val nickname = conversationObject.getString("nickname")
+            val picture_id = conversationObject.optInt("picture_id", 0)
+
+            val existingConversation = conversationsData.find { it.conversationID == conversation_id }
+            if (existingConversation == null) {
+                conversationsData.add(ConversationData(conversation_id,
+                    UserData(user_id, nickname,
+                        PictureData(picture_id, null)), mutableListOf()
+                ))
             }
         }
     }
@@ -343,7 +363,7 @@ class API private constructor(context: Context){
 
     data class FriendData(
         val userData: UserData,
-        var location: LocationData?
+        var location: LocationData?,
     )
 
     data class FriendRequestData(
@@ -351,9 +371,11 @@ class API private constructor(context: Context){
         var relation: String
     )
     data class ConversationData(
+        val conversationID: Int,
         var userData: UserData,
-        var lastMessage: MessageData?
-    )data class MessageData(
+        var messages: MutableList<MessageData>
+    )
+    data class MessageData(
         val text: String?,
         val image: ByteArray?,
         val timestamp: Timestamp

@@ -53,7 +53,6 @@ class ConversationsAdapter(
         return ConversationViewHolder(view)
     }
 
-
     override fun onBindViewHolder(holder: ConversationViewHolder, position: Int) {
         val friend = conversationList[position]
 

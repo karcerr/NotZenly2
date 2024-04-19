@@ -40,7 +40,7 @@ class MapActivity: AppCompatActivity() {
     private lateinit var profileButton: ImageButton
     private lateinit var messagesButton: ImageButton
     private lateinit var profileFragment: Fragment
-    private lateinit var messagesFragment: Fragment
+    private lateinit var conversationFragment: Fragment
     private var scaleFactor = 15.0
     private var isCentered = false
     private var customOverlaySelf: CustomIconOverlay? = null
@@ -67,11 +67,11 @@ class MapActivity: AppCompatActivity() {
         messagesButton = findViewById(R.id.messages_button)
         // Initialize and hide fragments
         fragmentManager = supportFragmentManager
-        messagesFragment = fragmentManager.findFragmentById(R.id.messages_fragment)!!
+        conversationFragment = fragmentManager.findFragmentById(R.id.conversations_fragment)!!
         profileFragment = fragmentManager.findFragmentById(R.id.profile_fragment)!!
         val transaction = fragmentManager.beginTransaction()
         transaction.hide(profileFragment)
-        transaction.hide(messagesFragment)
+        transaction.hide(conversationFragment)
         transaction.commit()
 
 
@@ -145,8 +145,12 @@ class MapActivity: AppCompatActivity() {
             toggleFragmentVisibility(profileFragment)
         }
         messagesButton.setOnClickListener {
-            toggleFragmentVisibility(messagesFragment)
-            //Тут будет загрузка сообщений
+            coroutineScope.launch {
+                api.getConversations()
+                val updatedConversations = api.getConversationsData()
+                (conversationFragment as ConversationsFragment).conversationsAdapter.updateData(updatedConversations)
+            }
+            toggleFragmentVisibility(conversationFragment)
         }
 
 
