@@ -58,10 +58,13 @@ class ConversationsAdapter(
 
         holder.nameTextView.text = friend.userData.nickname
         // Set profile picture if available, otherwise set placeholder
-        friend.userData.profilePicture.pfpData?.let {
-            val bitmap = it.let { it1 -> BitmapFactory.decodeByteArray(it, 0, it1.size) }
+        val picture = api.getPicturesData().find { it.pictureId == friend.userData.profilePictureId }
+        if (picture == null) {
+            holder.pictureImageView.setImageResource(R.drawable.person_placeholder)
+        } else {
+            val bitmap = picture.pfpData?.let { BitmapFactory.decodeByteArray(picture.pfpData, 0, it.size) }
             holder.pictureImageView.setImageBitmap(bitmap)
-        } ?: holder.pictureImageView.setImageResource(R.drawable.person_placeholder)
+        }
     }
 
     override fun getItemCount(): Int {

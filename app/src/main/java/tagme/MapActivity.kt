@@ -51,7 +51,7 @@ class MapActivity: AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     //these are for storing friends and drawing overlays:
     private val friendOverlays: MutableMap<String, CustomIconOverlay> = mutableMapOf()
-    private lateinit var fragmentManager : FragmentManager
+    lateinit var fragmentManager : FragmentManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

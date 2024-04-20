@@ -1,7 +1,6 @@
 package tagme
 
 import android.content.Context
-import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -10,6 +9,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tagme.R
@@ -42,12 +42,12 @@ class ProfileFragment : Fragment() {
             api.getFriends()
         }
         val friendRecyclerView: RecyclerView = view.findViewById(R.id.friends_recycler_view)
-        friendAdapter = FriendAdapter(api.getFriendsData(), api)
+        friendAdapter = FriendAdapter(api.getFriendsData(), api, requireActivity().supportFragmentManager)
         friendRecyclerView.adapter = friendAdapter
         friendRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
 
         val friendRequestsRecyclerView: RecyclerView = view.findViewById(R.id.friend_requests_recycler_view)
-        friendRequestAdapter = FriendRequestAdapter(api.getFriendRequestData(), api, friendAdapter)
+        friendRequestAdapter = FriendRequestAdapter(api.getFriendRequestData(), api, friendAdapter, requireActivity().supportFragmentManager)
         friendRequestsRecyclerView.adapter = friendRequestAdapter
         friendRequestsRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
         addFriendButton.setOnClickListener {
@@ -99,11 +99,13 @@ class MyLinearLayoutManager(context: Context) : LinearLayoutManager(context) {
 }
 class FriendAdapter(
     private var friendList: MutableList<API.FriendData>,
-    private val api: API
+    private val api: API,
+    private val childFragmentManager: FragmentManager
 ) : RecyclerView.Adapter<FriendAdapter.FriendViewHolder>() {
     inner class FriendViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTextView: TextView = itemView.findViewById(R.id.friend_name)
         val pictureImageView: ImageView = itemView.findViewById(R.id.friend_picture)
+        val friendLayout: LinearLayout = itemView.findViewById(R.id.friend_layout)
     }
     fun updateData(newFriendList: MutableList<API.FriendData>) {
         friendList = newFriendList
@@ -124,10 +126,11 @@ class FriendAdapter(
 
         holder.nameTextView.text = friend.userData.nickname
         // Set profile picture if available, otherwise set placeholder
-        friend.userData.profilePicture.pfpData?.let {
-            val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
-            holder.pictureImageView.setImageBitmap(bitmap)
-        } ?: holder.pictureImageView.setImageResource(R.drawable.person_placeholder)
+        holder.pictureImageView.setImageResource(R.drawable.person_placeholder)
+        holder.friendLayout.setOnClickListener {
+            val userProfileDialog = UserProfileDialogFragment.newInstance(friend.userData.userId)
+            userProfileDialog.show(childFragmentManager, "userProfileDialog")
+        }
     }
 
     override fun getItemCount(): Int {
@@ -137,18 +140,21 @@ class FriendAdapter(
 class FriendRequestAdapter(
     private var requestList: MutableList<API.FriendRequestData>,
     private val api: API,
-    private val friendAdapter: FriendAdapter
+    private val friendAdapter: FriendAdapter,
+    private val childFragmentManager: FragmentManager
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {    inner class IncomingFriendRequestViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTextView: TextView = itemView.findViewById(R.id.friend_name)
         val pictureImageView: ImageView = itemView.findViewById(R.id.friend_picture)
         val acceptButton: ImageButton = itemView.findViewById(R.id.accept_button)
         val denyButton: ImageButton = itemView.findViewById(R.id.deny_button)
+        val requestUserButton: LinearLayout = itemView.findViewById(R.id.incoming_friend_request)
     }
 
     inner class OutgoingFriendRequestViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTextView: TextView = itemView.findViewById(R.id.friend_name)
         val pictureImageView: ImageView = itemView.findViewById(R.id.friend_picture)
         val cancelButton: ImageButton = itemView.findViewById(R.id.cancel_button)
+        val requestUserButton: LinearLayout = itemView.findViewById(R.id.outgoing_friend_request)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -180,13 +186,13 @@ class FriendRequestAdapter(
             VIEW_TYPE_INCOMING -> {
                 val incomingHolder = holder as IncomingFriendRequestViewHolder
                 incomingHolder.nameTextView.text = requestee.userData.nickname
-                requestee.userData.profilePicture.pfpData?.let {
-                    val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
-                    incomingHolder.pictureImageView.setImageBitmap(bitmap)
-                } ?: incomingHolder.pictureImageView.setImageResource(R.drawable.person_placeholder)
+                incomingHolder.pictureImageView.setImageResource(R.drawable.person_placeholder)
                 incomingHolder.acceptButton.tag = requestee.userData.userId
                 incomingHolder.denyButton.tag = requestee.userData.userId
-
+                incomingHolder.requestUserButton.setOnClickListener {
+                    val userProfileDialog = UserProfileDialogFragment.newInstance(requestee.userData.userId)
+                    userProfileDialog.show(childFragmentManager, "userProfileDialog")
+                }
                 incomingHolder.acceptButton.setOnClickListener { view ->
                     val userId = view.tag as Int
                     CoroutineScope(Dispatchers.Main).launch {
@@ -217,12 +223,12 @@ class FriendRequestAdapter(
             VIEW_TYPE_OUTGOING -> {
                 val outgoingHolder = holder as OutgoingFriendRequestViewHolder
                 outgoingHolder.nameTextView.text = requestee.userData.nickname
-                requestee.userData.profilePicture.pfpData?.let {
-                    val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
-                    outgoingHolder.pictureImageView.setImageBitmap(bitmap)
-                } ?: outgoingHolder.pictureImageView.setImageResource(R.drawable.person_placeholder)
+                outgoingHolder.pictureImageView.setImageResource(R.drawable.person_placeholder)
                 outgoingHolder.cancelButton.tag = requestee.userData.userId
-
+                outgoingHolder.requestUserButton.setOnClickListener {
+                    val userProfileDialog = UserProfileDialogFragment.newInstance(requestee.userData.userId)
+                    userProfileDialog.show(childFragmentManager, "userProfileDialog")
+                }
                 outgoingHolder.cancelButton.setOnClickListener { view ->
                     val userId = view.tag as Int
                     CoroutineScope(Dispatchers.Main).launch {

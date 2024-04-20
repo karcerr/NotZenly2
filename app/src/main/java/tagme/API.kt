@@ -7,6 +7,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.*
 import org.json.JSONObject
 import java.sql.Timestamp
+import java.util.*
 
 class API private constructor(context: Context){
     private val sharedPreferences: SharedPreferences = context.getSharedPreferences("API_PREFS", Context.MODE_PRIVATE)
@@ -28,6 +29,7 @@ class API private constructor(context: Context){
     private val friendsData = mutableListOf<FriendData>()
     private val friendsRequestsData = mutableListOf<FriendRequestData>()
     private val conversationsData = mutableListOf<ConversationData>()
+    private val picturesData = mutableListOf<PictureData>()
 
     suspend fun connectToServer(): Boolean {
         return withContext(Dispatchers.IO) {
@@ -49,7 +51,7 @@ class API private constructor(context: Context){
 
                 override fun onMessage(webSocket: WebSocket, text: String) {
                     Log.d("Tagme_custom_log", "onMessage trigger: $text")
-                    answerReceived = true
+
                     val jsonObject = JSONObject(text)
                     answer = jsonObject
                     when (answer.getString("action")) {
@@ -70,8 +72,11 @@ class API private constructor(context: Context){
                         "get conversations" -> when (answer.getString("status")) {
                             "success" -> parseConversationsData(answer.getString("message"))
                         }
+                        "get picture" -> when (answer.getString("status")) {
+                            "success" -> parsePictureData(answer.getString("message"))
+                        }
                     }
-
+                    answerReceived = true
                     synchronized(this@API) {
                         (this@API as Object).notify()
                     }
@@ -235,6 +240,18 @@ class API private constructor(context: Context){
             waitForServerAnswer()
         }
     }
+    suspend fun getPicture(id: Int): JSONObject? {
+        return withContext(Dispatchers.IO) {
+            val requestData = JSONObject().apply {
+                put("action", "get picture")
+                put("token", token)
+                put("picture_id", id)
+            }
+            webSocket?.send(requestData.toString())
+
+            waitForServerAnswer()
+        }
+    }
 
     private suspend fun waitForServerAnswer(): JSONObject? {
         return synchronized(this) {
@@ -262,7 +279,21 @@ class API private constructor(context: Context){
             val pictureId = friendObject.optInt("picture_id", 0)
             val existingFriend = friendsData.find { it.userData.userId == id }
             if (existingFriend == null) {
-                friendsData.add(FriendData(UserData(id, nickname, PictureData(pictureId, null)), null))
+                friendsData.add(FriendData(UserData(id, nickname, pictureId), null))
+            }
+        }
+    }
+    private fun parsePictureData(jsonString: String){
+        val result = JSONObject(jsonString).getJSONArray("result")
+        for (i in 0 until result.length()) {
+            val friendObject = result.getJSONObject(i)
+            val pictureId = friendObject.getInt("picture_id")
+            val pictureDataString = friendObject.getString("picture")
+            val existingPicture = picturesData.find { it.pictureId == pictureId }
+            if (existingPicture == null) {
+                val pictureData: ByteArray = Base64.getDecoder().decode(pictureDataString)
+                picturesData.add(PictureData(pictureId, pictureData))
+                Log.d("Tagme_custom_log_picID", pictureId.toString())
             }
         }
     }
@@ -297,7 +328,7 @@ class API private constructor(context: Context){
             if (existingConversation == null) {
                 conversationsData.add(ConversationData(conversation_id,
                     UserData(user_id, nickname,
-                        PictureData(picture_id, null)), mutableListOf()
+                        picture_id), mutableListOf()
                 ))
             }
         }
@@ -318,10 +349,10 @@ class API private constructor(context: Context){
 
             val existingFriendRequest = friendsRequestsData.find { it.userData.userId == id }
             if (existingFriendRequest != null) {
-                existingFriendRequest.userData = UserData(id, nickname, PictureData(pictureId, null))
+                existingFriendRequest.userData = UserData(id, nickname, pictureId)
                 existingFriendRequest.relation = relation
             } else {
-                friendsRequestsData.add(FriendRequestData(UserData(id, nickname, PictureData(pictureId, null)), relation))
+                friendsRequestsData.add(FriendRequestData(UserData(id, nickname, pictureId), relation))
             }
         }
 
@@ -344,17 +375,23 @@ class API private constructor(context: Context){
     fun getConversationsData(): MutableList<ConversationData> {
         return conversationsData
     }
+    fun getPicturesData(): MutableList<PictureData> {
+        return picturesData
+    }
+    fun getPictureData(id: Int): ByteArray? {
+        return picturesData.find{it.pictureId == id}?.pfpData
+    }
     data class LocationData(
         var latitude: Double,
         var longitude: Double,
         var accuracy: Double,
         var speed: Float,
-         var timestamp: Timestamp?
+        var timestamp: Timestamp?
     )
     data class UserData(
         val userId: Int,
         var nickname: String,
-        var profilePicture: PictureData
+        var profilePictureId: Int
     )
     data class PictureData(
         val pictureId: Int,
