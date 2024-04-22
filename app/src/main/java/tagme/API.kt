@@ -2,6 +2,8 @@ package tagme
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*
@@ -29,8 +31,19 @@ class API private constructor(context: Context){
     private val friendsData = mutableListOf<FriendData>()
     private val friendsRequestsData = mutableListOf<FriendRequestData>()
     private val conversationsData = mutableListOf<ConversationData>()
-    private val picturesData = mutableListOf<PictureData>()
-
+    var picsData: List<PictureData>
+        get() {
+            val jsonString = sharedPreferences.getString("PICTURES_DATA", null)
+            return if (jsonString != null) {
+                deserializePicturesData(jsonString)
+            } else {
+                mutableListOf()
+            }
+        }
+        set(value) {
+            val jsonString = serializePicturesData(value)
+            sharedPreferences.edit().putString("PICTURES_DATA", jsonString).apply()
+        }
     suspend fun connectToServer(): Boolean {
         return withContext(Dispatchers.IO) {
             val url = "ws://141.8.193.201:8765"  // WebSocket server URL
@@ -289,10 +302,10 @@ class API private constructor(context: Context){
             val friendObject = result.getJSONObject(i)
             val pictureId = friendObject.getInt("picture_id")
             val pictureDataString = friendObject.getString("picture")
-            val existingPicture = picturesData.find { it.pictureId == pictureId }
+            val existingPicture = picsData.find { it.pictureId == pictureId }
             if (existingPicture == null) {
                 val pictureData: ByteArray = Base64.getDecoder().decode(pictureDataString)
-                picturesData.add(PictureData(pictureId, pictureData))
+                addPictureData(pictureId, pictureData)
                 Log.d("Tagme_custom_log_picID", pictureId.toString())
             }
         }
@@ -375,11 +388,11 @@ class API private constructor(context: Context){
     fun getConversationsData(): MutableList<ConversationData> {
         return conversationsData
     }
-    fun getPicturesData(): MutableList<PictureData> {
-        return picturesData
+    fun getPicturesData(): List<PictureData> {
+        return picsData
     }
     fun getPictureData(id: Int): ByteArray? {
-        return picturesData.find{it.pictureId == id}?.pfpData
+        return picsData.find{it.pictureId == id}?.pfpData
     }
     data class LocationData(
         var latitude: Double,
@@ -429,5 +442,27 @@ class API private constructor(context: Context){
                 instance ?: API(context.applicationContext).also { instance = it }
             }
         }
+    }
+    private fun serializePicturesData(picturesData: List<PictureData>): String {
+        val gson = Gson()
+        return gson.toJson(picturesData)
+    }
+
+    private fun deserializePicturesData(jsonString: String): List<PictureData> {
+        val gson = Gson()
+        val type = object : TypeToken<List<PictureData>>() {}.type
+        return gson.fromJson(jsonString, type)
+    }
+    fun addPictureData(pictureId: Int, pictureData: ByteArray) {
+        val newPictureData = PictureData(pictureId, pictureData)
+        val updatedPicturesData = picsData.toMutableList().apply {
+            add(newPictureData)
+        }
+        picsData = updatedPicturesData
+    }
+
+    fun removePictureData(pictureId: Int) {
+        val updatedPicturesData = picsData.filterNot { it.pictureId == pictureId }
+        picsData = updatedPicturesData.toMutableList()
     }
 }
