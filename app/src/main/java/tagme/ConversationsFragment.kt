@@ -57,7 +57,6 @@ class ConversationsAdapter(
         val friend = conversationList[position]
 
         holder.nameTextView.text = friend.userData.nickname
-        // Set profile picture if available, otherwise set placeholder
         val picture = api.getPicturesData().find { it.pictureId == friend.userData.profilePictureId }
         if (picture != null) {
             val bitmap = picture.pfpData?.let { BitmapFactory.decodeByteArray(picture.pfpData, 0, it.size) }

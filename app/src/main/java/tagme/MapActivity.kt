@@ -2,6 +2,8 @@ package tagme
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.location.Location
 import android.os.Bundle
@@ -10,6 +12,7 @@ import android.view.Gravity
 import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
@@ -115,7 +118,9 @@ class MapActivity: AppCompatActivity() {
             }
         }
         mLocationOverlay.enableMyLocation()
-
+        coroutineScope.launch{
+            api.getFriends()
+        }
         // Center the map on current location, draw an image
         mLocationOverlay.runOnFirstFix {
             val myLocation = mLocationOverlay.myLocation
@@ -259,7 +264,6 @@ class MapActivity: AppCompatActivity() {
                     }
                 }
                 delay(3000)
-                api.getFriends()
                 val friendsData = api.getFriendsData()
                 updateFriendOverlays(friendsData)
             }
@@ -306,12 +310,24 @@ class MapActivity: AppCompatActivity() {
         friendsData.forEach { friend ->
             if (friend.location != null) {
                 val overlay = friendOverlays[friend.userData.nickname]
+                val friendDrawable: Drawable = if (friend.userData.profilePictureId != 0) {
+                    // If friend has a picture, use it as the overlay drawable
+                    val pfpData = api.getPicturesData().find { it.pictureId == friend.userData.profilePictureId }?.pfpData
+                    if (pfpData != null) {
+                        val bitmap = BitmapFactory.decodeByteArray(pfpData, 0, pfpData.size)
+                        BitmapDrawable(resources, bitmap)
+                    } else {
+                        ResourcesCompat.getDrawable(resources, R.drawable.person_placeholder, null)!!
+                    }
+                } else {
+                    ResourcesCompat.getDrawable(resources, R.drawable.person_placeholder, null)!!
+                }
+
                 if (overlay != null) {
                     // Update existing overlay
                     overlay.setLocation(GeoPoint(friend.location!!.latitude, friend.location!!.longitude))
                 } else {
                     // Add new overlay
-                    val friendDrawable: Drawable = resources.getDrawable(R.drawable.person_placeholder, null)
                     val friendLocation = GeoPoint(friend.location!!.latitude, friend.location!!.longitude)
                     val newOverlay = CustomIconOverlay(
                         this,
@@ -326,6 +342,7 @@ class MapActivity: AppCompatActivity() {
                 }
             }
         }
+
     }
 
 

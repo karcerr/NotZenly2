@@ -10,7 +10,7 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Overlay
 
 class CustomIconOverlay(
-    context: Context,
+    private val context: Context,
     private var location: GeoPoint,
     private var speed: Float,
     private val drawable: Drawable,
@@ -31,31 +31,52 @@ class CustomIconOverlay(
         val projection = mapView?.projection
         val point = projection?.toPixels(location, null)
 
-        val rotation = -(mapView?.mapOrientation ?: 0f) // Negative sign because osmdroid uses clockwise rotation
+        val rotation = -(mapView?.mapOrientation ?: 0f)
 
         point?.let {
             canvas.save()
             canvas.rotate(rotation, it.x.toFloat(), it.y.toFloat())
-            drawable.setBounds(it.x - drawable.intrinsicWidth / 2, it.y - drawable.intrinsicHeight / 2,
-                it.x + drawable.intrinsicWidth / 2, it.y + drawable.intrinsicHeight / 2)
+
+            val scaleFactor = calculateScaleFactor(drawable)
+
+            val scaledWidth = (drawable.intrinsicWidth * scaleFactor).toInt()
+            val scaledHeight = (drawable.intrinsicHeight * scaleFactor).toInt()
+            drawable.setBounds(it.x - scaledWidth / 2, it.y - scaledHeight / 2,
+                it.x + scaledWidth / 2, it.y + scaledHeight / 2)
             drawable.draw(canvas)
 
-            // Drawing speed and name texts next to the drawable
             val speedText = "${speed.toInt()}m/s"
             val nameText = name
 
 
-            canvas.drawText(speedText, it.x.toFloat(), (it.y + drawable.intrinsicHeight / 2 + 25).toFloat(), textPaint)
-            canvas.drawText(nameText, it.x.toFloat() - textPaint.measureText(nameText) / 2, (it.y - drawable.intrinsicHeight / 2 + 5).toFloat(), textPaint)
+            canvas.drawText(speedText, it.x.toFloat(), (it.y + scaledHeight / 2 + 45).toFloat(), textPaint)
+            canvas.drawText(nameText, it.x.toFloat() - textPaint.measureText(nameText) / 2, (it.y - scaledHeight / 2 - 10).toFloat(), textPaint)
+
 
             canvas.restore()
         }
+
+    }
+    private fun calculateScaleFactor(drawable: Drawable): Float {
+        val placeholderWidth = dpToPx(64f)
+        val placeholderHeight = dpToPx(64f)
+
+        return if (placeholderWidth != 0 && placeholderHeight != 0) {
+            Math.min(placeholderWidth.toFloat() / drawable.intrinsicWidth, placeholderHeight.toFloat() / drawable.intrinsicHeight)
+        } else {
+            1f
+        }
     }
 
+    private fun dpToPx(dp: Float): Int {
+        val scale = context.resources.displayMetrics.density
+        return (dp * scale + 0.5f).toInt()
+    }
     fun setLocation(newLocation: GeoPoint) {
         location = newLocation
     }
     fun setSpeed(newSpeed: Float) {
         speed = newSpeed
     }
+
 }

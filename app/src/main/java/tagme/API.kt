@@ -4,7 +4,9 @@ import android.content.SharedPreferences
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import org.json.JSONObject
@@ -13,6 +15,7 @@ import java.util.*
 
 class API private constructor(context: Context){
     private val sharedPreferences: SharedPreferences = context.getSharedPreferences("API_PREFS", Context.MODE_PRIVATE)
+    private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
@@ -290,6 +293,14 @@ class API private constructor(context: Context){
             val id = friendObject.getInt("user_id")
             val nickname = friendObject.getString("nickname")
             val pictureId = friendObject.optInt("picture_id", 0)
+            if (pictureId != 0) {
+                val existingPicture = picsData.find { it.pictureId == pictureId }
+                if ((existingPicture == null) or (existingPicture?.pfpData == null)) {
+                    coroutineScope.launch {
+                        getPicture(pictureId)
+                    }
+                }
+            }
             val existingFriend = friendsData.find { it.userData.userId == id }
             if (existingFriend == null) {
                 friendsData.add(FriendData(UserData(id, nickname, pictureId), null))
@@ -359,7 +370,14 @@ class API private constructor(context: Context){
             val pictureId = requestObject.optInt("picture_id", 0)
 
             userIdsInResult.add(id)
-
+            if (pictureId != 0) {
+                val existingPicture = picsData.find { it.pictureId == pictureId }
+                if ((existingPicture == null) or (existingPicture?.pfpData == null)) {
+                    coroutineScope.launch {
+                        getPicture(pictureId)
+                    }
+                }
+            }
             val existingFriendRequest = friendsRequestsData.find { it.userData.userId == id }
             if (existingFriendRequest != null) {
                 existingFriendRequest.userData = UserData(id, nickname, pictureId)

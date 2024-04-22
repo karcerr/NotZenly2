@@ -44,7 +44,13 @@ class UserProfileDialogFragment : DialogFragment() {
         val pfp = view.findViewById<ImageView>(R.id.user_picture)
         var pfpId = 0
         val friend = api.getFriendsData().find { it.userData.userId == userId}
-        if (friend == null) {
+
+        if (friend != null) {
+            if (friend.userData.profilePictureId != 0) {
+                pfpId = friend.userData.profilePictureId
+            }
+            nameText.text = friend.userData.nickname
+        } else {
             val user = api.getFriendRequestData().find { it.userData.userId == userId }
             if (user != null) {
                 if (user.userData.profilePictureId != 0) {
@@ -52,12 +58,6 @@ class UserProfileDialogFragment : DialogFragment() {
                 }
                 nameText.text = user.userData.nickname
             }
-        } else {
-            if (friend.userData.profilePictureId != 0) {
-                pfpId = friend.userData.profilePictureId
-
-            }
-            nameText.text = friend.userData.nickname
         }
         if (pfpId != 0) {
             CoroutineScope(Dispatchers.Main).launch {
