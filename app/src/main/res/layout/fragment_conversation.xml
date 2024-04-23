@@ -16,7 +16,14 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="5dp">
+                    android:padding="10dp">
+                <ImageButton
+                        android:id="@+id/back_arrow_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/arrow_back"
+                        android:background="@null"
+                />
                 <TextView
                         android:id="@+id/conversations_title"
                         android:layout_width="0dp"
@@ -27,16 +34,10 @@
                         android:fontFamily="@font/my_font"
                         android:textSize="35sp"
                 />
-                <ImageButton
-                        android:id="@+id/back_button"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@drawable/close_cross"
-                        android:background="@null"
-                />
+
             </LinearLayout>
             <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/converations_recycler_view"
+                    android:id="@+id/conversations_recycler_view"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="20sp"

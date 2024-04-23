@@ -1,7 +1,6 @@
 package tagme
 
 import android.content.res.Resources
-import android.graphics.BitmapFactory
 import android.graphics.Rect
 import android.os.Bundle
 import android.util.Log
@@ -18,6 +17,7 @@ import kotlinx.coroutines.launch
 
 class UserProfileDialogFragment : DialogFragment() {
     private lateinit var api: API
+
     companion object {
         fun newInstance(userId: Int): UserProfileDialogFragment {
             val fragment = UserProfileDialogFragment()
@@ -61,16 +61,18 @@ class UserProfileDialogFragment : DialogFragment() {
         }
         if (pfpId != 0) {
             CoroutineScope(Dispatchers.Main).launch {
-                if (api.getPicturesData().find { it.pictureId == pfpId }?.pfpData == null) {
+                val pictureData = api.getPicturesData().find { it.pictureId == pfpId }
+                if (pictureData?.imagePath == null) {
                     api.getPicture(pfpId)
                 }
-                val data = api.getPictureData(pfpId)
-                if (data != null) {
-                    val bitmap = BitmapFactory.decodeByteArray(data, 0, data.size)
-                    pfp.setImageBitmap(bitmap)
+                // Load the image from cache
+                val bitmap = api.getPictureData(requireContext(), pfpId)
+                bitmap?.let {
+                    pfp.setImageBitmap(it)
                 }
             }
         }
+
         setSizePercent(100, 100)
     }
 }

@@ -1,6 +1,8 @@
 package tagme
 import android.content.Context
 import android.content.SharedPreferences
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -10,6 +12,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import org.json.JSONObject
+import java.io.File
+import java.io.FileOutputStream
 import java.sql.Timestamp
 import java.util.*
 
@@ -47,7 +51,7 @@ class API private constructor(context: Context){
             val jsonString = serializePicturesData(value)
             sharedPreferences.edit().putString("PICTURES_DATA", jsonString).apply()
         }
-    suspend fun connectToServer(): Boolean {
+    suspend fun connectToServer(context: Context): Boolean {
         return withContext(Dispatchers.IO) {
             val url = "ws://141.8.193.201:8765"  // WebSocket server URL
 
@@ -89,7 +93,7 @@ class API private constructor(context: Context){
                             "success" -> parseConversationsData(answer.getString("message"))
                         }
                         "get picture" -> when (answer.getString("status")) {
-                            "success" -> parsePictureData(answer.getString("message"))
+                            "success" -> parsePictureData(context, answer.getString("message"))
                         }
                     }
                     answerReceived = true
@@ -295,7 +299,7 @@ class API private constructor(context: Context){
             val pictureId = friendObject.optInt("picture_id", 0)
             if (pictureId != 0) {
                 val existingPicture = picsData.find { it.pictureId == pictureId }
-                if ((existingPicture == null) or (existingPicture?.pfpData == null)) {
+                if ((existingPicture == null) or (existingPicture?.imagePath == null)) {
                     coroutineScope.launch {
                         getPicture(pictureId)
                     }
@@ -307,7 +311,7 @@ class API private constructor(context: Context){
             }
         }
     }
-    private fun parsePictureData(jsonString: String){
+    private fun parsePictureData(context: Context, jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
         for (i in 0 until result.length()) {
             val friendObject = result.getJSONObject(i)
@@ -316,7 +320,15 @@ class API private constructor(context: Context){
             val existingPicture = picsData.find { it.pictureId == pictureId }
             if (existingPicture == null) {
                 val pictureData: ByteArray = Base64.getDecoder().decode(pictureDataString)
-                addPictureData(pictureId, pictureData)
+
+                val imagePath = saveImageToCache(context, pictureId.toString(), pictureData)
+
+                val newPictureData = PictureData(pictureId, imagePath)
+                val updatedPicturesData = picsData.toMutableList().apply {
+                    add(newPictureData)
+                }
+                picsData = updatedPicturesData
+
                 Log.d("Tagme_custom_log_picID", pictureId.toString())
             }
         }
@@ -372,7 +384,7 @@ class API private constructor(context: Context){
             userIdsInResult.add(id)
             if (pictureId != 0) {
                 val existingPicture = picsData.find { it.pictureId == pictureId }
-                if ((existingPicture == null) or (existingPicture?.pfpData == null)) {
+                if ((existingPicture == null) or (existingPicture?.imagePath == null)) {
                     coroutineScope.launch {
                         getPicture(pictureId)
                     }
@@ -409,9 +421,15 @@ class API private constructor(context: Context){
     fun getPicturesData(): List<PictureData> {
         return picsData
     }
-    fun getPictureData(id: Int): ByteArray? {
-        return picsData.find{it.pictureId == id}?.pfpData
+    fun getPictureData(context: Context, pictureId: Int): Bitmap? {
+        val picture = picsData.find { it.pictureId == pictureId }
+        return if (picture != null) {
+            BitmapFactory.decodeFile(picture.imagePath)
+        } else {
+            null
+        }
     }
+
     data class LocationData(
         var latitude: Double,
         var longitude: Double,
@@ -426,8 +444,9 @@ class API private constructor(context: Context){
     )
     data class PictureData(
         val pictureId: Int,
-        var pfpData: ByteArray?
+        val imagePath: String? // Path to the cached image
     )
+
 
     data class FriendData(
         val userData: UserData,
@@ -471,12 +490,25 @@ class API private constructor(context: Context){
         val type = object : TypeToken<List<PictureData>>() {}.type
         return gson.fromJson(jsonString, type)
     }
-    fun addPictureData(pictureId: Int, pictureData: ByteArray) {
-        val newPictureData = PictureData(pictureId, pictureData)
+    fun addPictureData(context: Context, pictureId: Int, pictureData: ByteArray) {
+        val imagePath = saveImageToCache(context, pictureId.toString(), pictureData)
+
+        val newPictureData = PictureData(pictureId, imagePath)
         val updatedPicturesData = picsData.toMutableList().apply {
             add(newPictureData)
         }
         picsData = updatedPicturesData
+    }
+
+    private fun saveImageToCache(context: Context, fileName: String, imageBytes: ByteArray): String {
+        val cacheDir = context.cacheDir
+        val file = File(cacheDir, fileName)
+
+        FileOutputStream(file).use { outputStream ->
+            outputStream.write(imageBytes)
+        }
+
+        return file.absolutePath
     }
 
     fun removePictureData(pictureId: Int) {

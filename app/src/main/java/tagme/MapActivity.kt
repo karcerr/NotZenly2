@@ -68,7 +68,7 @@ class MapActivity: AppCompatActivity() {
         centralizeButton = findViewById(R.id.center_button)
         profileButton = findViewById(R.id.profile_button)
         messagesButton = findViewById(R.id.messages_button)
-        // Initialize and hide fragments
+        // Initializing and hiding fragments
         fragmentManager = supportFragmentManager
         conversationFragment = fragmentManager.findFragmentById(R.id.conversations_fragment)!!
         profileFragment = fragmentManager.findFragmentById(R.id.profile_fragment)!!
@@ -92,13 +92,10 @@ class MapActivity: AppCompatActivity() {
         map.overlays.add(mRotationGestureOverlay)
 
 
-        // Creating a GpsMyLocationProvider instance
         val gpsMyLocationProvider = GpsMyLocationProvider(this)
-        // Setting the minimum time interval for location updates (in milliseconds)
         gpsMyLocationProvider.locationUpdateMinTime = 1000 // 1 sec
 
 
-        /* MyLocation overlay */
         val mLocationOverlay = object:  MyLocationNewOverlay(gpsMyLocationProvider, map) {
             override fun onLocationChanged(location: Location?, source: IMyLocationProvider?) {
                 super.onLocationChanged(location, source)
@@ -121,7 +118,6 @@ class MapActivity: AppCompatActivity() {
         coroutineScope.launch{
             api.getFriends()
         }
-        // Center the map on current location, draw an image
         mLocationOverlay.runOnFirstFix {
             val myLocation = mLocationOverlay.myLocation
             if (myLocation != null) {
@@ -161,13 +157,11 @@ class MapActivity: AppCompatActivity() {
 
         map.addMapListener(object : MapListener {
             override fun onScroll(event: ScrollEvent?): Boolean {
-                // Map is being scrolled, set isCentered to false
                 isCentered = false
                 return true
             }
 
             override fun onZoom(event: ZoomEvent?): Boolean {
-                // Map is being zoomed, set isCentered to false
                 isCentered = false
                 return true
             }
@@ -247,7 +241,7 @@ class MapActivity: AppCompatActivity() {
     private fun startSendingLocationUpdates() {
         coroutineScope.launch {
             while (isActive) {
-                val location = getCurrentLocation() // Implement this to get the current location
+                val location = getCurrentLocation()
 
                 location?.let {
                     val latitude = it.latitude.toString()
@@ -255,7 +249,6 @@ class MapActivity: AppCompatActivity() {
                     val accuracy = it.accuracy.toString()
                     val speed = it.speed.toString()
 
-                    // Send location data to the server
                     try {
                         api.sendLocation(latitude, longitude, accuracy, speed)
                         api.getLocations()
@@ -306,15 +299,13 @@ class MapActivity: AppCompatActivity() {
             map.overlays.remove(overlay)
         }
 
-        // Update or add friend overlays
         friendsData.forEach { friend ->
             if (friend.location != null) {
                 val overlay = friendOverlays[friend.userData.nickname]
                 val friendDrawable: Drawable = if (friend.userData.profilePictureId != 0) {
-                    // If friend has a picture, use it as the overlay drawable
-                    val pfpData = api.getPicturesData().find { it.pictureId == friend.userData.profilePictureId }?.pfpData
-                    if (pfpData != null) {
-                        val bitmap = BitmapFactory.decodeByteArray(pfpData, 0, pfpData.size)
+                    val imagePath = api.getPicturesData().find { it.pictureId == friend.userData.profilePictureId }?.imagePath
+                    if (imagePath != null) {
+                        val bitmap = BitmapFactory.decodeFile(imagePath)
                         BitmapDrawable(resources, bitmap)
                     } else {
                         ResourcesCompat.getDrawable(resources, R.drawable.person_placeholder, null)!!
@@ -324,10 +315,8 @@ class MapActivity: AppCompatActivity() {
                 }
 
                 if (overlay != null) {
-                    // Update existing overlay
                     overlay.setLocation(GeoPoint(friend.location!!.latitude, friend.location!!.longitude))
                 } else {
-                    // Add new overlay
                     val friendLocation = GeoPoint(friend.location!!.latitude, friend.location!!.longitude)
                     val newOverlay = CustomIconOverlay(
                         this,
@@ -348,7 +337,6 @@ class MapActivity: AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        // Clear friend overlays and cancel coroutine
         friendOverlays.clear()
         coroutineScope.cancel()
     }

@@ -1,8 +1,6 @@
 package tagme
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
+import android.graphics.*
 import android.graphics.drawable.Drawable
 import androidx.core.content.res.ResourcesCompat
 import org.osmdroid.util.GeoPoint
@@ -43,20 +41,51 @@ class CustomIconOverlay(
             val scaledHeight = (drawable.intrinsicHeight * scaleFactor).toInt()
             drawable.setBounds(it.x - scaledWidth / 2, it.y - scaledHeight / 2,
                 it.x + scaledWidth / 2, it.y + scaledHeight / 2)
+            val strokePaint = Paint().apply {
+                style = Paint.Style.STROKE
+                color = Color.BLACK
+                strokeWidth = 6.0F
+            }
+            val strokeRect = RectF(
+                (it.x - scaledWidth / 2).toFloat(),
+                (it.y - scaledHeight / 2).toFloat(),
+                (it.x + scaledWidth / 2).toFloat(),
+                (it.y + scaledHeight / 2).toFloat()
+            )
+            canvas.drawRoundRect(strokeRect, scaledWidth * 0.25f, scaledWidth * 0.25f, strokePaint)
+
+            val cornerSize = scaledWidth * 0.25f
+            val path = Path().apply {
+                addRoundRect(
+                    RectF(it.x.toFloat() - scaledWidth / 2, it.y.toFloat() - scaledHeight / 2,
+                        it.x.toFloat() + scaledWidth / 2, it.y.toFloat() + scaledHeight / 2),
+                    cornerSize, cornerSize, Path.Direction.CW
+                )
+                close()
+            }
+
+            canvas.clipPath(path)
+
             drawable.draw(canvas)
+
+            canvas.restore()
+
+            canvas.save()
+            canvas.rotate(rotation, it.x.toFloat(), it.y.toFloat())
 
             val speedText = "${speed.toInt()}m/s"
             val nameText = name
 
-
-            canvas.drawText(speedText, it.x.toFloat(), (it.y + scaledHeight / 2 + 45).toFloat(), textPaint)
+            if (speed.toInt() != 0)
+                canvas.drawText(speedText, it.x.toFloat(), (it.y + scaledHeight / 2 + 45).toFloat(), textPaint)
             canvas.drawText(nameText, it.x.toFloat() - textPaint.measureText(nameText) / 2, (it.y - scaledHeight / 2 - 10).toFloat(), textPaint)
-
 
             canvas.restore()
         }
-
     }
+
+
+
     private fun calculateScaleFactor(drawable: Drawable): Float {
         val placeholderWidth = dpToPx(64f)
         val placeholderHeight = dpToPx(64f)

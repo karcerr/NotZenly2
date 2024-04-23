@@ -1,13 +1,16 @@
 package tagme
 
-import android.graphics.BitmapFactory
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tagme.R
 import kotlinx.coroutines.CoroutineScope
@@ -23,33 +26,42 @@ class ConversationsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_conversation, container, false)
+        val backButton: ImageButton = view.findViewById(R.id.back_arrow_button)
         api = (requireActivity() as MapActivity).api
         CoroutineScope(Dispatchers.Main).launch {
             api.getConversations()
         }
-        val conversationsRecyclerView: RecyclerView = view.findViewById(R.id.converations_recycler_view)
-        conversationsAdapter = ConversationsAdapter(api.getConversationsData(), api)
+        val conversationsRecyclerView: RecyclerView = view.findViewById(R.id.conversations_recycler_view)
+        conversationsAdapter = ConversationsAdapter(requireContext(), api.getConversationsData(), api, requireActivity().supportFragmentManager)
         conversationsRecyclerView.adapter = conversationsAdapter
         conversationsRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
+
+        backButton.setOnClickListener{
+            requireActivity().onBackPressedDispatcher.onBackPressed()
+        }
 
         return view
     }
 }
 
 class ConversationsAdapter(
+    private val context: Context,
     private var conversationList: MutableList<API.ConversationData>,
-    private val api: API
+    private val api: API,
+    private val childFragmentManager: FragmentManager
 ) : RecyclerView.Adapter<ConversationsAdapter.ConversationViewHolder>() {
     inner class ConversationViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val nameTextView: TextView = itemView.findViewById(R.id.friend_name)
-        val pictureImageView: ImageView = itemView.findViewById(R.id.friend_picture)
+        val nameTextView: TextView = itemView.findViewById(R.id.conversation_name)
+        val pictureImageView: ImageView = itemView.findViewById(R.id.conversation_picture)
+        val conversationLayout: LinearLayout = itemView.findViewById(R.id.conversation_layout)
+        val coroutineScope = CoroutineScope(Dispatchers.Main)
     }
     fun updateData(newConversationList: MutableList<API.ConversationData>) {
         conversationList = newConversationList
         notifyDataSetChanged()
     }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ConversationViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.friend_item, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.conversation_item, parent, false)
         return ConversationViewHolder(view)
     }
 
@@ -59,8 +71,14 @@ class ConversationsAdapter(
         holder.nameTextView.text = friend.userData.nickname
         val picture = api.getPicturesData().find { it.pictureId == friend.userData.profilePictureId }
         if (picture != null) {
-            val bitmap = picture.pfpData?.let { BitmapFactory.decodeByteArray(picture.pfpData, 0, it.size) }
-            holder.pictureImageView.setImageBitmap(bitmap)
+            holder.coroutineScope.launch {
+                val bitmap = API.getInstance(context).getPictureData(context, picture.pictureId)
+                holder.pictureImageView.setImageBitmap(bitmap)
+            }
+        }
+        holder.conversationLayout.setOnClickListener {
+            val userProfileDialog = UserProfileDialogFragment.newInstance(friend.userData.userId)
+            userProfileDialog.show(childFragmentManager, "userProfileDialog")
         }
     }
 

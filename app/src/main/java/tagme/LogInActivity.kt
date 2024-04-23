@@ -48,7 +48,7 @@ class LogInActivity : AppCompatActivity() {
 
         val api = API.getInstance(applicationContext)
         CoroutineScope(Dispatchers.Main).launch {
-            val connected = api.connectToServer()
+            val connected = api.connectToServer(applicationContext)
             if (connected) {
                 Log.d("Tagme_custom_log", "Connected to the server")
                 if (api.token != null) {

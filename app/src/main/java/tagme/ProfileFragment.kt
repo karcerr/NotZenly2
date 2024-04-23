@@ -1,7 +1,6 @@
 package tagme
 
 import android.content.Context
-import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -43,12 +42,12 @@ class ProfileFragment : Fragment() {
             api.getFriends()
         }
         val friendRecyclerView: RecyclerView = view.findViewById(R.id.friends_recycler_view)
-        friendAdapter = FriendAdapter(api.getFriendsData(), api, requireActivity().supportFragmentManager)
+        friendAdapter = FriendAdapter(requireContext(), api.getFriendsData(), api, requireActivity().supportFragmentManager)
         friendRecyclerView.adapter = friendAdapter
         friendRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
 
         val friendRequestsRecyclerView: RecyclerView = view.findViewById(R.id.friend_requests_recycler_view)
-        friendRequestAdapter = FriendRequestAdapter(api.getFriendRequestData(), api, friendAdapter, requireActivity().supportFragmentManager)
+        friendRequestAdapter = FriendRequestAdapter(requireContext(), api.getFriendRequestData(), api, friendAdapter, requireActivity().supportFragmentManager)
         friendRequestsRecyclerView.adapter = friendRequestAdapter
         friendRequestsRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
         addFriendButton.setOnClickListener {
@@ -99,6 +98,7 @@ class MyLinearLayoutManager(context: Context) : LinearLayoutManager(context) {
     }
 }
 class FriendAdapter(
+    private val context: Context,
     private var friendList: MutableList<API.FriendData>,
     private val api: API,
     private val childFragmentManager: FragmentManager
@@ -107,6 +107,7 @@ class FriendAdapter(
         val nameTextView: TextView = itemView.findViewById(R.id.friend_name)
         val pictureImageView: ImageView = itemView.findViewById(R.id.friend_picture)
         val friendLayout: LinearLayout = itemView.findViewById(R.id.friend_layout)
+        val coroutineScope = CoroutineScope(Dispatchers.Main)
     }
     fun updateData(newFriendList: MutableList<API.FriendData>) {
         friendList = newFriendList
@@ -127,12 +128,13 @@ class FriendAdapter(
 
         holder.nameTextView.text = friend.userData.nickname
         val picture = api.getPicturesData().find { it.pictureId == friend.userData.profilePictureId }
-        if (picture == null) {
-            holder.pictureImageView.setImageResource(R.drawable.person_placeholder)
-        } else {
-            val bitmap = picture.pfpData?.let { BitmapFactory.decodeByteArray(picture.pfpData, 0, it.size) }
-            holder.pictureImageView.setImageBitmap(bitmap)
+        if (picture != null) {
+            holder.coroutineScope.launch {
+                val bitmap = API.getInstance(context).getPictureData(context, picture.pictureId)
+                holder.pictureImageView.setImageBitmap(bitmap)
+            }
         }
+
         holder.friendLayout.setOnClickListener {
             val userProfileDialog = UserProfileDialogFragment.newInstance(friend.userData.userId)
             userProfileDialog.show(childFragmentManager, "userProfileDialog")
@@ -144,6 +146,8 @@ class FriendAdapter(
     }
 }
 class FriendRequestAdapter(
+    private val context: Context,
+
     private var requestList: MutableList<API.FriendRequestData>,
     private val api: API,
     private val friendAdapter: FriendAdapter,
@@ -154,6 +158,7 @@ class FriendRequestAdapter(
         val acceptButton: ImageButton = itemView.findViewById(R.id.accept_button)
         val denyButton: ImageButton = itemView.findViewById(R.id.deny_button)
         val requestUserButton: LinearLayout = itemView.findViewById(R.id.incoming_friend_request)
+        val coroutineScope = CoroutineScope(Dispatchers.Main)
     }
 
     inner class OutgoingFriendRequestViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -161,6 +166,7 @@ class FriendRequestAdapter(
         val pictureImageView: ImageView = itemView.findViewById(R.id.friend_picture)
         val cancelButton: ImageButton = itemView.findViewById(R.id.cancel_button)
         val requestUserButton: LinearLayout = itemView.findViewById(R.id.outgoing_friend_request)
+        val coroutineScope = CoroutineScope(Dispatchers.Main)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -200,8 +206,10 @@ class FriendRequestAdapter(
                     userProfileDialog.show(childFragmentManager, "userProfileDialog")
                 }
                 if (picture != null) {
-                    val bitmap = picture.pfpData?.let { BitmapFactory.decodeByteArray(picture.pfpData, 0, it.size) }
-                    holder.pictureImageView.setImageBitmap(bitmap)
+                    incomingHolder.coroutineScope.launch {
+                        val bitmap = API.getInstance(context).getPictureData(context, picture.pictureId)
+                        incomingHolder.pictureImageView.setImageBitmap(bitmap)
+                    }
                 }
                 incomingHolder.acceptButton.setOnClickListener { view ->
                     val userId = view.tag as Int
@@ -239,9 +247,12 @@ class FriendRequestAdapter(
                     userProfileDialog.show(childFragmentManager, "userProfileDialog")
                 }
                 if (picture != null) {
-                    val bitmap = picture.pfpData?.let { BitmapFactory.decodeByteArray(picture.pfpData, 0, it.size) }
-                    holder.pictureImageView.setImageBitmap(bitmap)
+                    outgoingHolder.coroutineScope.launch {
+                        val bitmap = API.getInstance(context).getPictureData(context, picture.pictureId)
+                        outgoingHolder.pictureImageView.setImageBitmap(bitmap)
+                    }
                 }
+
                 outgoingHolder.cancelButton.setOnClickListener { view ->
                     val userId = view.tag as Int
                     CoroutineScope(Dispatchers.Main).launch {
