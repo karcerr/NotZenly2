@@ -28,7 +28,7 @@ class ProfileFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_profile, container, false)
         val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        val addFriendButton = view.findViewById<Button>(R.id.add_friend_button)
+        val addFriendButton = view.findViewById<ImageButton>(R.id.add_friend_button)
         val addFriendWindow = view.findViewById<View>(R.id.add_friend_window)
         val nicknameText = view.findViewById<TextView>(R.id.nickname_text)
         val darkOverlay = view.findViewById<View>(R.id.dark_overlay)

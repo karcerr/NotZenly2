@@ -4,7 +4,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/friend_layout"
-        android:background="@drawable/login_background"
+        android:background="@drawable/bg_cyan_grad"
         android:orientation="vertical">
     <LinearLayout
             android:layout_width="match_parent"
@@ -19,7 +19,7 @@
                 app:shapeAppearanceOverlay="@style/roundImageView"
                 app:strokeWidth="2dp"
                 android:padding="1dp"
-                app:strokeColor="@color/black"
+                app:strokeColor="@color/white"
                 android:layout_margin="8dp"/>
 
 

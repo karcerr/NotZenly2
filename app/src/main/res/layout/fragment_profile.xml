@@ -7,7 +7,7 @@
 <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/login_background">
+        android:background="@drawable/bg_cyan_grad">
 
     <LinearLayout
             android:id="@+id/main_content"
@@ -18,67 +18,137 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical">
-            <com.google.android.material.imageview.ShapeableImageView
-                    android:id="@+id/profile_picture"
-                    android:layout_width="128dp"
-                    android:layout_height="128dp"
-                    android:src="@drawable/person_placeholder"
-                    app:shapeAppearanceOverlay="@style/roundImageView"
-                    app:strokeWidth="2dp"
-                    android:padding="1dp"
-                    app:strokeColor="@color/black"
-                    android:layout_margin="8dp"/>
-            <TextView
-                    android:id="@+id/nickname_text"
-                    android:layout_width="0dp"
+                android:gravity="center_vertical"
+                android:layout_marginTop="5dp">
+            <ImageButton
+                    android:id="@+id/back_arrow_button"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:src="@drawable/arrow_back"
+                    android:background="@null"
+                    android:layout_marginStart="10dp"
+            />
+            <TextView
+                    android:layout_width="0dp"
                     android:layout_weight="1"
-                    android:text="Nickname"
+                    android:layout_height="wrap_content"
+                    android:text="Tags: 222"
+                    android:textColor="@color/white"
+                    android:textStyle="bold"
                     android:textAppearance="?android:textAppearanceMedium"
                     android:fontFamily="@font/my_font"
-                    android:textSize="35sp"
+                    android:textSize="30sp"
+                    android:gravity="center"
             />
+
             <ImageButton
                     android:id="@+id/settings_button"
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
                     android:src="@drawable/settings"
                     android:background="@null"
-                    android:contentDescription="Settings Button"
+                    android:layout_gravity="end"
+                    android:layout_marginEnd="10dp"
             />
         </LinearLayout>
+        <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/profile_picture"
+                android:layout_width="256dp"
+                android:layout_height="256dp"
+                android:src="@drawable/person_placeholder"
+                app:shapeAppearanceOverlay="@style/roundImageView"
+                app:strokeWidth="2dp"
+                android:padding="1dp"
+                app:strokeColor="@color/white"
+                android:layout_margin="8dp"
+                android:layout_gravity="center"
+        />
+        <TextView
+                android:id="@+id/nickname_text"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="Nickname"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:fontFamily="@font/my_font"
+                android:textSize="35sp"
+                android:layout_gravity="center"
+        />
+        <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:src="@drawable/separator"
+                android:layout_marginVertical="15dp"
+                android:layout_gravity="center"
+        />
         <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:paddingTop="16dp"
-                android:paddingBottom="8dp"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp">
-
-
+                android:layout_marginHorizontal="15dp"
+        >
             <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="Друзья:"
+                    android:text="Рейтинг"
                     android:textAppearance="?android:textAppearanceMedium"
                     android:fontFamily="@font/my_font"
                     android:textSize="30sp"
                     android:layout_weight="1"
+                    android:textColor="@color/white"
+                    android:textStyle="bold"
+                    android:layout_gravity="center_vertical"
             />
 
-            <Button
+            <ImageButton
+                    android:id="@+id/show_rating_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/arrow_right"
+                    android:textSize="20sp"
+                    android:background="@color/transparent"
+                    android:layout_marginEnd="5dp"
+                    android:layout_gravity="center_vertical"
+            />
+        </LinearLayout>
+        <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:src="@drawable/separator"
+                android:layout_marginVertical="15dp"
+                android:layout_gravity="center"
+        />
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginHorizontal="15dp"
+                android:layout_marginBottom="5dp"
+        >
+            <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="Друзья"
+                    android:textAppearance="?android:textAppearanceMedium"
+                    android:fontFamily="@font/my_font"
+                    android:textSize="30sp"
+                    android:layout_weight="1"
+                    android:textColor="@color/white"
+                    android:textStyle="bold"
+                    android:layout_gravity="center_vertical"
+            />
+
+            <ImageButton
                     android:id="@+id/add_friend_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Добавить друга"
-                    android:layout_marginStart="8dp"
-                    android:fontFamily="@font/my_font"
+                    android:src="@drawable/person_add_button"
                     android:textSize="20sp"
-                    android:background="@drawable/rounded_corner"
-                    android:backgroundTint="@color/purple_500"
-                    android:padding="8dp"
+                    android:background="@color/transparent"
+                    android:layout_marginEnd="5dp"
+                    android:layout_gravity="center_vertical"
             />
         </LinearLayout>
         <!-- Scrollable List of Friends -->
@@ -89,21 +159,28 @@
                 android:textSize="20sp"
                 android:fontFamily="@font/my_font"
         />
+        <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:src="@drawable/separator"
+                android:layout_marginVertical="15dp"
+                android:layout_gravity="center"
+        />
         <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:paddingTop="16dp"
-                android:paddingBottom="8dp"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp">
+                android:layout_marginHorizontal="15dp"
+                android:layout_marginBottom="5dp">
             <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="Заявки в друзья:"
+                    android:text="Заявки в друзья"
                     android:textAppearance="?android:textAppearanceMedium"
                     android:fontFamily="@font/my_font"
                     android:textSize="30sp"
+                    android:textColor="@color/white"
+                    android:textStyle="bold"
                     android:layout_weight="1"
             />
         </LinearLayout>
