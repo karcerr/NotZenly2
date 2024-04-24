@@ -26,7 +26,7 @@ class API private constructor(context: Context){
     private var webSocket: WebSocket? = null
     private var answerReceived = false
     private var answer = JSONObject()
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
     var myToken: String?
         get() = sharedPreferences.getString("TOKEN", null)
         set(value) {
@@ -372,7 +372,6 @@ class API private constructor(context: Context){
                 }
                 picsData = updatedPicturesData
 
-                Log.d("Tagme_custom_log_picID", pictureId.toString())
             }
         }
     }
@@ -380,6 +379,7 @@ class API private constructor(context: Context){
         val result = JSONObject(jsonString).getJSONArray("result")
 
         for (i in 0 until result.length()) {
+
             val locationObject = result.getJSONObject(i)
             val id = locationObject.getInt("user_id")
             val latitude = locationObject.getDouble("latitude")
@@ -387,14 +387,17 @@ class API private constructor(context: Context){
             val accuracy = locationObject.getDouble("accuracy")
             val speed = locationObject.getDouble("speed")
             val timestamp = locationObject.getString("timestamp")
-
             val existingFriend = friendsData.find { it.userData.userId == id }
             if (existingFriend != null) {
-                existingFriend.location?.latitude = latitude
-                existingFriend.location?.longitude = longitude
-                existingFriend.location?.accuracy = accuracy
-                existingFriend.location?.speed = speed.toFloat()
-                existingFriend.location?.timestamp = Timestamp(dateFormat.parse(timestamp).time)
+                if (existingFriend.location == null) {
+                    existingFriend.location = LocationData(latitude, longitude, accuracy, speed.toFloat(), Timestamp(dateFormat.parse(timestamp).time))
+                } else {
+                    existingFriend.location?.latitude = latitude
+                    existingFriend.location?.longitude = longitude
+                    existingFriend.location?.accuracy = accuracy
+                    existingFriend.location?.speed = speed.toFloat()
+                    existingFriend.location?.timestamp = Timestamp(dateFormat.parse(timestamp).time)
+                }
             }
         }
     }
@@ -431,13 +434,13 @@ class API private constructor(context: Context){
         val result = JSONObject(jsonString).getJSONArray("result")
         for (i in 0 until result.length()) {
             val messageObject = result.getJSONObject(i)
-            val messageId = messageObject.getInt("id")
+            val conversationId = messageObject.getInt("conversation_id")
+            val messageId = messageObject.getInt("message_id")
             val authorId = messageObject.getInt("author_id")
             val text = messageObject.getString("text")
             val pictureId = messageObject.optInt("picture_id", 0)
             val timestamp = messageObject.getString("timestamp")
-
-            val existingConversation = conversationsData.find { it.userData.userId == authorId }
+            val existingConversation = conversationsData.find { it.conversationID == conversationId }
             val existingMessage = existingConversation?.messages?.find{it.messageId == messageId}
             if (existingConversation != null) {
                 if (existingMessage == null) {
@@ -540,7 +543,7 @@ class API private constructor(context: Context){
 
     data class FriendData(
         val userData: UserData,
-        val location: LocationData?,
+        var location: LocationData?,
     )
 
     data class FriendRequestData(

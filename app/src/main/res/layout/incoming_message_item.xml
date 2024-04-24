@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/incoming_message_item"
         android:orientation="horizontal"
@@ -10,6 +10,7 @@
         android:layout_marginRight="5dp"
         android:layout_marginLeft="5dp"
         android:padding="10dp"
+        android:layout_gravity="start"
 >
     <TextView
             android:id="@+id/incoming_message_text_content"
@@ -21,13 +22,14 @@
             android:textStyle="bold"
             android:fontFamily="@font/my_font"
             android:textColor="@color/teal"
-            android:layout_gravity="center_vertical"/>
+            android:layout_gravity="center_vertical"
+    />
     <TextView
             android:id="@+id/incoming_message_timestamp"
             android:text="@string/timestamp"
             android:layout_width="50dp"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:textSize="12sp"
             android:textStyle="bold"
             android:fontFamily="@font/my_font"
             android:textColor="@color/teal"

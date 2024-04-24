@@ -36,16 +36,18 @@ class ConversationFragment : Fragment() {
         val myId = api.myUserId
         val conversationId = arguments?.getInt(ARG_CONVERSATION_ID)
         if (conversationId != null) {
+
             CoroutineScope(Dispatchers.Main).launch {
-                api.getMessagesFromWS(conversationId, 1)
+                api.getMessagesFromWS(conversationId, -1)
+                val conversation = conversationId.let { api.getConversationData(it) }
+                if (conversation != null) {
+                    val recyclerView: RecyclerView = view.findViewById(R.id.messageRecyclerView)
+                    recyclerView.layoutManager = LinearLayoutManager(context)
+                    val adapter = MessageAdapter(conversation.messages, myId)
+                    recyclerView.adapter = adapter
+                }
             }
-            val conversation = conversationId.let { api.getConversationData(it) }
-            if (conversation != null) {
-                val recyclerView: RecyclerView = view.findViewById(R.id.messageRecyclerView)
-                recyclerView.layoutManager = LinearLayoutManager(context)
-                val adapter = MessageAdapter(conversation.messages, myId)
-                recyclerView.adapter = adapter
-            }
+
         }
         return view
     }
@@ -93,7 +95,7 @@ class MessageAdapter(private val messageList: List<API.MessageData>, private val
                 itemView.findViewById<TextView>(R.id.outgoing_message_timestamp).text = message.timestamp.toString()
             } else {
                 itemView.findViewById<TextView>(R.id.incoming_message_text_content).text = message.text
-                itemView.findViewById<TextView>(R.id.incoming_message_text_content).text = message.timestamp.toString()
+                itemView.findViewById<TextView>(R.id.incoming_message_timestamp).text = message.timestamp.toString()
             }
         }
     }

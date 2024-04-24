@@ -316,13 +316,13 @@ class MapActivity: AppCompatActivity() {
                 }
 
                 if (overlay != null) {
-                    overlay.setLocation(GeoPoint(friend.location.latitude, friend.location.longitude))
+                    overlay.setLocation(GeoPoint(friend.location!!.latitude, friend.location!!.longitude))
                 } else {
-                    val friendLocation = GeoPoint(friend.location.latitude, friend.location.longitude)
+                    val friendLocation = GeoPoint(friend.location!!.latitude, friend.location!!.longitude)
                     val newOverlay = CustomIconOverlay(
                         this,
                         friendLocation,
-                        friend.location.speed,
+                        friend.location!!.speed,
                         friendDrawable,
                         friend.userData.nickname,
                         R.font.my_font

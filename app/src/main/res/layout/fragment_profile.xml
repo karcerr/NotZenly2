@@ -151,7 +151,6 @@
                     android:layout_gravity="center_vertical"
                     android:contentDescription="@string/add_a_friend_button"/>
         </LinearLayout>
-        <!-- Scrollable List of Friends -->
         <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/friends_recycler_view"
                 android:layout_width="match_parent"

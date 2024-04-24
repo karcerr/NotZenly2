@@ -1,37 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<FrameLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/outgoing_message_item"
         android:orientation="horizontal"
-        android:background="@drawable/rectangle_white"
-        android:layout_marginBottom="10dp"
-        android:layout_marginRight="5dp"
-        android:layout_marginLeft="5dp"
-        android:padding="10dp"
 >
-    <TextView
-            android:id="@+id/outgoing_message_text_content"
-            android:text="@string/text"
-            android:layout_width="0dp"
-            android:layout_weight="1"
+    <LinearLayout
+
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:fontFamily="@font/my_font"
-            android:textColor="@color/teal"
-            android:layout_gravity="center_vertical"/>
-    <TextView
-            android:id="@+id/outgoing_message_timestamp"
-            android:text="@string/timestamp"
-            android:layout_width="50dp"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:fontFamily="@font/my_font"
-            android:textColor="@color/teal"
-            android:gravity="end"
-            android:layout_gravity="bottom"
-    />
-</LinearLayout>
+            android:orientation="horizontal"
+            android:background="@drawable/rectangle_white"
+            android:layout_marginVertical="10dp"
+            android:layout_marginHorizontal="5dp"
+            android:padding="10dp"
+            android:layout_gravity="end"
+    >
+        <TextView
+                android:id="@+id/outgoing_message_text_content"
+                android:text="@string/text"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/my_font"
+                android:textColor="@color/teal"
+                android:layout_gravity="center_vertical"
+        />
+        <TextView
+                android:id="@+id/outgoing_message_timestamp"
+                android:text="@string/timestamp"
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/my_font"
+                android:textColor="@color/teal"
+                android:gravity="end"
+                android:layout_gravity="bottom"
+        />
+    </LinearLayout>
+
+</FrameLayout>
