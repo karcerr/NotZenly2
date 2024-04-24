@@ -63,7 +63,7 @@ class UserProfileDialogFragment : DialogFragment() {
             CoroutineScope(Dispatchers.Main).launch {
                 val pictureData = api.getPicturesData().find { it.pictureId == pfpId }
                 if (pictureData?.imagePath == null) {
-                    api.getPicture(pfpId)
+                    api.getPictureFromWS(pfpId)
                 }
                 // Load the image from cache
                 val bitmap = api.getPictureData(requireContext(), pfpId)

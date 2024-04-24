@@ -13,7 +13,7 @@
             app:shapeAppearanceOverlay="@style/roundImageView"
             app:strokeWidth="2dp"
             android:padding="1dp"
-            app:strokeColor="@color/black"
+            app:strokeColor="@color/white"
             android:layout_margin="8dp"/>
     <LinearLayout
             android:id="@+id/main_content"
@@ -27,7 +27,7 @@
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:paddingTop="6dp"
-                android:text="There will be displayed the nickname"
+                android:text="@string/nickname_text_placeholder"
                 android:fontFamily="@font/my_font"
                 android:layout_gravity="center_vertical"/>
         <TextView
@@ -37,7 +37,7 @@
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:paddingTop="6dp"
-                android:text="There will be displayed your last message!"
+                android:text="@string/last_message_placeholder"
                 android:fontFamily="@font/my_font"
                 android:layout_gravity="center_vertical"/>
 

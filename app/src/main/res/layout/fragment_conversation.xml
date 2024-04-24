@@ -1,48 +1,109 @@
 <?xml version="1.0" encoding="utf-8"?>
-    <ScrollView
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:app="http://schemas.android.com/apk/res-auto"
+<androidx.constraintlayout.widget.ConstraintLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_cyan_grad"
+>
+    <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/login_background">
+            android:orientation="vertical"
+    >
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="10dp"
+                android:background="@color/teal"
+        >
+            <ImageButton
+                    android:id="@+id/back_arrow_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/arrow_back"
+                    android:background="@null"
+            />
+            <TextView
+                    android:id="@+id/conversation_name"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="user name"
+                    android:textAppearance="?android:textAppearanceMedium"
+                    android:fontFamily="@font/my_font"
+                    android:textSize="35sp"
+                    android:textColor="@color/white"
+                    android:textStyle="bold"
+                    android:gravity="center|center_vertical"
+            />
+            <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/conversation_pfp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/person_placeholder"
+                    app:shapeAppearanceOverlay="@style/roundImageView"
+                    app:strokeWidth="2dp"
+                    android:padding="1dp"
+                    app:strokeColor="@color/white"
+                    android:layout_margin="8dp"/>
+        </LinearLayout>
+        <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/messageRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                android:padding="8dp"
+                app:layout_constraintTop_toBottomOf="@id/conversation_name"
+                app:layout_constraintBottom_toBottomOf="parent"/>
 
         <LinearLayout
-                android:id="@+id/main_content"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
-            <LinearLayout
-                    android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="10dp"
+                android:background="@color/teal"
+        >
+            <ImageButton
+                    android:id="@+id/attach_button"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:padding="10dp">
-                <ImageButton
-                        android:id="@+id/back_arrow_button"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@drawable/arrow_back"
-                        android:background="@null"
-                />
-                <TextView
-                        android:id="@+id/conversations_title"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Conversations"
-                        android:textAppearance="?android:textAppearanceMedium"
-                        android:fontFamily="@font/my_font"
-                        android:textSize="35sp"
-                />
-
-            </LinearLayout>
-            <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/conversations_recycler_view"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="20sp"
+                    android:src="@drawable/plus_circle"
+                    android:background="@null"
+                    android:contentDescription="@string/attach_button"/>
+            <EditText
+                    android:id="@+id/message_edit_text"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/rect_bg"
+                    android:backgroundTint="@color/white"
+                    android:hint="@string/enter_your_message"
+                    android:inputType="text"
+                    android:textColorHint="@color/greenish"
+                    android:textAppearance="?android:textAppearanceMedium"
                     android:fontFamily="@font/my_font"
-            />
+                    android:textSize="20sp"
+                    android:textColor="@color/white"
+                    android:textStyle="bold"
+                    android:gravity="start|center_vertical"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="-20dp"
+                    android:autofillHints=""/>
+            <ImageButton
+                    android:id="@+id/send_msg_button"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/arrow_circle_up"
+                    android:background="@null"
+                    android:layout_margin="8dp"
+                    android:contentDescription="@string/send_a_message_button"/>
         </LinearLayout>
-    </ScrollView>
+    </LinearLayout>
 
+
+</androidx.constraintlayout.widget.ConstraintLayout>

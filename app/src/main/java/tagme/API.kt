@@ -15,6 +15,7 @@ import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
 import java.sql.Timestamp
+import java.text.SimpleDateFormat
 import java.util.*
 
 class API private constructor(context: Context){
@@ -25,10 +26,21 @@ class API private constructor(context: Context){
     private var webSocket: WebSocket? = null
     private var answerReceived = false
     private var answer = JSONObject()
-    var token: String?
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+    var myToken: String?
         get() = sharedPreferences.getString("TOKEN", null)
         set(value) {
             sharedPreferences.edit().putString("TOKEN", value).apply()
+        }
+    var myUserId: Int
+        get() = sharedPreferences.getInt("UserID", 0)
+        set(value) {
+            sharedPreferences.edit().putInt("UserID", value).apply()
+        }
+    var myPfpId: Int
+        get() = sharedPreferences.getInt("PfpId", 0)
+        set(value) {
+            sharedPreferences.edit().putInt("PfpId", value).apply()
         }
     var myNickname: String?
         get() = sharedPreferences.getString("NICKNAME", null)
@@ -77,7 +89,7 @@ class API private constructor(context: Context){
                     when (answer.getString("action")) {
                         "login", "register" -> when (answer.getString("status")) {
                             "success" -> {
-                                token = answer.getString("message")
+                                myToken = answer.getString("message")
                             }
                         }
                         "get locations" -> when (answer.getString("status")) {
@@ -95,6 +107,13 @@ class API private constructor(context: Context){
                         "get picture" -> when (answer.getString("status")) {
                             "success" -> parsePictureData(context, answer.getString("message"))
                         }
+                        "get messages" -> when (answer.getString("status")) {
+                            "success" -> parseMessagesData(answer.getString("message"))
+                        }
+                        "get my data" -> when (answer.getString("status")) {
+                            "success" -> parseMyData(answer.getString("message"))
+                        }
+
                     }
                     answerReceived = true
                     synchronized(this@API) {
@@ -140,18 +159,18 @@ class API private constructor(context: Context){
         return withContext(Dispatchers.IO) {
             val requestData = JSONObject().apply {
                 put("action", "validate token")
-                put("token", token)
+                put("token", myToken)
             }
             webSocket?.send(requestData.toString())
 
             waitForServerAnswer()
         }
     }
-    suspend fun sendLocation(latitude: String, longitude: String, accuracy: String, speed: String): JSONObject? {
+    suspend fun sendLocationToWS(latitude: String, longitude: String, accuracy: String, speed: String): JSONObject? {
         return withContext(Dispatchers.IO) {
             val requestData = JSONObject().apply {
                 put("action", "send location")
-                put("token", token)
+                put("token", myToken)
                 put("latitude", latitude)
                 put("longitude", longitude)
                 put("accuracy", accuracy)
@@ -163,11 +182,11 @@ class API private constructor(context: Context){
             waitForServerAnswer()
         }
     }
-    suspend fun getLocations(): JSONObject? {
+    suspend fun getLocationsFromWS(): JSONObject? {
         return withContext(Dispatchers.IO) {
             val requestData = JSONObject().apply {
                 put("action", "get locations")
-                put("token", token)
+                put("token", myToken)
             }
 
             webSocket?.send(requestData.toString())
@@ -175,11 +194,11 @@ class API private constructor(context: Context){
             waitForServerAnswer()
         }
     }
-    suspend fun getFriends(): JSONObject? {
+    suspend fun getFriendsFromWS(): JSONObject? {
         return withContext(Dispatchers.IO) {
             val requestData = JSONObject().apply {
                 put("action", "get friends")
-                put("token", token)
+                put("token", myToken)
             }
 
             webSocket?.send(requestData.toString())
@@ -187,11 +206,11 @@ class API private constructor(context: Context){
             waitForServerAnswer()
         }
     }
-    suspend fun getConversations(): JSONObject? {
+    suspend fun getConversationsFromWS(): JSONObject? {
         return withContext(Dispatchers.IO) {
             val requestData = JSONObject().apply {
                 put("action", "get conversations")
-                put("token", token)
+                put("token", myToken)
             }
 
             webSocket?.send(requestData.toString())
@@ -199,11 +218,11 @@ class API private constructor(context: Context){
             waitForServerAnswer()
         }
     }
-    suspend fun sendFriendRequest(username: String): JSONObject? {
+    suspend fun sendFriendRequestToWS(username: String): JSONObject? {
         return withContext(Dispatchers.IO) {
             val requestData = JSONObject().apply {
                 put("action", "add friend")
-                put("token", token)
+                put("token", myToken)
                 put("nickname", username)
             }
 
@@ -212,11 +231,11 @@ class API private constructor(context: Context){
             waitForServerAnswer()
         }
     }
-    suspend fun getFriendRequests(): JSONObject? {
+    suspend fun getFriendRequestsFromWS(): JSONObject? {
         return withContext(Dispatchers.IO) {
             val requestData = JSONObject().apply {
                 put("action", "get friend requests")
-                put("token", token)
+                put("token", myToken)
             }
 
             webSocket?.send(requestData.toString())
@@ -228,7 +247,7 @@ class API private constructor(context: Context){
         return withContext(Dispatchers.IO) {
             val requestData = JSONObject().apply {
                 put("action", "accept request")
-                put("token", token)
+                put("token", myToken)
                 put("user2_id", id)
             }
             webSocket?.send(requestData.toString())
@@ -240,7 +259,7 @@ class API private constructor(context: Context){
         return withContext(Dispatchers.IO) {
             val requestData = JSONObject().apply {
                 put("action", "deny request")
-                put("token", token)
+                put("token", myToken)
                 put("user2_id", id)
             }
             webSocket?.send(requestData.toString())
@@ -252,7 +271,7 @@ class API private constructor(context: Context){
         return withContext(Dispatchers.IO) {
             val requestData = JSONObject().apply {
                 put("action", "cancel request")
-                put("token", token)
+                put("token", myToken)
                 put("user2_id", id)
             }
             webSocket?.send(requestData.toString())
@@ -260,12 +279,36 @@ class API private constructor(context: Context){
             waitForServerAnswer()
         }
     }
-    suspend fun getPicture(id: Int): JSONObject? {
+    suspend fun getPictureFromWS(id: Int): JSONObject? {
         return withContext(Dispatchers.IO) {
             val requestData = JSONObject().apply {
                 put("action", "get picture")
-                put("token", token)
+                put("token", myToken)
                 put("picture_id", id)
+            }
+            webSocket?.send(requestData.toString())
+
+            waitForServerAnswer()
+        }
+    }
+    suspend fun getMyDataFromWS(): JSONObject? {
+        return withContext(Dispatchers.IO) {
+            val requestData = JSONObject().apply {
+                put("action", "get my data")
+                put("token", myToken)
+            }
+            webSocket?.send(requestData.toString())
+
+            waitForServerAnswer()
+        }
+    }
+    suspend fun getMessagesFromWS(conversationId: Int, lastMsgId: Int): JSONObject? {
+        return withContext(Dispatchers.IO) {
+            val requestData = JSONObject().apply {
+                put("action", "get messages")
+                put("token", myToken)
+                put("conversation_id", conversationId)
+                put("last_message_id", lastMsgId)
             }
             webSocket?.send(requestData.toString())
 
@@ -301,7 +344,7 @@ class API private constructor(context: Context){
                 val existingPicture = picsData.find { it.pictureId == pictureId }
                 if ((existingPicture == null) or (existingPicture?.imagePath == null)) {
                     coroutineScope.launch {
-                        getPicture(pictureId)
+                        getPictureFromWS(pictureId)
                     }
                 }
             }
@@ -343,12 +386,27 @@ class API private constructor(context: Context){
             val longitude = locationObject.getDouble("longitude")
             val accuracy = locationObject.getDouble("accuracy")
             val speed = locationObject.getDouble("speed")
-            //val timestamp = friendObject.get("timestamp")
+            val timestamp = locationObject.getString("timestamp")
 
             val existingFriend = friendsData.find { it.userData.userId == id }
             if (existingFriend != null) {
-                existingFriend.location = LocationData(latitude,longitude,accuracy,speed.toFloat(), null)
+                existingFriend.location?.latitude = latitude
+                existingFriend.location?.longitude = longitude
+                existingFriend.location?.accuracy = accuracy
+                existingFriend.location?.speed = speed.toFloat()
+                existingFriend.location?.timestamp = Timestamp(dateFormat.parse(timestamp).time)
             }
+        }
+    }
+    private fun parseMyData(jsonString: String){
+        val result = JSONObject(jsonString).getJSONArray("result")
+
+        for (i in 0 until result.length()) {
+            val locationObject = result.getJSONObject(i)
+            val userId = locationObject.getInt("user_id")
+            val picId = locationObject.getInt("picture_id")
+            myUserId = userId
+            myPfpId = picId
         }
     }
     private fun parseConversationsData(jsonString: String){
@@ -369,6 +427,34 @@ class API private constructor(context: Context){
             }
         }
     }
+    private fun parseMessagesData(jsonString: String){
+        val result = JSONObject(jsonString).getJSONArray("result")
+        for (i in 0 until result.length()) {
+            val messageObject = result.getJSONObject(i)
+            val messageId = messageObject.getInt("id")
+            val authorId = messageObject.getInt("author_id")
+            val text = messageObject.getString("text")
+            val pictureId = messageObject.optInt("picture_id", 0)
+            val timestamp = messageObject.getString("timestamp")
+
+            val existingConversation = conversationsData.find { it.userData.userId == authorId }
+            val existingMessage = existingConversation?.messages?.find{it.messageId == messageId}
+            if (existingConversation != null) {
+                if (existingMessage == null) {
+                    existingConversation.messages.add(
+                        MessageData(
+                            messageId,
+                            authorId,
+                            text,
+                            pictureId,
+                            Timestamp(dateFormat.parse(timestamp).time)
+                        )
+                    )
+                }
+            }
+
+        }
+    }
     private fun parseFriendRequestData(jsonString: String) {
         val result = JSONObject(jsonString).getJSONArray("result")
         val userIdsInResult = HashSet<Int>() // Store user ids present in the result
@@ -386,13 +472,14 @@ class API private constructor(context: Context){
                 val existingPicture = picsData.find { it.pictureId == pictureId }
                 if ((existingPicture == null) or (existingPicture?.imagePath == null)) {
                     coroutineScope.launch {
-                        getPicture(pictureId)
+                        getPictureFromWS(pictureId)
                     }
                 }
             }
             val existingFriendRequest = friendsRequestsData.find { it.userData.userId == id }
             if (existingFriendRequest != null) {
-                existingFriendRequest.userData = UserData(id, nickname, pictureId)
+                existingFriendRequest.userData.nickname = nickname
+                existingFriendRequest.userData.profilePictureId = pictureId
                 existingFriendRequest.relation = relation
             } else {
                 friendsRequestsData.add(FriendRequestData(UserData(id, nickname, pictureId), relation))
@@ -417,6 +504,9 @@ class API private constructor(context: Context){
     }
     fun getConversationsData(): MutableList<ConversationData> {
         return conversationsData
+    }
+    fun getConversationData(id: Int): ConversationData? {
+        return conversationsData.find{it.conversationID == id}
     }
     fun getPicturesData(): List<PictureData> {
         return picsData
@@ -450,23 +540,26 @@ class API private constructor(context: Context){
 
     data class FriendData(
         val userData: UserData,
-        var location: LocationData?,
+        val location: LocationData?,
     )
 
     data class FriendRequestData(
-        var userData: UserData,
+        val userData: UserData,
         var relation: String
     )
     data class ConversationData(
         val conversationID: Int,
-        var userData: UserData,
+        val userData: UserData,
         var messages: MutableList<MessageData>
     )
     data class MessageData(
-        val text: String?,
-        val image: ByteArray?,
+        val messageId: Int,
+        val authorId: Int,
+        var text: String?,
+        val imageId: Int?,
         val timestamp: Timestamp
     )
+
 
     companion object {
         // Singleton instance
@@ -490,15 +583,6 @@ class API private constructor(context: Context){
         val type = object : TypeToken<List<PictureData>>() {}.type
         return gson.fromJson(jsonString, type)
     }
-    fun addPictureData(context: Context, pictureId: Int, pictureData: ByteArray) {
-        val imagePath = saveImageToCache(context, pictureId.toString(), pictureData)
-
-        val newPictureData = PictureData(pictureId, imagePath)
-        val updatedPicturesData = picsData.toMutableList().apply {
-            add(newPictureData)
-        }
-        picsData = updatedPicturesData
-    }
 
     private fun saveImageToCache(context: Context, fileName: String, imageBytes: ByteArray): String {
         val cacheDir = context.cacheDir
@@ -509,10 +593,5 @@ class API private constructor(context: Context){
         }
 
         return file.absolutePath
-    }
-
-    fun removePictureData(pictureId: Int) {
-        val updatedPicturesData = picsData.filterNot { it.pictureId == pictureId }
-        picsData = updatedPicturesData.toMutableList()
     }
 }

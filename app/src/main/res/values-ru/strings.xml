@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="errorMessage">Ошибка</string>
+    <string name="enter_nickname">Введите никнейм</string>
+    <string name="send_request">Отправить запрос</string>
+    <string name="friend_requests">Заявки в друзья</string>
+    <string name="friends">Друзья</string>
+    <string name="add_a_friend_button">Кнопка добавления в друзья</string>
+    <string name="go_to_rating_button">Кнопка перехода в рейтинг</string>
+    <string name="Rating">Рейтинг</string>
+    <string name="nickname">Никнейм</string>
+    <string name="go_back_button">Кнопка назад</string>
+    <string name="settings_button">Кнопка настроек</string>
+    <string name="nickname_text_placeholder">Здесь будет отражен никнейм</string>
+    <string name="last_message_placeholder">Здесь будет отражено последнее сообщение</string>
+    <string name="enter_your_message">Введите сообщение</string>
+    <string name="send_a_message_button">Кнопка отправления сообщения</string>
+    <string name="attach_button">Кнопка прикрепления вложений</string>
+    <string name="text">текст</string>
+    <string name="conversations">Беседы</string>
+    <string name="login">Логин</string>
+    <string name="password">Пароль</string>
+    <string name="log_in">Войти</string>
+    <string name="register">Зарегистрироваться</string>
+    <string name="location_request">Для работы приложения необходим доступ к геолокации</string>
+    <string name="turn_location_on">Включить геолокацию</string>
+</resources>

@@ -33,13 +33,14 @@ class ProfileFragment : Fragment() {
         val nicknameText = view.findViewById<TextView>(R.id.nickname_text)
         val darkOverlay = view.findViewById<View>(R.id.dark_overlay)
         val requestInput = view.findViewById<EditText>(R.id.nickname_edit_text)
+        val backButton = view.findViewById<ImageButton>(R.id.back_arrow_button)
         api = (requireActivity() as MapActivity).api
         val sendRequestButton = view.findViewById<Button>(R.id.send_request_button)
         val statusText = view.findViewById<TextView>(R.id.status_text)
         nicknameText.text = api.myNickname
         CoroutineScope(Dispatchers.Main).launch {
-            api.getFriendRequests()
-            api.getFriends()
+            api.getFriendRequestsFromWS()
+            api.getFriendsFromWS()
         }
         val friendRecyclerView: RecyclerView = view.findViewById(R.id.friends_recycler_view)
         friendAdapter = FriendAdapter(requireContext(), api.getFriendsData(), api, requireActivity().supportFragmentManager)
@@ -62,7 +63,7 @@ class ProfileFragment : Fragment() {
         sendRequestButton.setOnClickListener{
             val nickname = requestInput.text.toString()
             CoroutineScope(Dispatchers.Main).launch {
-                val answer = api.sendFriendRequest(nickname)
+                val answer = api.sendFriendRequestToWS(nickname)
                 if (answer != null) {
                     val message = answer.getString("message")
                     if (answer.getString("status") == "success") {
@@ -72,7 +73,7 @@ class ProfileFragment : Fragment() {
                         darkOverlay.visibility = View.GONE
                         addFriendWindow.visibility = View.GONE
                         Toast.makeText(requireContext(), "Friend request was sent!", Toast.LENGTH_SHORT).show()
-                        api.getFriendRequests()
+                        api.getFriendRequestsFromWS()
                         val updatedRequests = api.getFriendRequestData()
                         friendRequestAdapter.updateData(updatedRequests)
                     } else {
@@ -88,7 +89,9 @@ class ProfileFragment : Fragment() {
             }
         }
 
-
+        backButton.setOnClickListener{
+            requireActivity().onBackPressedDispatcher.onBackPressed()
+        }
         return view
     }
 }
@@ -218,7 +221,7 @@ class FriendRequestAdapter(
                         if (answer != null) {
                             if (answer.getString("status") == "success") {
                                 removeItem(holder.adapterPosition)
-                                api.getFriends()
+                                api.getFriendsFromWS()
                                 val updatedFriends = api.getFriendsData()
                                 friendAdapter.updateData(updatedFriends)
                             }

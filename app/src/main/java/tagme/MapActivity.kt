@@ -116,7 +116,8 @@ class MapActivity: AppCompatActivity() {
         }
         mLocationOverlay.enableMyLocation()
         coroutineScope.launch{
-            api.getFriends()
+            api.getFriendsFromWS()
+            api.getMyDataFromWS()
         }
         mLocationOverlay.runOnFirstFix {
             val myLocation = mLocationOverlay.myLocation
@@ -136,8 +137,8 @@ class MapActivity: AppCompatActivity() {
         }
         profileButton.setOnClickListener {
             coroutineScope.launch {
-                api.getFriendRequests()
-                api.getFriends()
+                api.getFriendRequestsFromWS()
+                api.getFriendsFromWS()
                 val updatedRequests = api.getFriendRequestData()
                 val updatedFriends = api.getFriendsData()
                 (profileFragment as ProfileFragment).friendRequestAdapter.updateData(updatedRequests)
@@ -147,7 +148,7 @@ class MapActivity: AppCompatActivity() {
         }
         messagesButton.setOnClickListener {
             coroutineScope.launch {
-                api.getConversations()
+                api.getConversationsFromWS()
                 val updatedConversations = api.getConversationsData()
                 (conversationFragment as ConversationsFragment).conversationsAdapter.updateData(updatedConversations)
             }
@@ -250,8 +251,8 @@ class MapActivity: AppCompatActivity() {
                     val speed = it.speed.toString()
 
                     try {
-                        api.sendLocation(latitude, longitude, accuracy, speed)
-                        api.getLocations()
+                        api.sendLocationToWS(latitude, longitude, accuracy, speed)
+                        api.getLocationsFromWS()
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
@@ -315,13 +316,13 @@ class MapActivity: AppCompatActivity() {
                 }
 
                 if (overlay != null) {
-                    overlay.setLocation(GeoPoint(friend.location!!.latitude, friend.location!!.longitude))
+                    overlay.setLocation(GeoPoint(friend.location.latitude, friend.location.longitude))
                 } else {
-                    val friendLocation = GeoPoint(friend.location!!.latitude, friend.location!!.longitude)
+                    val friendLocation = GeoPoint(friend.location.latitude, friend.location.longitude)
                     val newOverlay = CustomIconOverlay(
                         this,
                         friendLocation,
-                        friend.location!!.speed,
+                        friend.location.speed,
                         friendDrawable,
                         friend.userData.nickname,
                         R.font.my_font

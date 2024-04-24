@@ -19,20 +19,20 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginTop="5dp">
+                android:layout_marginTop="5dp"
+                android:layout_marginHorizontal="10dp">
             <ImageButton
                     android:id="@+id/back_arrow_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:src="@drawable/arrow_back"
                     android:background="@null"
-                    android:layout_marginStart="10dp"
-            />
+                    android:contentDescription="@string/go_back_button"/>
             <TextView
                     android:layout_width="0dp"
                     android:layout_weight="1"
                     android:layout_height="wrap_content"
-                    android:text="Tags: 222"
+                    android:text="@string/Tag_counter"
                     android:textColor="@color/white"
                     android:textStyle="bold"
                     android:textAppearance="?android:textAppearanceMedium"
@@ -48,8 +48,7 @@
                     android:src="@drawable/settings"
                     android:background="@null"
                     android:layout_gravity="end"
-                    android:layout_marginEnd="10dp"
-            />
+                    android:contentDescription="@string/settings_button"/>
         </LinearLayout>
         <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/profile_picture"
@@ -68,7 +67,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="0dp"
                 android:layout_weight="1"
-                android:text="Nickname"
+                android:text="@string/nickname"
                 android:textColor="@color/white"
                 android:textStyle="bold"
                 android:textAppearance="?android:textAppearanceMedium"
@@ -82,6 +81,7 @@
                 android:src="@drawable/separator"
                 android:layout_marginVertical="15dp"
                 android:layout_gravity="center"
+                android:importantForAccessibility="no"
         />
         <LinearLayout
                 android:layout_width="match_parent"
@@ -92,7 +92,7 @@
             <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="Рейтинг"
+                    android:text="@string/Rating"
                     android:textAppearance="?android:textAppearanceMedium"
                     android:fontFamily="@font/my_font"
                     android:textSize="30sp"
@@ -111,7 +111,7 @@
                     android:background="@color/transparent"
                     android:layout_marginEnd="5dp"
                     android:layout_gravity="center_vertical"
-            />
+                    android:contentDescription="@string/go_to_rating_button"/>
         </LinearLayout>
         <ImageView
                 android:layout_width="match_parent"
@@ -119,7 +119,7 @@
                 android:src="@drawable/separator"
                 android:layout_marginVertical="15dp"
                 android:layout_gravity="center"
-        />
+                android:importantForAccessibility="no"/>
         <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -130,7 +130,7 @@
             <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="Друзья"
+                    android:text="@string/friends"
                     android:textAppearance="?android:textAppearanceMedium"
                     android:fontFamily="@font/my_font"
                     android:textSize="30sp"
@@ -149,7 +149,7 @@
                     android:background="@color/transparent"
                     android:layout_marginEnd="5dp"
                     android:layout_gravity="center_vertical"
-            />
+                    android:contentDescription="@string/add_a_friend_button"/>
         </LinearLayout>
         <!-- Scrollable List of Friends -->
         <androidx.recyclerview.widget.RecyclerView
@@ -165,7 +165,7 @@
                 android:src="@drawable/separator"
                 android:layout_marginVertical="15dp"
                 android:layout_gravity="center"
-        />
+                android:importantForAccessibility="no"/>
         <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -175,7 +175,7 @@
             <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="Заявки в друзья"
+                    android:text="@string/friend_requests"
                     android:textAppearance="?android:textAppearanceMedium"
                     android:fontFamily="@font/my_font"
                     android:textSize="30sp"
@@ -217,9 +217,10 @@
             android:id="@+id/nickname_edit_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Enter Nickname"
+            android:hint="@string/enter_nickname"
             android:textColorHint="@color/grey"
             android:textSize="20sp"
+            android:autofillHints=""
             android:background="@drawable/rounded_corner"
             android:fontFamily="@font/my_font"
             android:padding="16dp"
@@ -246,7 +247,7 @@
             android:id="@+id/send_request_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Send Request"
+            android:text="@string/send_request"
             android:textSize="20sp"
             android:background="@drawable/rounded_corner"
             android:backgroundTint="@color/purple_500"

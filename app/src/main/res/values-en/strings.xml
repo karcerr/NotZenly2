@@ -1,5 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">TagMe</string>
     <string name="errorMessage">Some error</string>
     <string name="enter_nickname">Enter Nickname</string>
     <string name="send_request">Send Request</string>
@@ -9,21 +9,19 @@
     <string name="go_to_rating_button">Go to rating button</string>
     <string name="Rating">Rating</string>
     <string name="nickname">Nickname</string>
-    <string name="Tag_counter" translatable="false">Tags: 0</string>
     <string name="go_back_button">go back button</string>
     <string name="settings_button">settings button</string>
     <string name="nickname_text_placeholder">There will be displayed the nickname</string>
     <string name="last_message_placeholder">There will be displayed your last message!</string>
-    <string name="enter_your_message">Enter a message!</string>
-    <string name="send_a_message_button">send a message</string>
+    <string name="enter_your_message">Enter a message</string>
+    <string name="send_a_message_button">send a message button</string>
     <string name="attach_button">attach button</string>
     <string name="text">text</string>
-    <string name="timestamp" translatable="false">00:00</string>
     <string name="conversations">Conversations</string>
     <string name="login">Login</string>
     <string name="password">Password</string>
     <string name="log_in">Log in</string>
     <string name="register">Register</string>
     <string name="location_request">The application requires access to geolocation to operate.</string>
-    <string name="turn_location_on">Включить геолокацию</string>
+    <string name="turn_location_on">Enable geolocation</string>
 </resources>
