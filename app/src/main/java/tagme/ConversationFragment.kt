@@ -59,7 +59,7 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
                 val adapter = MessageAdapter(conversation.messages, myId)
                 adapter.setLastMessageIdListener(this@ConversationFragment)
                 recyclerView.adapter = adapter
-
+                recyclerView.scrollToPosition(adapter.itemCount - 1)
 
                 val picture = api.getPicturesData().find { it.pictureId == conversation.userData.profilePictureId }
                 if (picture != null) {
