@@ -10,12 +10,14 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tagme.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+
 
 class ConversationsFragment : Fragment() {
     lateinit var conversationsAdapter: ConversationsAdapter
@@ -28,9 +30,6 @@ class ConversationsFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_conversations, container, false)
         val backButton: ImageButton = view.findViewById(R.id.back_arrow_button)
         api = (requireActivity() as MapActivity).api
-        CoroutineScope(Dispatchers.Main).launch {
-            api.getConversationsFromWS()
-        }
         val conversationsRecyclerView: RecyclerView = view.findViewById(R.id.conversations_recycler_view)
         conversationsAdapter = ConversationsAdapter(
             requireContext(),
@@ -81,9 +80,12 @@ class ConversationsAdapter(
                 val bitmap = API.getInstance(context).getPictureData(context, picture.pictureId)
                 holder.pictureImageView.setImageBitmap(bitmap)
             }
+        } else {
+            val drawable = ContextCompat.getDrawable(context, R.drawable.person_placeholder)
+            holder.pictureImageView.setImageDrawable(drawable)
         }
         holder.conversationLayout.setOnClickListener {
-            val conversationFragment = ConversationFragment.newInstance(conversationId)
+            val conversationFragment = ConversationFragment.newInstance(conversationId, conversation.userData.nickname)
             parentActivity.supportFragmentManager.beginTransaction()
                 .replace(R.id.conversations_fragment, conversationFragment)
                 .addToBackStack(null)

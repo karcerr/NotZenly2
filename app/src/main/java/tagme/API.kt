@@ -107,7 +107,7 @@ class API private constructor(context: Context){
                         "get picture" -> when (answer.getString("status")) {
                             "success" -> parsePictureData(context, answer.getString("message"))
                         }
-                        "get messages" -> when (answer.getString("status")) {
+                        "get messages", "get new messages" -> when (answer.getString("status")) {
                             "success" -> parseMessagesData(answer.getString("message"))
                         }
                         "get my data" -> when (answer.getString("status")) {
@@ -315,6 +315,33 @@ class API private constructor(context: Context){
             waitForServerAnswer()
         }
     }
+    suspend fun getNewMessagesFromWS(conversationId: Int, lastMsgId: Int): JSONObject? {
+        return withContext(Dispatchers.IO) {
+            val requestData = JSONObject().apply {
+                put("action", "get new messages")
+                put("token", myToken)
+                put("conversation_id", conversationId)
+                put("last_message_id", lastMsgId)
+            }
+            webSocket?.send(requestData.toString())
+
+            waitForServerAnswer()
+        }
+    }
+
+    suspend fun sendMessageToWS(conversationId: Int, text: String): JSONObject? {
+        return withContext(Dispatchers.IO) {
+            val requestData = JSONObject().apply {
+                put("action", "send message")
+                put("token", myToken)
+                put("conversation_id", conversationId)
+                put("text", text)
+            }
+            webSocket?.send(requestData.toString())
+
+            waitForServerAnswer()
+        }
+    }
 
     private suspend fun waitForServerAnswer(): JSONObject? {
         return synchronized(this) {
@@ -440,6 +467,7 @@ class API private constructor(context: Context){
             val text = messageObject.getString("text")
             val pictureId = messageObject.optInt("picture_id", 0)
             val timestamp = messageObject.getString("timestamp")
+            val ifRead = messageObject.getBoolean("read")
             val existingConversation = conversationsData.find { it.conversationID == conversationId }
             val existingMessage = existingConversation?.messages?.find{it.messageId == messageId}
             if (existingConversation != null) {
@@ -450,7 +478,8 @@ class API private constructor(context: Context){
                             authorId,
                             text,
                             pictureId,
-                            Timestamp(dateFormat.parse(timestamp).time)
+                            Timestamp(dateFormat.parse(timestamp).time),
+                            ifRead
                         )
                     )
                 }
@@ -560,7 +589,8 @@ class API private constructor(context: Context){
         val authorId: Int,
         var text: String?,
         val imageId: Int?,
-        val timestamp: Timestamp
+        val timestamp: Timestamp,
+        val readL: Boolean
     )
 
 

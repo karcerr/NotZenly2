@@ -171,18 +171,14 @@ class MapActivity: AppCompatActivity() {
     private fun toggleFragmentVisibility(fragment: Fragment) {
         val transaction = fragmentManager.beginTransaction()
         transaction.setCustomAnimations(R.anim.slide_up, 0, 0, R.anim.slide_down)
-        if (fragment.isAdded) {
-            if (fragment.isVisible) {
-                fragment.exitTransition = Slide(Gravity.BOTTOM)
-                transaction.hide(fragment)
-            } else {
-                transaction.addToBackStack(null)
-                transaction.show(fragment)
-            }
+        if (fragment.isVisible) {
+            fragment.exitTransition = Slide(Gravity.BOTTOM)
+            transaction.hide(fragment)
         } else {
-            transaction.add(R.id.map, fragment, "profile_fragment")
             transaction.addToBackStack(null)
+            transaction.show(fragment)
         }
+
         transaction.commit()
     }
 

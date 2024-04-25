@@ -12,8 +12,8 @@
     <string name="Tag_counter" translatable="false">Tags: 0</string>
     <string name="go_back_button">go back button</string>
     <string name="settings_button">settings button</string>
-    <string name="nickname_text_placeholder">There will be displayed the nickname</string>
-    <string name="last_message_placeholder">There will be displayed your last message!</string>
+    <string name="nickname_text_placeholder">Nickname</string>
+    <string name="last_message_placeholder">Start a conversation!</string>
     <string name="enter_your_message">Enter a message!</string>
     <string name="send_a_message_button">send a message</string>
     <string name="attach_button">attach button</string>

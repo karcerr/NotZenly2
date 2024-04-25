@@ -11,8 +11,8 @@
     <string name="nickname">Никнейм</string>
     <string name="go_back_button">Кнопка назад</string>
     <string name="settings_button">Кнопка настроек</string>
-    <string name="nickname_text_placeholder">Здесь будет отражен никнейм</string>
-    <string name="last_message_placeholder">Здесь будет отражено последнее сообщение</string>
+    <string name="nickname_text_placeholder">Имя</string>
+    <string name="last_message_placeholder">Начните общение!</string>
     <string name="enter_your_message">Введите сообщение</string>
     <string name="send_a_message_button">Кнопка отправления сообщения</string>
     <string name="attach_button">Кнопка прикрепления вложений</string>

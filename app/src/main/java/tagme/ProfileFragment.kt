@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -38,10 +39,6 @@ class ProfileFragment : Fragment() {
         val sendRequestButton = view.findViewById<Button>(R.id.send_request_button)
         val statusText = view.findViewById<TextView>(R.id.status_text)
         nicknameText.text = api.myNickname
-        CoroutineScope(Dispatchers.Main).launch {
-            api.getFriendRequestsFromWS()
-            api.getFriendsFromWS()
-        }
         val friendRecyclerView: RecyclerView = view.findViewById(R.id.friends_recycler_view)
         friendAdapter = FriendAdapter(requireContext(), api.getFriendsData(), api, requireActivity().supportFragmentManager)
         friendRecyclerView.adapter = friendAdapter
@@ -136,6 +133,9 @@ class FriendAdapter(
                 val bitmap = API.getInstance(context).getPictureData(context, picture.pictureId)
                 holder.pictureImageView.setImageBitmap(bitmap)
             }
+        } else {
+            val drawable = ContextCompat.getDrawable(context, R.drawable.person_placeholder)
+            holder.pictureImageView.setImageDrawable(drawable)
         }
 
         holder.friendLayout.setOnClickListener {
@@ -213,6 +213,9 @@ class FriendRequestAdapter(
                         val bitmap = API.getInstance(context).getPictureData(context, picture.pictureId)
                         incomingHolder.pictureImageView.setImageBitmap(bitmap)
                     }
+                } else {
+                    val drawable = ContextCompat.getDrawable(context, R.drawable.person_placeholder)
+                    holder.pictureImageView.setImageDrawable(drawable)
                 }
                 incomingHolder.acceptButton.setOnClickListener { view ->
                     val userId = view.tag as Int
@@ -254,6 +257,9 @@ class FriendRequestAdapter(
                         val bitmap = API.getInstance(context).getPictureData(context, picture.pictureId)
                         outgoingHolder.pictureImageView.setImageBitmap(bitmap)
                     }
+                } else {
+                    val drawable = ContextCompat.getDrawable(context, R.drawable.person_placeholder)
+                    holder.pictureImageView.setImageDrawable(drawable)
                 }
 
                 outgoingHolder.cancelButton.setOnClickListener { view ->
