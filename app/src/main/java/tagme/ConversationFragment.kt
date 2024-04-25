@@ -18,7 +18,6 @@ import com.google.android.material.imageview.ShapeableImageView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.max
@@ -113,11 +112,15 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
                     val conversationId = requireArguments().getInt(ARG_CONVERSATION_ID)
                     val answer = api.getNewMessagesFromWS(conversationId, lastMessageId)
                     if (answer != null) {
-                        if (answer.getString("status") == "success") {
-                            val result = JSONObject(answer.getString("message")).getJSONArray("result")
-                            if (result.length() != 0){
-                                val updatedMessages = api.getConversationData(conversationId)?.messages.orEmpty()
-                                (recyclerView.adapter as? MessageAdapter)?.updateData(updatedMessages)
+                        val status = answer.optString("status")
+                        if (status == "success") {
+                            val messageObject = answer.optJSONObject("message")
+                            if (messageObject != null) {
+                                val result = messageObject.optJSONArray("result")
+                                if (result != null && result.length() != 0) {
+                                    val updatedMessages = api.getConversationData(conversationId)?.messages.orEmpty()
+                                    (recyclerView.adapter as? MessageAdapter)?.updateData(updatedMessages)
+                                }
                             }
                         }
                     }
