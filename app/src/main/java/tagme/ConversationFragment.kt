@@ -145,7 +145,7 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
     }
 }
 class MessageAdapter(
-    private val messageList: MutableList<API.MessageData>,
+    private var messageList:MutableList<API.MessageData>,
     private val myUserId: Int
 ) : RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() {
     private lateinit var lastMessageIdListener: LastMessageIdListener
@@ -176,7 +176,12 @@ class MessageAdapter(
         return messageList.size
     }
     fun updateData(newMessages: List<API.MessageData>) {
-        messageList.addAll(newMessages)
+        val uniqueNewMessages = newMessages.filter { newMessage ->
+            !messageList.any { existingMessage ->
+                existingMessage.messageId == newMessage.messageId
+            }
+        }
+        messageList.addAll(uniqueNewMessages)
         notifyDataSetChanged()
     }
     override fun getItemViewType(position: Int): Int {
