@@ -5,4 +5,9 @@
         <item name="cornerSize"> 25% </item>
         <item name="color"> @color/white </item>
     </style>
+    <style name="roundImageViewMsg" parent="">
+        <item name="cornerFamily"> rounded </item>
+        <item name="cornerSize"> 15% </item>
+        <item name="color"> @color/white </item>
+    </style>
 </resources>

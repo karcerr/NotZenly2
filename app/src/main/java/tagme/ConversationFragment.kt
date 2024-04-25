@@ -1,12 +1,15 @@
 package tagme
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -15,14 +18,21 @@ import com.google.android.material.imageview.ShapeableImageView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.math.max
 
 class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
     private lateinit var api: API
     private var lastMessageId: Int = -1
     private lateinit var recyclerView: RecyclerView
+    private var messageUpdateHandler: Handler? = null
+    private var messageUpdateRunnable: Runnable? = null
+
+
     companion object {
+        private const val MESSAGE_UPDATE_INTERVAL_MS = 1000L
         private const val ARG_CONVERSATION_ID = "conversationId"
         private const val ARG_NICKNAME = "nickname"
 
@@ -86,15 +96,52 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
                         editText.text.clear()
 
                         recyclerView.scrollToPosition(updatedMessages.size - 1)
+                    } else {
+                        val errorText = answer?.getString("message")
+                        Toast.makeText(requireContext(), "Error: $errorText", Toast.LENGTH_LONG)
                     }
                 }
             }
         }
-
         return view
     }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        messageUpdateRunnable = object : Runnable {
+            override fun run() {
+                CoroutineScope(Dispatchers.Main).launch {
+                    val conversationId = requireArguments().getInt(ARG_CONVERSATION_ID)
+                    val answer = api.getNewMessagesFromWS(conversationId, lastMessageId)
+                    if (answer != null) {
+                        if (answer.getString("status") == "success") {
+                            val result = JSONObject(answer.getString("message")).getJSONArray("result")
+                            if (result.length() != 0){
+                                val updatedMessages = api.getConversationData(conversationId)?.messages.orEmpty()
+                                (recyclerView.adapter as? MessageAdapter)?.updateData(updatedMessages)
+                            }
+                        }
+                    }
+                    messageUpdateHandler?.postDelayed(this@ConversationFragment.messageUpdateRunnable!!, MESSAGE_UPDATE_INTERVAL_MS)
+                }
+            }
+        }
+        startMessageUpdates()
+    }
+    override fun onDestroyView() {
+        super.onDestroyView()
+        stopMessageUpdates()
+    }
+    private fun startMessageUpdates() {
+        messageUpdateHandler = Handler(Looper.getMainLooper())
+        messageUpdateRunnable?.let { messageUpdateHandler?.postDelayed(it, MESSAGE_UPDATE_INTERVAL_MS) }
+    }
+
+    private fun stopMessageUpdates() {
+        messageUpdateRunnable?.let { messageUpdateHandler?.removeCallbacks(it) }
+        messageUpdateHandler = null
+    }
     override fun onLastMessageIdChanged(lastMessageId: Int) {
-        this.lastMessageId = lastMessageId
+        this.lastMessageId = max(this.lastMessageId, lastMessageId)
     }
 }
 class MessageAdapter(
@@ -163,5 +210,4 @@ class MessageAdapter(
     fun setLastMessageIdListener(listener: LastMessageIdListener) {
         lastMessageIdListener = listener
     }
-
 }

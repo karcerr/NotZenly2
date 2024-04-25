@@ -5,7 +5,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/incoming_message_item"
         android:orientation="horizontal"
-        android:background="@drawable/rectangle_white"
+        android:background="@drawable/msg_rectangle"
         android:backgroundTint="@color/teal_"
         android:layout_marginBottom="10dp"
         android:layout_marginRight="5dp"
