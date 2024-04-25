@@ -434,7 +434,7 @@ class API private constructor(context: Context){
         for (i in 0 until result.length()) {
             val locationObject = result.getJSONObject(i)
             val userId = locationObject.getInt("user_id")
-            val picId = locationObject.getInt("picture_id")
+            val picId = locationObject.optInt("picture_id", 0)
             myUserId = userId
             myPfpId = picId
         }
