@@ -13,6 +13,8 @@ import android.transition.Slide
 import android.util.Log
 import android.view.Gravity
 import android.view.View
+import android.view.animation.Animation
+import android.view.animation.TranslateAnimation
 import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -51,6 +53,7 @@ class MapActivity: AppCompatActivity() {
     private var scaleFactor = 15.0
     private var centeredTargetId = -1
     private var isAnimating = false
+    private var isUiHidden = false
     private var customOverlaySelf: CustomIconOverlay? = null
     //private var lastY = -1f
     //these are for constant sending location:
@@ -114,7 +117,7 @@ class MapActivity: AppCompatActivity() {
                             customOverlaySelf?.setSpeed(location.speed)
                         }
                         if (centeredTargetId == api.myUserId) {
-                            customOverlaySelf?.let { centralizeMap(it.getLocation(), centeredTargetId) }
+                            customOverlaySelf?.let { centralizeMapAnimated(it.getLocation(), centeredTargetId) }
                         }
                     }
                 }
@@ -142,13 +145,13 @@ class MapActivity: AppCompatActivity() {
                         clickListener = null
                     )
                     map.overlays.add(customOverlaySelf)
-                    centralizeMap(customOverlaySelf!!.getLocation(), api.myUserId)
-                    }
+                    centralizeMapInstant(location, api.myUserId)
+                }
             }
         }
 
         centralizeButton.setOnClickListener{
-            customOverlaySelf?.let { centralizeMap(it.getLocation(), api.myUserId) }
+            customOverlaySelf?.let { centralizeMapAnimated(it.getLocation(), api.myUserId) }
         }
         profileButton.setOnClickListener {
             coroutineScope.launch {
@@ -173,14 +176,14 @@ class MapActivity: AppCompatActivity() {
 
         map.addMapListener(object : MapListener {
             override fun onScroll(event: ScrollEvent?): Boolean {
-                if (!isAnimating) {
+                if (!isAnimating and (centeredTargetId != -1)) {
                     setCenteredFalse()
                 }
                 return true
             }
 
             override fun onZoom(event: ZoomEvent?): Boolean {
-                if (!isAnimating) {
+                if (!isAnimating and (centeredTargetId != -1)) {
                     setCenteredFalse()
                 }
                 return true
@@ -233,28 +236,72 @@ class MapActivity: AppCompatActivity() {
         return super.onTouchEvent(event)
     }
     */
-    private fun centralizeMap(location: GeoPoint, targetId: Int){
+    private fun centralizeMapAnimated(location: GeoPoint, targetId: Int){
         Log.d("Tagme_custom_log", "centralizing on $targetId")
-        isAnimating = true
-        mapController.animateTo(location, scaleFactor, 500)
-        setCenteredTrue(targetId)
-        handler.postDelayed({
-            isAnimating = false
-        }, 600)
+        if (!isAnimating) {
+            isAnimating = true
+            setCenteredTrue(targetId)
+            mapController.animateTo(location, scaleFactor, 500)
+            handler.postDelayed({
+                isAnimating = false
+            }, 650)
+        }
+    }
+    private fun centralizeMapInstant(location: GeoPoint, targetId: Int){
+        centeredTargetId = targetId
+        mapController.setCenter(location)
+        mapController.setZoom(scaleFactor)
     }
 
-    private fun setCenteredTrue(targetId: Int){
+    private fun setCenteredTrue(targetId: Int) {
         centeredTargetId = targetId
-        profileButton.visibility = View.GONE
-        messagesButton.visibility = View.GONE
-        centralizeButton.visibility = View.GONE
+        if (!isUiHidden) {
+            slideView(profileButton, View.GONE)
+            slideView(messagesButton, View.GONE)
+            slideView(centralizeButton, View.GONE)
+        }
     }
-    private fun setCenteredFalse(){
+
+    private fun setCenteredFalse() {
         centeredTargetId = -1
-        profileButton.visibility = View.VISIBLE
-        messagesButton.visibility = View.VISIBLE
-        centralizeButton.visibility = View.VISIBLE
+        if (isUiHidden) {
+            slideView(profileButton, View.VISIBLE)
+            slideView(messagesButton, View.VISIBLE)
+            slideView(centralizeButton, View.VISIBLE)
+        }
     }
+
+    private fun slideView(view: View, visibility: Int) {
+        val parentHeight = (view.parent as View).height.toFloat()
+        val animate: Animation = if (visibility == View.VISIBLE) {
+            TranslateAnimation(
+                0f,
+                0f,
+                parentHeight,
+                0f
+            )
+        } else {
+            TranslateAnimation(
+                0f,
+                0f,
+                0f,
+                parentHeight
+            )
+        }
+        animate.duration = 500
+        animate.fillAfter = true
+        animate.setAnimationListener(object : Animation.AnimationListener {
+            override fun onAnimationStart(animation: Animation?) {
+            }
+            override fun onAnimationEnd(animation: Animation?) {
+                view.visibility = visibility
+                isUiHidden = visibility != View.VISIBLE
+            }
+            override fun onAnimationRepeat(animation: Animation?) {}
+        })
+        view.startAnimation(animate)
+    }
+
 
     //Функции ниже "нужны" для my location overlays. Хотя вроде и без них работает
      override fun onResume() {
@@ -346,7 +393,7 @@ class MapActivity: AppCompatActivity() {
                 if (overlay != null) {
                     overlay.setLocation(GeoPoint(friend.location!!.latitude, friend.location!!.longitude))
                     if (centeredTargetId == overlay.getUserId()) {
-                        centralizeMap(overlay.getLocation(), friend.userData.userId)
+                        centralizeMapAnimated(overlay.getLocation(), friend.userData.userId)
                     }
                 } else {
                     val friendLocation = GeoPoint(friend.location!!.latitude, friend.location!!.longitude)
@@ -359,7 +406,7 @@ class MapActivity: AppCompatActivity() {
                         friend.userData.userId,
                         R.font.my_font,
                         clickListener = { customIconOverlay ->
-                            centralizeMap(customIconOverlay.getLocation(), friend.userData.userId)
+                            centralizeMapAnimated(customIconOverlay.getLocation(), friend.userData.userId)
                         }
                     )
 
