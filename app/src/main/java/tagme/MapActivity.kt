@@ -48,7 +48,7 @@ class MapActivity: AppCompatActivity() {
     private lateinit var centralizeButton: ImageButton
     private lateinit var profileButton: ImageButton
     private lateinit var messagesButton: ImageButton
-    private lateinit var profileFragment: Fragment
+    private lateinit var profileFragment: ProfileFragment
     private lateinit var conversationFragment: Fragment
     private var scaleFactor = 15.0
     private var centeredTargetId = -1
@@ -80,7 +80,7 @@ class MapActivity: AppCompatActivity() {
         // Initializing and hiding fragments
         fragmentManager = supportFragmentManager
         conversationFragment = fragmentManager.findFragmentById(R.id.conversations_fragment)!!
-        profileFragment = fragmentManager.findFragmentById(R.id.profile_fragment)!!
+        profileFragment = fragmentManager.findFragmentById(R.id.profile_fragment) as ProfileFragment
         val transaction = fragmentManager.beginTransaction()
         transaction.hide(profileFragment)
         transaction.hide(conversationFragment)
@@ -236,7 +236,7 @@ class MapActivity: AppCompatActivity() {
         return super.onTouchEvent(event)
     }
     */
-    private fun centralizeMapAnimated(location: GeoPoint, targetId: Int){
+    fun centralizeMapAnimated(location: GeoPoint, targetId: Int){
         Log.d("Tagme_custom_log", "centralizing on $targetId")
         if (!isAnimating) {
             isAnimating = true

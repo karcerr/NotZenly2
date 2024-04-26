@@ -113,7 +113,6 @@ class API private constructor(context: Context){
                         "get my data" -> when (answer.getString("status")) {
                             "success" -> parseMyData(answer.getString("message"))
                         }
-
                     }
                     answerReceived = true
                     synchronized(this@API) {

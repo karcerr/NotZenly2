@@ -17,6 +17,7 @@ import com.example.tagme.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.osmdroid.util.GeoPoint
 
 class ProfileFragment : Fragment() {
     lateinit var friendAdapter: FriendAdapter
@@ -40,7 +41,7 @@ class ProfileFragment : Fragment() {
         val statusText = view.findViewById<TextView>(R.id.status_text)
         nicknameText.text = api.myNickname
         val friendRecyclerView: RecyclerView = view.findViewById(R.id.friends_recycler_view)
-        friendAdapter = FriendAdapter(requireContext(), api.getFriendsData(), api, requireActivity().supportFragmentManager)
+        friendAdapter = FriendAdapter(requireContext(), api.getFriendsData(), api, requireActivity().supportFragmentManager, requireActivity() as MapActivity)
         friendRecyclerView.adapter = friendAdapter
         friendRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
 
@@ -101,12 +102,15 @@ class FriendAdapter(
     private val context: Context,
     private var friendList: MutableList<API.FriendData>,
     private val api: API,
-    private val childFragmentManager: FragmentManager
+    private val childFragmentManager: FragmentManager,
+    private val mapActivity: MapActivity
 ) : RecyclerView.Adapter<FriendAdapter.FriendViewHolder>() {
     inner class FriendViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTextView: TextView = itemView.findViewById(R.id.friend_name)
         val pictureImageView: ImageView = itemView.findViewById(R.id.friend_picture)
         val friendLayout: LinearLayout = itemView.findViewById(R.id.friend_layout)
+        val locateButton: ImageButton = itemView.findViewById(R.id.locate_friend_button)
+        val messageButton: ImageButton = itemView.findViewById(R.id.text_friend_button)
         val coroutineScope = CoroutineScope(Dispatchers.Main)
     }
     fun updateData(newFriendList: MutableList<API.FriendData>) {
@@ -141,6 +145,14 @@ class FriendAdapter(
         holder.friendLayout.setOnClickListener {
             val userProfileDialog = UserProfileDialogFragment.newInstance(friend.userData.userId)
             userProfileDialog.show(childFragmentManager, "userProfileDialog")
+        }
+        holder.locateButton.setOnClickListener {
+            val friendLocation = GeoPoint(friend.location!!.latitude, friend.location!!.longitude)
+            mapActivity.centralizeMapAnimated(friendLocation, friend.userData.userId)
+            mapActivity.onBackPressedDispatcher.onBackPressed()
+        }
+        holder.messageButton.setOnClickListener {
+
         }
     }
 
