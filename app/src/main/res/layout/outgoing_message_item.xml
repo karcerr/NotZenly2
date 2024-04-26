@@ -27,6 +27,7 @@
                 android:fontFamily="@font/my_font"
                 android:textColor="@color/teal"
                 android:layout_gravity="center_vertical"
+                android:maxWidth="250dp"
         />
         <TextView
                 android:id="@+id/outgoing_message_timestamp"
