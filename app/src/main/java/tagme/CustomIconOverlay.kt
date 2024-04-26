@@ -13,7 +13,7 @@ class CustomIconOverlay(
     private var speed: Float,
     private val drawable: Drawable,
     private var name: String,
-    private val fontResId: Int
+    private val fontResId: Int,
 ) : Overlay(context) {
     private val textPaint = Paint().apply {
         color = Color.BLACK
@@ -23,6 +23,7 @@ class CustomIconOverlay(
         strokeWidth = 2f
         style = Paint.Style.FILL_AND_STROKE
     }
+
     override fun draw(canvas: Canvas, mapView: MapView?, shadow: Boolean) {
         super.draw(canvas, mapView, shadow)
 
@@ -84,14 +85,12 @@ class CustomIconOverlay(
         }
     }
 
-
-
     private fun calculateScaleFactor(drawable: Drawable): Float {
         val placeholderWidth = dpToPx(64f)
         val placeholderHeight = dpToPx(64f)
 
         return if (placeholderWidth != 0 && placeholderHeight != 0) {
-            Math.min(placeholderWidth.toFloat() / drawable.intrinsicWidth, placeholderHeight.toFloat() / drawable.intrinsicHeight)
+            (placeholderWidth.toFloat() / drawable.intrinsicWidth).coerceAtMost(placeholderHeight.toFloat() / drawable.intrinsicHeight)
         } else {
             1f
         }
@@ -103,6 +102,9 @@ class CustomIconOverlay(
     }
     fun setLocation(newLocation: GeoPoint) {
         location = newLocation
+    }
+    fun getLocation(): GeoPoint {
+        return location
     }
     fun setSpeed(newSpeed: Float) {
         speed = newSpeed

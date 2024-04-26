@@ -108,7 +108,7 @@ class MapActivity: AppCompatActivity() {
                             customOverlaySelf?.setSpeed(location.speed)
                         }
                         if (isCentered) {
-                            centralizeMap(this)
+                            customOverlaySelf?.let { centralizeMap(it) }
                         }
                     }
                 }
@@ -123,17 +123,24 @@ class MapActivity: AppCompatActivity() {
             val myLocation = mLocationOverlay.myLocation
             if (myLocation != null) {
                 runOnUiThread {
-                    centralizeMap(mLocationOverlay)
+
                     val drawable: Drawable = resources.getDrawable(R.drawable.person_placeholder, null)
                     val location = GeoPoint(mLocationOverlay.myLocation)
-                    customOverlaySelf = CustomIconOverlay(this, location, 0.0f, drawable, "Я", R.font.my_font)
+                    customOverlaySelf = CustomIconOverlay(
+                        this,
+                        location,
+                        0.0f, drawable,
+                        "",
+                        R.font.my_font,
+                    )
                     map.overlays.add(customOverlaySelf)
+                    centralizeMap(customOverlaySelf!!)
                     }
             }
         }
 
         centralizeButton.setOnClickListener{
-            centralizeMap(mLocationOverlay)
+            customOverlaySelf?.let { it1 -> centralizeMap(it1) }
         }
         profileButton.setOnClickListener {
             coroutineScope.launch {
@@ -214,14 +221,11 @@ class MapActivity: AppCompatActivity() {
         return super.onTouchEvent(event)
     }
     */
-    private fun centralizeMap(mLocOverlay: MyLocationNewOverlay){
-        val myLocation = mLocOverlay.myLocation
-        if (myLocation != null) {
-            mapController.setCenter(GeoPoint(myLocation))
-            mapController.setZoom(scaleFactor)
-            map.mapOrientation = 0f
-            isCentered = true
-        }
+    private fun centralizeMap(locOverlay: CustomIconOverlay){
+        val location = locOverlay.getLocation()
+        //тут - без поворота. Для поворота можно добавить аргумент 0f
+        mapController.animateTo(location, scaleFactor, 500)
+        isCentered = true
     }
     //Функции ниже "нужны" для my location overlays. Хотя вроде и без них работает
      override fun onResume() {
@@ -321,10 +325,12 @@ class MapActivity: AppCompatActivity() {
                         friend.location!!.speed,
                         friendDrawable,
                         friend.userData.nickname,
-                        R.font.my_font
+                        R.font.my_font,
                     )
+
                     friendOverlays[friend.userData.nickname] = newOverlay
                     map.overlays.add(newOverlay)
+
                 }
             }
         }
