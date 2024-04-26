@@ -2,10 +2,13 @@ package tagme
 import android.content.Context
 import android.graphics.*
 import android.graphics.drawable.Drawable
+import android.view.MotionEvent
 import androidx.core.content.res.ResourcesCompat
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Overlay
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 class CustomIconOverlay(
     private val context: Context,
@@ -13,7 +16,10 @@ class CustomIconOverlay(
     private var speed: Float,
     private val drawable: Drawable,
     private var name: String,
+    private var userId: Int,
     private val fontResId: Int,
+    private val clickListener: ((CustomIconOverlay) -> Unit)?
+
 ) : Overlay(context) {
     private val textPaint = Paint().apply {
         color = Color.BLACK
@@ -23,6 +29,29 @@ class CustomIconOverlay(
         strokeWidth = 2f
         style = Paint.Style.FILL_AND_STROKE
     }
+
+
+    override fun onSingleTapConfirmed(e: MotionEvent?, mapView: MapView?): Boolean {
+        val projection = mapView?.projection
+        val point = projection?.toPixels(location, null)
+
+        point?.let {
+            val x = e?.x ?: 0f
+            val y = e?.y ?: 0f
+
+            val distance = sqrt((x - it.x).toDouble().pow(2.0) + (y - it.y).toDouble().pow(2.0))
+
+            val iconRadius = (drawable.intrinsicWidth * calculateScaleFactor(drawable) / 2).toFloat()
+
+            if (distance <= iconRadius) {
+                clickListener?.invoke(this)
+                return true
+            }
+        }
+
+        return super.onSingleTapConfirmed(e, mapView)
+    }
+
 
     override fun draw(canvas: Canvas, mapView: MapView?, shadow: Boolean) {
         super.draw(canvas, mapView, shadow)
@@ -103,11 +132,14 @@ class CustomIconOverlay(
     fun setLocation(newLocation: GeoPoint) {
         location = newLocation
     }
-    fun getLocation(): GeoPoint {
-        return location
-    }
+
     fun setSpeed(newSpeed: Float) {
         speed = newSpeed
     }
-
+    fun getLocation(): GeoPoint {
+        return location
+    }
+    fun getUserId(): Int {
+        return userId
+    }
 }
