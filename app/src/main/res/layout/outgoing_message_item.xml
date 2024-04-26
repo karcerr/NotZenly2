@@ -32,7 +32,7 @@
         <TextView
                 android:id="@+id/outgoing_message_timestamp"
                 android:text="@string/timestamp"
-                android:layout_width="50dp"
+                android:layout_width="40dp"
                 android:layout_height="wrap_content"
                 android:textSize="12sp"
                 android:textStyle="bold"
