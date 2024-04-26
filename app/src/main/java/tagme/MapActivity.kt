@@ -244,7 +244,7 @@ class MapActivity: AppCompatActivity() {
             mapController.animateTo(location, scaleFactor, 500)
             handler.postDelayed({
                 isAnimating = false
-            }, 650)
+            }, 550)
         }
     }
     private fun centralizeMapInstant(location: GeoPoint, targetId: Int){
@@ -255,25 +255,27 @@ class MapActivity: AppCompatActivity() {
 
     private fun setCenteredTrue(targetId: Int) {
         centeredTargetId = targetId
-        if (!isUiHidden) {
-            slideView(profileButton, View.GONE)
-            slideView(messagesButton, View.GONE)
-            slideView(centralizeButton, View.GONE)
+        if (!isUiHidden and (targetId != api.myUserId)) {
+            isUiHidden = true
+            slideView(profileButton, true)
+            slideView(messagesButton, true)
+            slideView(centralizeButton, true)
         }
     }
 
     private fun setCenteredFalse() {
         centeredTargetId = -1
         if (isUiHidden) {
-            slideView(profileButton, View.VISIBLE)
-            slideView(messagesButton, View.VISIBLE)
-            slideView(centralizeButton, View.VISIBLE)
+            isUiHidden = false
+            slideView(profileButton, false)
+            slideView(messagesButton, false)
+            slideView(centralizeButton, false)
         }
     }
 
-    private fun slideView(view: View, visibility: Int) {
+    private fun slideView(view: View, hide: Boolean) {
         val parentHeight = (view.parent as View).height.toFloat()
-        val animate: Animation = if (visibility == View.VISIBLE) {
+        val animate: Animation = if (!hide) {
             TranslateAnimation(
                 0f,
                 0f,
@@ -290,15 +292,6 @@ class MapActivity: AppCompatActivity() {
         }
         animate.duration = 500
         animate.fillAfter = true
-        animate.setAnimationListener(object : Animation.AnimationListener {
-            override fun onAnimationStart(animation: Animation?) {
-            }
-            override fun onAnimationEnd(animation: Animation?) {
-                view.visibility = visibility
-                isUiHidden = visibility != View.VISIBLE
-            }
-            override fun onAnimationRepeat(animation: Animation?) {}
-        })
         view.startAnimation(animate)
     }
 
