@@ -360,6 +360,7 @@ class API private constructor(context: Context){
     }
     private fun parseFriendsData(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
+        val picturesToRequest = mutableSetOf<Int>()
 
         for (i in 0 until result.length()) {
             val friendObject = result.getJSONObject(i)
@@ -369,9 +370,7 @@ class API private constructor(context: Context){
             if (pictureId != 0) {
                 val existingPicture = picsData.find { it.pictureId == pictureId }
                 if ((existingPicture == null) or (existingPicture?.imagePath == null)) {
-                    coroutineScope.launch {
-                        getPictureFromWS(pictureId)
-                    }
+                    picturesToRequest.add(pictureId)
                 }
             }
             val existingFriend = friendsData.find { it.userData.userId == id }
@@ -379,6 +378,12 @@ class API private constructor(context: Context){
                 friendsData.add(FriendData(UserData(id, nickname, pictureId), null))
             }
         }
+        coroutineScope.launch {
+            for (pictureId in picturesToRequest) {
+                getPictureFromWS(pictureId)
+            }
+        }
+
     }
     private fun parsePictureData(context: Context, jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
@@ -389,9 +394,7 @@ class API private constructor(context: Context){
             val existingPicture = picsData.find { it.pictureId == pictureId }
             if (existingPicture == null) {
                 val pictureData: ByteArray = Base64.getDecoder().decode(pictureDataString)
-
                 val imagePath = saveImageToCache(context, pictureId.toString(), pictureData)
-
                 val newPictureData = PictureData(pictureId, imagePath)
                 val updatedPicturesData = picsData.toMutableList().apply {
                     add(newPictureData)
@@ -489,6 +492,7 @@ class API private constructor(context: Context){
     private fun parseFriendRequestData(jsonString: String) {
         val result = JSONObject(jsonString).getJSONArray("result")
         val userIdsInResult = HashSet<Int>() // Store user ids present in the result
+        val picturesToRequest = mutableSetOf<Int>()
 
         // Parse result JSON and update or add FriendRequestData
         for (i in 0 until result.length()) {
@@ -502,9 +506,7 @@ class API private constructor(context: Context){
             if (pictureId != 0) {
                 val existingPicture = picsData.find { it.pictureId == pictureId }
                 if ((existingPicture == null) or (existingPicture?.imagePath == null)) {
-                    coroutineScope.launch {
-                        getPictureFromWS(pictureId)
-                    }
+                    picturesToRequest.add(pictureId)
                 }
             }
             val existingFriendRequest = friendsRequestsData.find { it.userData.userId == id }
@@ -522,6 +524,11 @@ class API private constructor(context: Context){
             val friendRequest = iterator.next()
             if (friendRequest.userData.userId !in userIdsInResult) {
                 iterator.remove()
+            }
+        }
+        coroutineScope.launch {
+            for (pictureId in picturesToRequest) {
+                getPictureFromWS(pictureId)
             }
         }
     }
