@@ -449,7 +449,15 @@ class API private constructor(context: Context){
                         UserData(userId, nickname, profilePictureId), mutableListOf(),
                         null))
                 }
-
+            } else {
+                existingConversation.userData = UserData(userId, nickname, profilePictureId)
+                if (lastMessageAuthorId != 0) {
+                    Log.d("Tagme_custom_log1",
+                        (existingConversation.lastMessage == LastMessageData(lastMessageAuthorId, lastMessageText, lastMessagePictureId,Timestamp(dateFormat.parse(timestamp)!!.time), read)).toString()
+                    )
+                    existingConversation.lastMessage = LastMessageData(lastMessageAuthorId, lastMessageText, lastMessagePictureId,
+                        Timestamp(dateFormat.parse(timestamp)!!.time), read)
+                }
             }
         }
     }
@@ -568,7 +576,7 @@ class API private constructor(context: Context){
     )
     data class ConversationData(
         val conversationID: Int,
-        val userData: UserData,
+        var userData: UserData,
         var messages: MutableList<MessageData>,
         var lastMessage: LastMessageData?
     )

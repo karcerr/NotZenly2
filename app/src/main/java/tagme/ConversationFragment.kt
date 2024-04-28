@@ -62,12 +62,13 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
         val editText: EditText = view.findViewById(R.id.message_edit_text)
         val sendMessageButton: ImageButton = view.findViewById(R.id.send_msg_button)
         nickname.text = requireArguments().getString(ARG_NICKNAME)
+        recyclerView = view.findViewById(R.id.messageRecyclerView)
+        recyclerView.layoutManager = LinearLayoutManager(context)
+
         CoroutineScope(Dispatchers.Main).launch {
             api.getMessagesFromWS(conversationId, -1)
             val conversation = conversationId.let { api.getConversationData(it) }
             if (conversation != null) {
-                recyclerView = view.findViewById(R.id.messageRecyclerView)
-                recyclerView.layoutManager = LinearLayoutManager(context)
                 val adapter = MessageAdapter(conversation.messages, myId)
                 adapter.setLastMessageIdListener(this@ConversationFragment)
                 recyclerView.adapter = adapter
@@ -106,26 +107,24 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        messageUpdateRunnable = object : Runnable {
-            override fun run() {
-                CoroutineScope(Dispatchers.Main).launch {
-                    val conversationId = requireArguments().getInt(ARG_CONVERSATION_ID)
-                    val answer = api.getNewMessagesFromWS(conversationId, lastMessageId)
-                    if (answer != null) {
-                        val status = answer.optString("status")
-                        if (status == "success") {
-                            val messageObject = answer.optJSONObject("message")
-                            if (messageObject != null) {
-                                val result = messageObject.optJSONArray("result")
-                                if (result != null && result.length() != 0) {
-                                    val updatedMessages = api.getConversationData(conversationId)?.messages.orEmpty()
-                                    (recyclerView.adapter as? MessageAdapter)?.updateData(updatedMessages)
-                                }
+        messageUpdateRunnable = Runnable {
+            CoroutineScope(Dispatchers.Main).launch {
+                val conversationId = requireArguments().getInt(ARG_CONVERSATION_ID)
+                val answer = api.getNewMessagesFromWS(conversationId, lastMessageId)
+                if (answer != null) {
+                    val status = answer.optString("status")
+                    if (status == "success") {
+                        val messageObject = answer.optJSONObject("message")
+                        if (messageObject != null) {
+                            val result = messageObject.optJSONArray("result")
+                            if (result != null && result.length() != 0) {
+                                val updatedMessages = api.getConversationData(conversationId)?.messages.orEmpty()
+                                (recyclerView.adapter as? MessageAdapter)?.updateData(updatedMessages)
                             }
                         }
                     }
-                    messageUpdateHandler?.postDelayed(this@ConversationFragment.messageUpdateRunnable!!, MESSAGE_UPDATE_INTERVAL_MS)
                 }
+                messageUpdateHandler?.postDelayed(this@ConversationFragment.messageUpdateRunnable!!, MESSAGE_UPDATE_INTERVAL_MS)
             }
         }
         startMessageUpdates()
