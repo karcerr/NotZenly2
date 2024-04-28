@@ -26,4 +26,5 @@
     <string name="register">Register</string>
     <string name="location_request">The application requires access to geolocation to operate.</string>
     <string name="turn_location_on">Включить геолокацию</string>
+    <string name="date_placeholder" translatable="false">01.02.2024</string>
 </resources>

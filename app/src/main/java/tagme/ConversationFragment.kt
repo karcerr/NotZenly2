@@ -18,9 +18,12 @@ import com.google.android.material.imageview.ShapeableImageView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.sql.Timestamp
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.math.max
+
 
 class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
     private lateinit var api: API
@@ -150,30 +153,49 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
 class MessageAdapter(
     private var messageList:MutableList<API.MessageData>,
     private val myUserId: Int
-) : RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() {
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private lateinit var lastMessageIdListener: LastMessageIdListener
 
     companion object {
         const val INCOMING_MESSAGE_TYPE = 0
         const val OUTGOING_MESSAGE_TYPE = 1
+        const val DATE_SEPARATOR_TYPE = 2
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
-        val layoutId = if (viewType == INCOMING_MESSAGE_TYPE) {
-            R.layout.incoming_message_item
-        } else {
-            R.layout.outgoing_message_item
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return when (viewType) {
+            INCOMING_MESSAGE_TYPE -> {
+                val view = LayoutInflater.from(parent.context).inflate(R.layout.incoming_message_item, parent, false)
+                MessageViewHolder(view)
+            }
+            OUTGOING_MESSAGE_TYPE -> {
+                val view = LayoutInflater.from(parent.context).inflate(R.layout.outgoing_message_item, parent, false)
+                MessageViewHolder(view)
+            }
+            DATE_SEPARATOR_TYPE -> {
+                val view = LayoutInflater.from(parent.context).inflate(R.layout.date_separator_item, parent, false)
+                DateSeparatorViewHolder(view)
+            }
+            else -> throw IllegalArgumentException("Invalid view type")
         }
-        val view = LayoutInflater.from(parent.context).inflate(layoutId, parent, false)
-        return MessageViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
-        val message = messageList[position]
-        val messageId = message.messageId
-        lastMessageIdListener.onLastMessageIdChanged(messageId)
-        holder.bind(message)
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        when (holder.itemViewType) {
+            INCOMING_MESSAGE_TYPE, OUTGOING_MESSAGE_TYPE -> {
+                val messageViewHolder = holder as MessageViewHolder
+                val message = messageList[position]
+                messageViewHolder.bind(message)
+            }
+            DATE_SEPARATOR_TYPE -> {
+                val dateSeparatorViewHolder = holder as DateSeparatorViewHolder
+                val message = messageList[position]
+                val date = message.timestamp.toLocalDateTime().toLocalDate().toString()
+                dateSeparatorViewHolder.bind(date)
+            }
+        }
     }
+
 
     override fun getItemCount(): Int {
         return messageList.size
@@ -185,16 +207,25 @@ class MessageAdapter(
             }
         }
         messageList.addAll(uniqueNewMessages)
+        messageList.sortBy {it.timestamp}
         notifyDataSetChanged()
     }
     override fun getItemViewType(position: Int): Int {
         val message = messageList[position]
-        return if (message.authorId == myUserId) {
-            OUTGOING_MESSAGE_TYPE
-        } else {
-            INCOMING_MESSAGE_TYPE
+        val previousMessage = if (position > 0) messageList[position - 1] else null
+
+        if (previousMessage == null) {
+            return if (message.authorId == myUserId) OUTGOING_MESSAGE_TYPE else INCOMING_MESSAGE_TYPE
         }
+
+        val currentMessageDate = message.timestamp.toLocalDateTime().toLocalDate()
+        val previousMessageDate = previousMessage.timestamp.toLocalDateTime().toLocalDate()
+
+        return if (currentMessageDate != previousMessageDate) DATE_SEPARATOR_TYPE
+        else if (message.authorId == myUserId) OUTGOING_MESSAGE_TYPE
+        else INCOMING_MESSAGE_TYPE
     }
+
 
     inner class MessageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
@@ -212,10 +243,20 @@ class MessageAdapter(
             }
         }
     }
+    inner class DateSeparatorViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val dateTextView: TextView = itemView.findViewById(R.id.dateTextView)
+        fun bind(date: String) {
+            dateTextView.text = date
+        }
+    }
+
     interface LastMessageIdListener {
         fun onLastMessageIdChanged(lastMessageId: Int)
     }
     fun setLastMessageIdListener(listener: LastMessageIdListener) {
         lastMessageIdListener = listener
     }
+}
+fun Timestamp.toLocalDateTime(): LocalDateTime {
+    return LocalDateTime.ofInstant(this.toInstant(), ZoneId.systemDefault())
 }
