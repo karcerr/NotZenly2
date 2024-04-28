@@ -9,7 +9,10 @@
             android:layout_width="0dp"
             android:layout_weight=".5"
             android:layout_height="match_parent"
-            android:src="@drawable/separator"
+            android:src="@drawable/separator_small"
+            android:layout_gravity="center"
+            android:importantForAccessibility="no"
+            android:layout_marginEnd="10dp"
     />
     <TextView
             android:id="@+id/dateTextView"
@@ -27,7 +30,10 @@
             android:layout_width="0dp"
             android:layout_weight=".5"
             android:layout_height="match_parent"
-            android:src="@drawable/separator"
+            android:layout_gravity="center"
+            android:src="@drawable/separator_small"
+            android:importantForAccessibility="no"
+            android:layout_marginStart="10dp"
     />
 
 </LinearLayout>

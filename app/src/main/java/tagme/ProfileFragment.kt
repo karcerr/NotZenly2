@@ -29,10 +29,12 @@ class ProfileFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_profile, container, false)
+        val coroutineScope = CoroutineScope(Dispatchers.Main)
         val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         val addFriendButton = view.findViewById<ImageButton>(R.id.add_friend_button)
         val addFriendWindow = view.findViewById<View>(R.id.add_friend_window)
         val nicknameText = view.findViewById<TextView>(R.id.nickname_text)
+        val myProfilePic = view.findViewById<ImageView>(R.id.profile_picture)
         val darkOverlay = view.findViewById<View>(R.id.dark_overlay)
         val requestInput = view.findViewById<EditText>(R.id.nickname_edit_text)
         val backButton = view.findViewById<ImageButton>(R.id.back_arrow_button)
@@ -40,6 +42,15 @@ class ProfileFragment : Fragment() {
         val sendRequestButton = view.findViewById<Button>(R.id.send_request_button)
         val statusText = view.findViewById<TextView>(R.id.status_text)
         nicknameText.text = api.myNickname
+        if (api.myPfpId != 0) {
+            coroutineScope.launch {
+                val bitmap = api.getPictureData(api.myPfpId)
+                if (bitmap != null) {
+                    myProfilePic.setImageBitmap(bitmap)
+                }
+            }
+        }
+
         val friendRecyclerView: RecyclerView = view.findViewById(R.id.friends_recycler_view)
         friendAdapter = FriendAdapter(requireContext(), api.getFriendsData(), api, requireActivity().supportFragmentManager, requireActivity() as MapActivity)
         friendRecyclerView.adapter = friendAdapter
@@ -60,7 +71,7 @@ class ProfileFragment : Fragment() {
         }
         sendRequestButton.setOnClickListener{
             val nickname = requestInput.text.toString()
-            CoroutineScope(Dispatchers.Main).launch {
+            coroutineScope.launch {
                 val answer = api.sendFriendRequestToWS(nickname)
                 if (answer != null) {
                     val message = answer.getString("message")
@@ -131,15 +142,16 @@ class FriendAdapter(
         val friend = friendList[position]
 
         holder.nameTextView.text = friend.userData.nickname
-        val picture = api.getPicturesData().find { it.pictureId == friend.userData.profilePictureId }
-        if (picture != null) {
+        val drawablePlaceholder = ContextCompat.getDrawable(context, R.drawable.person_placeholder)
+        holder.pictureImageView.setImageDrawable(drawablePlaceholder)
+
+        if (friend.userData.profilePictureId != 0) {
             holder.coroutineScope.launch {
-                val bitmap = API.getInstance(context).getPictureData(context, picture.pictureId)
-                holder.pictureImageView.setImageBitmap(bitmap)
+                val bitmap = api.getPictureData(friend.userData.profilePictureId)
+                if (bitmap != null) {
+                    holder.pictureImageView.setImageBitmap(bitmap)
+                }
             }
-        } else {
-            val drawable = ContextCompat.getDrawable(context, R.drawable.person_placeholder)
-            holder.pictureImageView.setImageDrawable(drawable)
         }
 
         holder.friendLayout.setOnClickListener {
@@ -209,7 +221,7 @@ class FriendRequestAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val requestee = requestList[position]
-        val picture = api.getPicturesData().find { it.pictureId == requestee.userData.profilePictureId }
+        val drawablePlaceholder = ContextCompat.getDrawable(context, R.drawable.person_placeholder)
         when (holder.itemViewType) {
             VIEW_TYPE_INCOMING -> {
                 val incomingHolder = holder as IncomingFriendRequestViewHolder
@@ -220,18 +232,19 @@ class FriendRequestAdapter(
                     val userProfileDialog = UserProfileDialogFragment.newInstance(requestee.userData.userId)
                     userProfileDialog.show(childFragmentManager, "userProfileDialog")
                 }
-                if (picture != null) {
+                holder.pictureImageView.setImageDrawable(drawablePlaceholder)
+                if (requestee.userData.profilePictureId != 0) {
                     incomingHolder.coroutineScope.launch {
-                        val bitmap = API.getInstance(context).getPictureData(context, picture.pictureId)
-                        incomingHolder.pictureImageView.setImageBitmap(bitmap)
+                        val bitmap = api.getPictureData(requestee.userData.profilePictureId)
+                        if (bitmap != null) {
+                            incomingHolder.pictureImageView.setImageBitmap(bitmap)
+                        }
                     }
-                } else {
-                    val drawable = ContextCompat.getDrawable(context, R.drawable.person_placeholder)
-                    holder.pictureImageView.setImageDrawable(drawable)
                 }
+
                 incomingHolder.acceptButton.setOnClickListener { view ->
                     val userId = view.tag as Int
-                    CoroutineScope(Dispatchers.Main).launch {
+                    incomingHolder.coroutineScope.launch {
                         val answer = api.acceptFriendRequest(userId)
                         if (answer != null) {
                             if (answer.getString("status") == "success") {
@@ -245,7 +258,7 @@ class FriendRequestAdapter(
                 }
                 incomingHolder.denyButton.setOnClickListener { view ->
                     val userId = view.tag as Int
-                    CoroutineScope(Dispatchers.Main).launch {
+                    incomingHolder.coroutineScope.launch {
                         val answer = api.denyFriendRequest(userId)
                         if (answer != null) {
                             if (answer.getString("status") == "success") {
@@ -264,19 +277,18 @@ class FriendRequestAdapter(
                     val userProfileDialog = UserProfileDialogFragment.newInstance(requestee.userData.userId)
                     userProfileDialog.show(childFragmentManager, "userProfileDialog")
                 }
-                if (picture != null) {
+                holder.pictureImageView.setImageDrawable(drawablePlaceholder)
+                if (requestee.userData.profilePictureId != 0) {
                     outgoingHolder.coroutineScope.launch {
-                        val bitmap = API.getInstance(context).getPictureData(context, picture.pictureId)
-                        outgoingHolder.pictureImageView.setImageBitmap(bitmap)
+                        val bitmap = api.getPictureData(requestee.userData.profilePictureId)
+                        if (bitmap != null) {
+                            outgoingHolder.pictureImageView.setImageBitmap(bitmap)
+                        }
                     }
-                } else {
-                    val drawable = ContextCompat.getDrawable(context, R.drawable.person_placeholder)
-                    holder.pictureImageView.setImageDrawable(drawable)
                 }
-
                 outgoingHolder.cancelButton.setOnClickListener { view ->
                     val userId = view.tag as Int
-                    CoroutineScope(Dispatchers.Main).launch {
+                    outgoingHolder.coroutineScope.launch {
                         val answer = api.cancelFriendRequest(userId)
                         if (answer != null) {
                             if (answer.getString("status") == "success") {

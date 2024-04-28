@@ -73,11 +73,8 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
                 recyclerView.adapter = adapter
                 recyclerView.scrollToPosition(adapter.itemCount - 1)
 
-                val picture = api.getPicturesData().find { it.pictureId == conversation.userData.profilePictureId }
-                if (picture != null) {
-                    val bitmap = requireContext().let {
-                        API.getInstance(it).getPictureData(requireContext(), picture.pictureId)
-                    }
+                val bitmap = api.getPictureData(conversation.userData.profilePictureId)
+                if (bitmap != null) {
                     pfp.setImageBitmap(bitmap)
                 }
 
@@ -155,7 +152,7 @@ class MessageAdapter(
     private val myUserId: Int
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private lateinit var lastMessageIdListener: LastMessageIdListener
-
+    private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
     companion object {
         const val INCOMING_MESSAGE_TYPE = 0
         const val OUTGOING_MESSAGE_TYPE = 1
@@ -228,8 +225,6 @@ class MessageAdapter(
 
 
     inner class MessageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
-
         fun bind(message: API.MessageData) {
             val timestampDateTime = LocalDateTime.parse(message.timestamp.toString(), dateFormatter)
             val timestampText = timestampDateTime.format(DateTimeFormatter.ofPattern("HH:mm"))

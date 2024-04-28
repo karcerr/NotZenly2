@@ -14,13 +14,14 @@ class CustomIconOverlay(
     private val context: Context,
     private var location: GeoPoint,
     private var speed: Float,
-    private val drawable: Drawable,
+    private var drawable: Drawable,
     private var name: String,
     private var userId: Int,
     private val fontResId: Int,
     private val clickListener: ((CustomIconOverlay) -> Unit)?
 
 ) : Overlay(context) {
+    var mapView: MapView? = null
     private val textPaint = Paint().apply {
         color = Color.BLACK
         textSize = 48f
@@ -142,4 +143,9 @@ class CustomIconOverlay(
     fun getUserId(): Int {
         return userId
     }
+    fun updateDrawable(newDrawable: Drawable) {
+        drawable = newDrawable
+        mapView?.invalidate()
+    }
+
 }

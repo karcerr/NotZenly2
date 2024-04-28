@@ -2,9 +2,7 @@ package tagme
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
 import android.location.Location
 import android.os.Bundle
 import android.os.Handler
@@ -62,7 +60,7 @@ class MapActivity: AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     //these are for storing friends and drawing overlays:
     private val friendOverlays: MutableMap<Int, CustomIconOverlay> = mutableMapOf()
-    lateinit var fragmentManager : FragmentManager
+    private lateinit var fragmentManager : FragmentManager
     private val handler = Handler(Looper.getMainLooper())
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -126,26 +124,35 @@ class MapActivity: AppCompatActivity() {
         mLocationOverlay.enableMyLocation()
         coroutineScope.launch{
             api.getFriendsFromWS()
-            api.getMyDataFromWS()
         }
         mLocationOverlay.runOnFirstFix {
             val myLocation = mLocationOverlay.myLocation
             if (myLocation != null) {
                 runOnUiThread {
-
-                    val drawable: Drawable = resources.getDrawable(R.drawable.person_placeholder, null)
+                    val selfDrawablePlaceHolder = ResourcesCompat.getDrawable(resources, R.drawable.person_placeholder, null)!!
                     val location = GeoPoint(mLocationOverlay.myLocation)
                     customOverlaySelf = CustomIconOverlay(
                         this,
                         location,
-                        0.0f, drawable,
+                        0.0f,
+                        selfDrawablePlaceHolder,
                         "",
                         api.myUserId,
                         R.font.my_font,
                         clickListener = null
-                    )
+                    ).apply {
+                        mapView = map
+                    }
                     map.overlays.add(customOverlaySelf)
                     centralizeMapInstant(location, api.myUserId)
+                    coroutineScope.launch {
+                        if (api.myPfpId != 0) {
+                            val bitmap = api.getPictureData(api.myPfpId)
+                            if (bitmap != null) {
+                                customOverlaySelf!!.updateDrawable(BitmapDrawable(resources, bitmap))
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -159,8 +166,8 @@ class MapActivity: AppCompatActivity() {
                 api.getFriendsFromWS()
                 val updatedRequests = api.getFriendRequestData()
                 val updatedFriends = api.getFriendsData()
-                (profileFragment as ProfileFragment).friendRequestAdapter.updateData(updatedRequests)
-                (profileFragment as ProfileFragment).friendAdapter.updateData(updatedFriends)
+                profileFragment.friendRequestAdapter.updateData(updatedRequests)
+                profileFragment.friendAdapter.updateData(updatedFriends)
             }
             toggleFragmentVisibility(profileFragment)
         }
@@ -371,17 +378,7 @@ class MapActivity: AppCompatActivity() {
         friendsData.forEach { friend ->
             if (friend.location != null) {
                 val overlay = friendOverlays[friend.userData.userId]
-                val friendDrawable: Drawable = if (friend.userData.profilePictureId != 0) {
-                    val imagePath = api.getPicturesData().find { it.pictureId == friend.userData.profilePictureId }?.imagePath
-                    if (imagePath != null) {
-                        val bitmap = BitmapFactory.decodeFile(imagePath)
-                        BitmapDrawable(resources, bitmap)
-                    } else {
-                        ResourcesCompat.getDrawable(resources, R.drawable.person_placeholder, null)!!
-                    }
-                } else {
-                    ResourcesCompat.getDrawable(resources, R.drawable.person_placeholder, null)!!
-                }
+                val placeholderDrawable = ResourcesCompat.getDrawable(resources, R.drawable.person_placeholder, null)!!
 
                 if (overlay != null) {
                     overlay.setLocation(GeoPoint(friend.location!!.latitude, friend.location!!.longitude))
@@ -394,22 +391,31 @@ class MapActivity: AppCompatActivity() {
                         this,
                         friendLocation,
                         friend.location!!.speed,
-                        friendDrawable,
+                        placeholderDrawable,
                         friend.userData.nickname,
                         friend.userData.userId,
                         R.font.my_font,
                         clickListener = { customIconOverlay ->
                             centralizeMapAnimated(customIconOverlay.getLocation(), friend.userData.userId)
                         }
-                    )
+                    ).apply {
+                        mapView = map
+                    }
 
                     friendOverlays[friend.userData.userId] = newOverlay
                     map.overlays.add(newOverlay)
+                    if (friend.userData.profilePictureId != 0) {
+                        coroutineScope.launch {
+                            val bitmap = api.getPictureData(friend.userData.profilePictureId)
+                            if (bitmap != null) {
+                                friendOverlays[friend.userData.userId]!!.updateDrawable(BitmapDrawable(resources, bitmap))
+                            }
+                        }
+                    }
                 }
             }
         }
     }
-
 
     override fun onDestroy() {
         super.onDestroy()
