@@ -3,6 +3,7 @@ package tagme
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -64,12 +65,33 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
         nickname.text = requireArguments().getString(ARG_NICKNAME)
         recyclerView = view.findViewById(R.id.messageRecyclerView)
         recyclerView.layoutManager = LinearLayoutManager(context)
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
 
+                val isAtBottom = !recyclerView.canScrollVertically(1)
+                (recyclerView.adapter as? MessageAdapter)?.bottomSticking = isAtBottom
+            }
+        })
+        recyclerView.addOnLayoutChangeListener { _, _, _, _, bottom, _, _, _, oldBottom ->
+            if (bottom < oldBottom) {
+                recyclerView.post {
+                    recyclerView.smoothScrollToPosition(
+                        recyclerView.adapter!!.itemCount - 1
+                    )
+                }
+            }
+        }
         CoroutineScope(Dispatchers.Main).launch {
             api.getMessagesFromWS(conversationId, -1)
-            val conversation = conversationId.let { api.getConversationData(it) }
+            val conversation =  api.getConversationData(conversationId)
+
             if (conversation != null) {
-                val adapter = MessageAdapter(conversation.messages, myId)
+                val deepConversationCopy = conversation.copy()
+                deepConversationCopy.messages = conversation.messages.map {it.copy()}.toMutableList()
+                deepConversationCopy.messages.sortBy { it.timestamp }
+                lastMessageId = conversation.messages.lastOrNull()?.messageId ?: -1
+                val adapter = MessageAdapter(deepConversationCopy.messages, myId, recyclerView)
                 adapter.setLastMessageIdListener(this@ConversationFragment)
                 recyclerView.adapter = adapter
                 recyclerView.scrollToPosition(adapter.itemCount - 1)
@@ -92,10 +114,13 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
                     if (answer != null && answer.getString("status") == "success") {
                         api.getNewMessagesFromWS(conversationId, lastMessageId)
                         val updatedMessages = api.getConversationData(conversationId)?.messages.orEmpty()
-                        (recyclerView.adapter as? MessageAdapter)?.updateData(updatedMessages)
+                        val updatedMessagesDeepCopy = updatedMessages.map {it.copy()}
+                        Log.d("Tagme_custom_log", "updatedMessages: $updatedMessagesDeepCopy")
+                        (recyclerView.adapter as? MessageAdapter)?.updateData(updatedMessagesDeepCopy)
+                        if ((recyclerView.adapter as? MessageAdapter)?.bottomSticking == false) {
+                            recyclerView.smoothScrollToPosition(recyclerView.adapter!!.itemCount - 1)
+                        }
                         editText.text.clear()
-
-                        recyclerView.scrollToPosition(updatedMessages.size - 1)
                     } else {
                         val errorText = answer?.getString("message")
                         Toast.makeText(requireContext(), "Error: $errorText", Toast.LENGTH_LONG)
@@ -119,7 +144,8 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
                             val result = messageObject.optJSONArray("result")
                             if (result != null && result.length() != 0) {
                                 val updatedMessages = api.getConversationData(conversationId)?.messages.orEmpty()
-                                (recyclerView.adapter as? MessageAdapter)?.updateData(updatedMessages)
+                                val updatedMessagesDeepCopy = updatedMessages.map {it.copy()}
+                                (recyclerView.adapter as? MessageAdapter)?.updateData(updatedMessagesDeepCopy)
                             }
                         }
                     }
@@ -132,6 +158,7 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
     override fun onDestroyView() {
         super.onDestroyView()
         stopMessageUpdates()
+        recyclerView.viewTreeObserver.removeOnGlobalLayoutListener {}
     }
     private fun startMessageUpdates() {
         messageUpdateHandler = Handler(Looper.getMainLooper())
@@ -144,14 +171,17 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
     }
     override fun onLastMessageIdChanged(lastMessageId: Int) {
         this.lastMessageId = max(this.lastMessageId, lastMessageId)
+        Log.d("Tagme_custom_log", this.lastMessageId.toString())
     }
 }
 class MessageAdapter(
     private var messageList:MutableList<API.MessageData>,
-    private val myUserId: Int
+    private val myUserId: Int,
+    private val recyclerView: RecyclerView
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private lateinit var lastMessageIdListener: LastMessageIdListener
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
+    var bottomSticking = true
     companion object {
         const val INCOMING_MESSAGE_TYPE = 0
         const val OUTGOING_MESSAGE_TYPE = 1
@@ -197,15 +227,66 @@ class MessageAdapter(
         return messageList.size
     }
     fun updateData(newMessages: List<API.MessageData>) {
-        val uniqueNewMessages = newMessages.filter { newMessage ->
+        val messagesToAdd = newMessages.filter { newMessage ->
             !messageList.any { existingMessage ->
                 existingMessage.messageId == newMessage.messageId
             }
         }
-        messageList.addAll(uniqueNewMessages)
-        messageList.sortBy {it.timestamp}
-        notifyDataSetChanged()
+        val messagesToUpdate = newMessages.filter { newMessage ->
+            messageList.any { existingMessage ->
+                existingMessage.messageId == newMessage.messageId && existingMessage != newMessage
+            }
+        }
+        val messagesToRemove = messageList.filter { existingMessage ->
+            !newMessages.any { newMessage ->
+                existingMessage.messageId == newMessage.messageId
+            }
+        }
+
+        if (messagesToAdd.isNotEmpty()) {
+            messageList.addAll(messagesToAdd)
+            messageList.sortBy { it.timestamp }
+            notifyItemRangeInserted(itemCount, messagesToAdd.size)
+            Log.d("Tagme_custom_log", "Messages to add are: $messagesToAdd")
+        } else {
+            Log.d("Tagme_custom_log", "Messages to add are empty")
+        }
+
+        messagesToUpdate.forEach { updatedMessage ->
+            val index = messageList.indexOfFirst { it.messageId == updatedMessage.messageId }
+            if (index != -1) {
+                messageList[index] = updatedMessage
+                notifyItemChanged(index)
+            }
+        }
+        if (messagesToUpdate.isNotEmpty()) {
+            Log.d("Tagme_custom_log", "Messages to update are: $messagesToUpdate")
+        } else {
+            Log.d("Tagme_custom_log", "Messages to update are empty")
+        }
+        messagesToRemove.forEach { removedMessage ->
+            val index = messageList.indexOfFirst { it.messageId == removedMessage.messageId }
+            if (index != -1) {
+                messageList.removeAt(index)
+                notifyItemRemoved(index)
+            }
+        }
+        if (messagesToRemove.isNotEmpty()) {
+            Log.d("Tagme_custom_log", "Messages to remove are: $messagesToRemove")
+        } else {
+            Log.d("Tagme_custom_log", "Messages to remove are empty")
+        }
+        messageList.lastOrNull()?.let { lastMessage ->
+            lastMessageIdListener.onLastMessageIdChanged(lastMessage.messageId)
+            Log.d("Tagme_custom_log", lastMessage.messageId.toString())
+        }
+
+        if (bottomSticking && messagesToAdd.isNotEmpty()) {
+            recyclerView.smoothScrollToPosition(itemCount - 1)
+            Log.d("Tagme_custom_log", "ScrolledByUpdateData")
+        }
     }
+
     override fun getItemViewType(position: Int): Int {
         val message = messageList[position]
         val previousMessage = if (position > 0) messageList[position - 1] else null

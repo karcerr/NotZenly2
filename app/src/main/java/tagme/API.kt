@@ -340,7 +340,7 @@ class API private constructor(context: Context){
 
     private suspend fun waitForServerAnswer(): JSONObject? {
         return synchronized(this) {
-            val timeoutDuration = 3000
+            val timeoutDuration = 10000
             val startTime = System.currentTimeMillis()
 
             while (!answerReceived) {
@@ -452,9 +452,6 @@ class API private constructor(context: Context){
             } else {
                 existingConversation.userData = UserData(userId, nickname, profilePictureId)
                 if (lastMessageAuthorId != 0) {
-                    Log.d("Tagme_custom_log1",
-                        (existingConversation.lastMessage == LastMessageData(lastMessageAuthorId, lastMessageText, lastMessagePictureId,Timestamp(dateFormat.parse(timestamp)!!.time), read)).toString()
-                    )
                     existingConversation.lastMessage = LastMessageData(lastMessageAuthorId, lastMessageText, lastMessagePictureId,
                         Timestamp(dateFormat.parse(timestamp)!!.time), read)
                 }

@@ -37,13 +37,11 @@ class ConversationsFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        Log.d("Tagme_custom_log", "onCreateView")
         val view = inflater.inflate(R.layout.fragment_conversations, container, false)
         val backButton: ImageButton = view.findViewById(R.id.back_arrow_button)
         api = (requireActivity() as MapActivity).api
         recyclerView = view.findViewById(R.id.conversations_recycler_view)
-        val conversationListSorted = api.getConversationsData().map { conversation ->
-            conversation.copy()
+        val conversationListSorted = api.getConversationsData().map { it.copy()
         }.sortedByDescending { it.lastMessage?.timestamp }.toMutableList()
         conversationsAdapter = ConversationsAdapter(
             requireContext(),
@@ -61,7 +59,6 @@ class ConversationsFragment : Fragment() {
         return view
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        Log.d("Tagme_custom_log", "onViewCreated")
         super.onViewCreated(view, savedInstanceState)
         conversationUpdateRunnable = Runnable {
             CoroutineScope(Dispatchers.Main).launch {
@@ -128,14 +125,11 @@ class ConversationsAdapter(
                 val newItem = newConversationListSorted[newItemPosition]
                 val didChange = (oldItem.lastMessage == newItem.lastMessage && oldItem.userData == newItem.userData)
                 val didListChange2 = (conversationList == newConversationListSorted)
-                Log.d("Tagme_custom_log", "areContentsTheSame $didChange")
-                Log.d("Tagme_custom_log", "areListsTheSame2 $didListChange2")
                 return didChange
             }
         })
         diffResult.dispatchUpdatesTo(this)
-        conversationList = newConversationListSorted.map { conversation ->
-            conversation.copy()
+        conversationList = newConversationListSorted.map {it.copy()
         }.toMutableList()
         conversationList.sortByDescending { it.lastMessage?.timestamp }
 
