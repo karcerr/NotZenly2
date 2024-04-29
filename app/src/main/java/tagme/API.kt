@@ -495,9 +495,7 @@ class API private constructor(context: Context){
         if (messages.isEmpty()) return
 
         val currentMessage = messages.last().copy()
-        Log.d("Tagme_custom_log_1", currentMessage.toString())
         if (messages.size < 2) {
-            Log.d("Tagme_custom_log_2", currentMessage.toString())
             val separator = createSeparator(currentMessage)
             messages.add(0, separator)  // Add separator at the beginning of the list
             return
@@ -508,7 +506,6 @@ class API private constructor(context: Context){
         val currentMessageDate = getDateString(currentMessage.timestamp)
 
         if (lastMessageDate != currentMessageDate) {
-            Log.d("Tagme_custom_log_3", currentMessage.toString())
             val separator = createSeparator(currentMessage)
             messages.removeLast()
             messages.add(separator)
