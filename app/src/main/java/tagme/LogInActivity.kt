@@ -51,7 +51,7 @@ class LogInActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.Main).launch {
             val connected = api.connectToServer(applicationContext)
             if (connected) {
-                Log.d("Tagme_custom_log", "Connected to the server")
+                Log.d("Tagme", "Connected to the server")
                 if (api.myToken != null) {
                     CoroutineScope(Dispatchers.Main).launch {
                         val answer = api.loginToken()
@@ -60,13 +60,13 @@ class LogInActivity : AppCompatActivity() {
                                 api.getMyDataFromWS()
                                 hideLoginShowGpsOverlay()
                                 isAuthorized = true
-                                Log.d("Tagme_custom_log", "Logged in via token")
+                                Log.d("Tagme", "Logged in via token")
                             }
                         }
                     }
                 }
             } else {
-                Log.d("Tagme_custom_log", "Failed to connect to the server")
+                Log.d("Tagme", "Failed to connect to the server")
             }
         }
         loginBtn.setOnClickListener {

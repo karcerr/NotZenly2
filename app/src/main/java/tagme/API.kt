@@ -71,15 +71,15 @@ class API private constructor(context: Context){
             val listener = object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
                     this@API.webSocket = webSocket
-                    Log.d("Tagme_custom_log", "onOpen trigger: $response")
+                    Log.d("Tagme_WS", "onOpen trigger: $response")
                 }
 
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                    Log.d("Tagme_custom_log", "onFailure trigger: $response")
+                    Log.d("Tagme_WS", "onFailure trigger: $response")
                 }
 
                 override fun onMessage(webSocket: WebSocket, text: String) {
-                    Log.d("Tagme_custom_log", "onMessage trigger: $text")
+                    Log.d("Tagme_WS", "onMessage trigger: $text")
                     val jsonObject = JSONObject(text)
                     answer = jsonObject
                     when (answer.getString("action")) {
@@ -484,20 +484,21 @@ class API private constructor(context: Context){
                         )
                     )
                     existingConversation.messages.sortBy { it.timestamp }
+                    addSeparatorIfNeeded(existingConversation.messages)
                 } else {
                     //TBA: editing of existing images
                 }
-                addSeparatorIfNeeded(existingConversation.messages)
             }
         }
     }
     private fun addSeparatorIfNeeded(messages: MutableList<MessageData>) {
         if (messages.isEmpty()) return
-
-        val currentMessage = messages.last().copy()
+        val currentMessage = messages.map{it.copy()}.last()
         if (messages.size < 2) {
             val separator = createSeparator(currentMessage)
-            messages.add(0, separator)  // Add separator at the beginning of the list
+            messages.removeLast()
+            messages.add(separator)
+            messages.add(currentMessage)
             return
         }
 

@@ -37,7 +37,7 @@ class UserProfileDialogFragment : DialogFragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        Log.d("Tagme_custom_log_DiaFr", "onViewCreated called")
+        Log.d("Tagme_DiaFr", "onViewCreated called")
         super.onViewCreated(view, savedInstanceState)
         val userId = arguments?.getInt("userId")
         val nameText = view.findViewById<TextView>(R.id.user_name)

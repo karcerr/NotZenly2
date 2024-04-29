@@ -244,7 +244,7 @@ class MapActivity: AppCompatActivity() {
     }
     */
     fun centralizeMapAnimated(location: GeoPoint, targetId: Int){
-        Log.d("Tagme_custom_log", "centralizing on $targetId")
+        Log.d("Tagme", "centralizing on $targetId")
         if (!isAnimating) {
             isAnimating = true
             setCenteredTrue(targetId)

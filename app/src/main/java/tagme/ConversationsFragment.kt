@@ -71,7 +71,7 @@ class ConversationsFragment : Fragment() {
         startConversationUpdates()
     }
     override fun onDestroyView() {
-        Log.d("Tagme_custom_log", "onDestroyView was called")
+        Log.d("Tagme", "onDestroyView was called")
         super.onDestroyView()
         stopConversationUpdates()
     }
