@@ -398,7 +398,6 @@ class API private constructor(context: Context){
             val longitude = locationObject.getDouble("longitude")
             val accuracy = locationObject.getDouble("accuracy")
             val speed = locationObject.getDouble("speed")
-            Log.d("Tagme_custom_log_speed", "$id = $speed")
             val timestamp = locationObject.getString("timestamp")
             val existingFriend = friendsData.find { it.userData.userId == id }
             if (existingFriend != null) {
