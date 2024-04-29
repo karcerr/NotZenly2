@@ -483,10 +483,56 @@ class API private constructor(context: Context){
                             ifRead
                         )
                     )
+                    existingConversation.messages.sortBy { it.timestamp }
+                } else {
+                    //TBA: editing of existing images
                 }
+                addSeparatorIfNeeded(existingConversation.messages)
             }
-
         }
+    }
+    private fun addSeparatorIfNeeded(messages: MutableList<MessageData>) {
+        if (messages.isEmpty()) return
+
+        val currentMessage = messages.last().copy()
+        Log.d("Tagme_custom_log_1", currentMessage.toString())
+        if (messages.size < 2) {
+            Log.d("Tagme_custom_log_2", currentMessage.toString())
+            val separator = createSeparator(currentMessage)
+            messages.add(0, separator)  // Add separator at the beginning of the list
+            return
+        }
+
+        val lastMessage = messages[messages.size - 2].copy()
+        val lastMessageDate = getDateString(lastMessage.timestamp)
+        val currentMessageDate = getDateString(currentMessage.timestamp)
+
+        if (lastMessageDate != currentMessageDate) {
+            Log.d("Tagme_custom_log_3", currentMessage.toString())
+            val separator = createSeparator(currentMessage)
+            messages.removeLast()
+            messages.add(separator)
+            messages.add(currentMessage)
+        }
+    }
+
+    private fun createSeparator(referenceMessage: MessageData): MessageData {
+        return MessageData(
+            0,
+            0,
+            "",
+            null,
+            referenceMessage.timestamp,
+            true
+        )
+    }
+
+    private fun getDateString(timestamp: Timestamp): String {
+        val calendar = Calendar.getInstance()
+        calendar.time = timestamp
+        val dayOfYear = calendar.get(Calendar.DAY_OF_YEAR)
+        val year = calendar.get(Calendar.YEAR)
+        return "$year-$dayOfYear"
     }
     private fun parseFriendRequestData(jsonString: String) {
         val result = JSONObject(jsonString).getJSONArray("result")

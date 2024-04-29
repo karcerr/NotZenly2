@@ -7,7 +7,7 @@
         android:orientation="horizontal"
         android:background="@drawable/msg_rectangle"
         android:backgroundTint="@color/teal_"
-        android:layout_marginBottom="10dp"
+        android:layout_marginVertical="5dp"
         android:layout_marginRight="5dp"
         android:layout_marginLeft="5dp"
         android:padding="10dp"

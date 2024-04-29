@@ -136,13 +136,16 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
             CoroutineScope(Dispatchers.Main).launch {
                 val conversationId = requireArguments().getInt(ARG_CONVERSATION_ID)
                 val answer = api.getNewMessagesFromWS(conversationId, lastMessageId)
+                Log.d("Tagme_custom_log1", answer.toString())
                 if (answer != null) {
                     val status = answer.optString("status")
+                    Log.d("Tagme_custom_log2", status.toString())
                     if (status == "success") {
                         val messageObject = answer.optJSONObject("message")
                         if (messageObject != null) {
+                            Log.d("Tagme_custom_log3", messageObject.toString())
                             val result = messageObject.optJSONArray("result")
-                            if (result != null && result.length() != 0) {
+                            if (result != null && result.length() > 0) {
                                 val updatedMessages = api.getConversationData(conversationId)?.messages.orEmpty()
                                 val updatedMessagesDeepCopy = updatedMessages.map {it.copy()}
                                 (recyclerView.adapter as? MessageAdapter)?.updateData(updatedMessagesDeepCopy)
@@ -289,18 +292,11 @@ class MessageAdapter(
 
     override fun getItemViewType(position: Int): Int {
         val message = messageList[position]
-        val previousMessage = if (position > 0) messageList[position - 1] else null
 
-        if (previousMessage == null) {
-            return if (message.authorId == myUserId) OUTGOING_MESSAGE_TYPE else INCOMING_MESSAGE_TYPE
+        if (message.messageId == 0) {
+            return DATE_SEPARATOR_TYPE
         }
-
-        val currentMessageDate = message.timestamp.toLocalDateTime().toLocalDate()
-        val previousMessageDate = previousMessage.timestamp.toLocalDateTime().toLocalDate()
-
-        return if (currentMessageDate != previousMessageDate) DATE_SEPARATOR_TYPE
-        else if (message.authorId == myUserId) OUTGOING_MESSAGE_TYPE
-        else INCOMING_MESSAGE_TYPE
+        return if (message.authorId == myUserId) OUTGOING_MESSAGE_TYPE else INCOMING_MESSAGE_TYPE
     }
 
 
