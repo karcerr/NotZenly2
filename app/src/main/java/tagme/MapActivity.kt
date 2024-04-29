@@ -382,6 +382,7 @@ class MapActivity: AppCompatActivity() {
 
                 if (overlay != null) {
                     overlay.setLocation(GeoPoint(friend.location!!.latitude, friend.location!!.longitude))
+                    overlay.setSpeed(friend.location!!.speed)
                     if (centeredTargetId == overlay.getUserId()) {
                         centralizeMapAnimated(overlay.getLocation(), friend.userData.userId)
                     }
