@@ -26,5 +26,7 @@
     <string name="turn_location_on">Enable geolocation</string>
     <string name="profile">Profile</string>
     <string name="centralize">Centralize</string>
+    <string name="message">Message</string>
+    <string name="search">search</string>
     <string name="add_geo_story">Add geo story</string>
 </resources>
