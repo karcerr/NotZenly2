@@ -29,4 +29,8 @@
     <string name="message">Сообщения</string>
     <string name="search">Поиск</string>
     <string name="add_geo_story">Добавить гео историю</string>
+    <string name="privacy">Приватность</string>
+    <string name="privacy_friends_only">Только друзья</string>
+    <string name="privacy_global">Все пользователи</string>
+    <string name="photo_preview">Превью фото</string>
 </resources>

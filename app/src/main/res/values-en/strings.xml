@@ -29,4 +29,8 @@
     <string name="message">Message</string>
     <string name="search">search</string>
     <string name="add_geo_story">Add geo story</string>
+    <string name="privacy">Privacy</string>
+    <string name="privacy_friends_only">friends only</string>
+    <string name="privacy_global">global</string>
+    <string name="photo_preview">Photo preview</string>
 </resources>
