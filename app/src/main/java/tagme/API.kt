@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.sql.Timestamp
@@ -23,6 +24,7 @@ class API private constructor(context: Context){
     private var webSocket: WebSocket? = null
     private var answerReceived = false
     private var answer = JSONObject()
+    var lastInsertedPicId = 0
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
     var myToken: String?
         get() = sharedPreferences.getString("TOKEN", null)
@@ -108,6 +110,9 @@ class API private constructor(context: Context){
                         }
                         "get my data" -> when (answer.getString("status")) {
                             "success" -> parseMyData(answer.getString("message"))
+                        }
+                        "insert picture" -> when (answer.getString("status")) {
+                            "success" -> parseInsertedPictureId(answer.getString("message"))
                         }
                     }
                     answerReceived = true
@@ -337,6 +342,23 @@ class API private constructor(context: Context){
             waitForServerAnswer()
         }
     }
+    suspend fun insertPictureIntoWS(picture: ByteArrayOutputStream): JSONObject? {
+
+        return withContext(Dispatchers.IO) {
+            lastInsertedPicId = 0
+            val base64ImageData = Base64.getEncoder().encodeToString(picture.toByteArray())
+
+            val requestData = JSONObject().apply {
+                put("action", "insert picture")
+                put("token", myToken)
+                put("picture", base64ImageData)
+            }
+            webSocket?.send(requestData.toString())
+
+            waitForServerAnswer()
+        }
+    }
+
 
     private suspend fun waitForServerAnswer(): JSONObject? {
         return synchronized(this) {
@@ -413,6 +435,10 @@ class API private constructor(context: Context){
             }
         }
     }
+    private fun parseInsertedPictureId(picId: String){
+        lastInsertedPicId = picId.toInt()
+    }
+
     private fun parseMyData(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
 

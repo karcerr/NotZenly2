@@ -13,6 +13,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.TranslateAnimation
+import android.widget.FrameLayout
 import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -44,9 +45,13 @@ class MapActivity: AppCompatActivity() {
     private lateinit var map : MapView
     private lateinit var mapController: IMapController
     private lateinit var centralizeButton: ImageButton
+    private lateinit var centralizeButtonFrame: FrameLayout
     private lateinit var profileButton: ImageButton
+    private lateinit var profileButtonFrame: FrameLayout
     private lateinit var messagesButton: ImageButton
+    private lateinit var messagesButtonFrame: FrameLayout
     private lateinit var createGeoStoryButton: ImageButton
+    private lateinit var createGeoStoryButtonFrame: FrameLayout
     private lateinit var profileFragment: ProfileFragment
     private lateinit var conversationFragment: ConversationsFragment
     private lateinit var geoStoryCreation: GeoStoryCreationFragment
@@ -75,9 +80,13 @@ class MapActivity: AppCompatActivity() {
         setContentView(R.layout.map_activity)
         map = findViewById(R.id.map)
         centralizeButton = findViewById(R.id.center_button)
+        centralizeButtonFrame = findViewById(R.id.center_button_frame)
         profileButton = findViewById(R.id.profile_button)
+        profileButtonFrame = findViewById(R.id.profile_button_frame)
         messagesButton = findViewById(R.id.messages_button)
+        messagesButtonFrame = findViewById(R.id.messages_button_frame)
         createGeoStoryButton = findViewById(R.id.create_geo_story_button)
+        createGeoStoryButtonFrame = findViewById(R.id.create_geo_story_button_frame)
         // Initializing and hiding fragments
         fragmentManager = supportFragmentManager
         conversationFragment = fragmentManager.findFragmentById(R.id.conversations_fragment) as ConversationsFragment
@@ -273,9 +282,9 @@ class MapActivity: AppCompatActivity() {
         centeredTargetId = targetId
         if (!isUiHidden and (targetId != api.myUserId)) {
             isUiHidden = true
-            slideView(profileButton, true)
-            slideView(messagesButton, true)
-            slideView(centralizeButton, true)
+            slideView(profileButtonFrame, true)
+            slideView(messagesButtonFrame, true)
+            slideView(centralizeButtonFrame, true)
         }
     }
 
@@ -283,9 +292,9 @@ class MapActivity: AppCompatActivity() {
         centeredTargetId = -1
         if (isUiHidden) {
             isUiHidden = false
-            slideView(profileButton, false)
-            slideView(messagesButton, false)
-            slideView(centralizeButton, false)
+            slideView(profileButtonFrame, false)
+            slideView(messagesButtonFrame, false)
+            slideView(centralizeButtonFrame, false)
         }
     }
 

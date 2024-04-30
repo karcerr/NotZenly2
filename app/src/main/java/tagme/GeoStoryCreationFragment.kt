@@ -30,8 +30,11 @@ class GeoStoryCreationFragment : Fragment() {
     private lateinit var geoStoryPreviewIcon: ImageView
     private lateinit var compressingStatus: LinearLayout
     private lateinit var imagePickerLauncher: ActivityResultLauncher<Intent>
+    private lateinit var imageBitmap: Bitmap
+    private lateinit var outputStream: ByteArrayOutputStream
+    private var imageCompressed: Boolean = false
     companion object{
-        const val IMAGE_REQUEST_CODE = 100
+        val MAX_SIZE_BEFORE_ENCODING = 150 * 1024
     }
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -60,13 +63,20 @@ class GeoStoryCreationFragment : Fragment() {
         }
 
         geoStoryFrameLayout.setOnClickListener {
+            imageCompressed = false
             pickImageGallery()
         }
         backButton.setOnClickListener {
             requireActivity().onBackPressedDispatcher.onBackPressed()
         }
-        backButton.setOnClickListener{
-            requireActivity().onBackPressedDispatcher.onBackPressed()
+        publishButton.setOnClickListener{
+            coroutineScope.launch {
+                if (imageCompressed) {
+                    val byt = outputStream.size()
+                    Log.d("Tagme_PIC", byt.toString())
+                    api.insertPictureIntoWS(outputStream)
+                }
+            }
         }
 
         return view
@@ -85,37 +95,41 @@ class GeoStoryCreationFragment : Fragment() {
                 originalBitmap.recycle()
                 requireActivity().runOnUiThread {
                     compressingStatus.visibility = View.GONE
-                    geoStoryPreview.setImageBitmap(compressedBitmap)
+                    imageBitmap = compressedBitmap
+                    imageCompressed = true
+                    geoStoryPreview.setImageBitmap(imageBitmap)
                 }
             }
         }
     }
     private fun compressBitmap(bitmap: Bitmap): Bitmap {
-        val outputStream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+        val desiredHeight = 800
+        val aspectRatio = 9f / 16f
+        val desiredWidth = (desiredHeight * aspectRatio).toInt()
+        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, desiredWidth, desiredHeight, true)
+        outputStream = ByteArrayOutputStream()
+        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
         val initialByteArray = outputStream.toByteArray()
         requireActivity().runOnUiThread {
             geoStoryPreview.setImageResource(R.drawable.photo_bg)
             geoStoryPreviewIcon.visibility = View.GONE
             compressingStatus.visibility = View.VISIBLE
         }
-        if (initialByteArray.size <= 200 * 1024) {
+        if (initialByteArray.size <= MAX_SIZE_BEFORE_ENCODING) {
             Log.d("Tagme_PIC", "Image size is already within the desired range.")
             return BitmapFactory.decodeByteArray(initialByteArray, 0, initialByteArray.size)
         }
         var quality = 100
         var byteArray = initialByteArray
         Log.d("Tagme_PIC", "Before compressing: ${byteArray.size}")
-        while (byteArray.size > 200 * 1024 && quality > 0) {
+        while (byteArray.size > MAX_SIZE_BEFORE_ENCODING && quality > 0) {
             outputStream.reset()
-            quality -= 10
-            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+            quality -= if (quality <= 20) 5 else 10
+            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
             byteArray = outputStream.toByteArray()
-            Log.d("Tagme_PIC", "Compressing: ${byteArray.size}")
+            Log.d("Tagme_PIC", "Compressing: $quality ${byteArray.size}")
         }
 
         return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
     }
-
-
 }
