@@ -24,4 +24,7 @@
     <string name="register">Register</string>
     <string name="location_request">The application requires access to geolocation to operate.</string>
     <string name="turn_location_on">Enable geolocation</string>
+    <string name="profile">Profile</string>
+    <string name="centralize">Centralize</string>
+    <string name="add_geo_story">Add geo story</string>
 </resources>
