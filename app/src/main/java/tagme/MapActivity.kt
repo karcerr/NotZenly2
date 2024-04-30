@@ -46,8 +46,10 @@ class MapActivity: AppCompatActivity() {
     private lateinit var centralizeButton: ImageButton
     private lateinit var profileButton: ImageButton
     private lateinit var messagesButton: ImageButton
+    private lateinit var createGeoStoryButton: ImageButton
     private lateinit var profileFragment: ProfileFragment
-    private lateinit var conversationFragment: Fragment
+    private lateinit var conversationFragment: ConversationsFragment
+    private lateinit var geoStoryCreation: GeoStoryCreationFragment
     private var scaleFactor = 15.0
     private var centeredTargetId = -1
     private var isAnimating = false
@@ -75,13 +77,16 @@ class MapActivity: AppCompatActivity() {
         centralizeButton = findViewById(R.id.center_button)
         profileButton = findViewById(R.id.profile_button)
         messagesButton = findViewById(R.id.messages_button)
+        createGeoStoryButton = findViewById(R.id.create_geo_story_button)
         // Initializing and hiding fragments
         fragmentManager = supportFragmentManager
-        conversationFragment = fragmentManager.findFragmentById(R.id.conversations_fragment)!!
+        conversationFragment = fragmentManager.findFragmentById(R.id.conversations_fragment) as ConversationsFragment
         profileFragment = fragmentManager.findFragmentById(R.id.profile_fragment) as ProfileFragment
+        geoStoryCreation = fragmentManager.findFragmentById(R.id.geo_story_creation_fragment) as GeoStoryCreationFragment
         val transaction = fragmentManager.beginTransaction()
         transaction.hide(profileFragment)
         transaction.hide(conversationFragment)
+        transaction.hide(geoStoryCreation)
         transaction.commit()
 
 
@@ -175,10 +180,14 @@ class MapActivity: AppCompatActivity() {
             coroutineScope.launch {
                 api.getConversationsFromWS()
                 val updatedConversations = api.getConversationsData()
-                (conversationFragment as ConversationsFragment).conversationsAdapter.updateData(updatedConversations)
+                conversationFragment.conversationsAdapter.updateData(updatedConversations)
             }
             toggleFragmentVisibility(conversationFragment)
         }
+        createGeoStoryButton.setOnClickListener {
+            toggleFragmentVisibility(geoStoryCreation)
+        }
+
 
 
         map.addMapListener(object : MapListener {

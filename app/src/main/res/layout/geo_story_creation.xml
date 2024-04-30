@@ -1,14 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-         xmlns:app="http://schemas.android.com/apk/res-auto"
-         android:layout_width="match_parent"
-         android:layout_height="match_parent">
-
-<androidx.core.widget.NestedScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/geo_story_gradient_2">
-
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+             android:background="@drawable/geo_story_gradient_2"
+>
     <LinearLayout
             android:id="@+id/main_content"
             android:layout_width="match_parent"
@@ -19,7 +14,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginTop="5dp"
+                android:layout_marginTop="10dp"
                 android:layout_marginHorizontal="10dp">
             <ImageButton
                     android:id="@+id/back_arrow_button"
@@ -37,6 +32,7 @@
                 android:background="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true"
+                android:id="@+id/geo_story_frame"
         >
             <ImageView
                     android:id="@+id/geo_story_preview"
@@ -45,7 +41,8 @@
                     android:padding="6dp"
                     android:background="@drawable/geo_story_gradient"
                     android:src="@drawable/photo_bg"
-                    android:contentDescription="@string/photo_preview"/>
+                    android:contentDescription="@string/photo_preview"
+            />
 
             <ImageView
                     android:layout_width="wrap_content"
@@ -53,9 +50,6 @@
                     android:layout_gravity="center"
                     android:src="@drawable/add_a_photo" android:importantForAccessibility="no"/>
         </FrameLayout>
-
-
-
 
         <LinearLayout
                 android:layout_width="match_parent"
@@ -71,19 +65,18 @@
                     android:text="@string/privacy"
                     android:textAppearance="?android:textAppearanceMedium"
                     android:fontFamily="@font/my_font"
-                    android:textSize="45sp"
+                    android:textSize="40sp"
                     android:layout_weight="1"
                     android:textColor="@color/white"
                     android:textStyle="bold"
-                    android:layout_gravity="center_vertical"
+                    android:layout_gravity="center"
             />
 
             <ImageButton
                     android:id="@+id/global_privacy"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
+                    android:layout_width="46dp"
+                    android:layout_height="46dp"
                     android:src="@drawable/planet"
-                    android:textSize="20sp"
                     android:background="@color/transparent"
                     android:layout_marginEnd="5dp"
                     android:layout_gravity="center_vertical"
@@ -91,12 +84,12 @@
                     android:contentDescription="@string/privacy_global"/>
             <ImageButton
                     android:id="@+id/friend_only_privacy"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
+                    android:layout_width="46dp"
+                    android:layout_height="46dp"
                     android:src="@drawable/friends"
-                    android:textSize="20sp"
                     android:background="@color/transparent"
                     android:layout_marginHorizontal="5dp"
+                    android:tint="#5EFF77"
                     android:layout_gravity="center_vertical"
                     android:scaleType="fitCenter"
                     android:contentDescription="@string/privacy_friends_only"/>
@@ -109,9 +102,17 @@
                 android:layout_marginVertical="15dp"
                 android:layout_gravity="center"
                 android:importantForAccessibility="no"/>
-
+        <ImageButton
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:layout_gravity="center"
+                android:layout_marginVertical="15dp"
+                android:src="@drawable/geo_story_icon"
+                android:background="@color/transparent"
+                android:scaleType="fitCenter"
+                android:id="@+id/publish_geo_story_button"
+        />
 
 
     </LinearLayout>
-</androidx.core.widget.NestedScrollView>
 </FrameLayout>
