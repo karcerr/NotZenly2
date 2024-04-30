@@ -2,9 +2,7 @@ package tagme
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
 import android.location.Location
 import android.os.Bundle
 import android.os.Handler
@@ -48,8 +46,10 @@ class MapActivity: AppCompatActivity() {
     private lateinit var centralizeButton: ImageButton
     private lateinit var profileButton: ImageButton
     private lateinit var messagesButton: ImageButton
-    private lateinit var profileFragment: Fragment
-    private lateinit var conversationFragment: Fragment
+    private lateinit var createGeoStoryButton: ImageButton
+    private lateinit var profileFragment: ProfileFragment
+    private lateinit var conversationFragment: ConversationsFragment
+    private lateinit var geoStoryCreation: GeoStoryCreationFragment
     private var scaleFactor = 15.0
     private var centeredTargetId = -1
     private var isAnimating = false
@@ -62,7 +62,7 @@ class MapActivity: AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     //these are for storing friends and drawing overlays:
     private val friendOverlays: MutableMap<Int, CustomIconOverlay> = mutableMapOf()
-    lateinit var fragmentManager : FragmentManager
+    private lateinit var fragmentManager : FragmentManager
     private val handler = Handler(Looper.getMainLooper())
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,13 +77,16 @@ class MapActivity: AppCompatActivity() {
         centralizeButton = findViewById(R.id.center_button)
         profileButton = findViewById(R.id.profile_button)
         messagesButton = findViewById(R.id.messages_button)
+        createGeoStoryButton = findViewById(R.id.create_geo_story_button)
         // Initializing and hiding fragments
         fragmentManager = supportFragmentManager
-        conversationFragment = fragmentManager.findFragmentById(R.id.conversations_fragment)!!
-        profileFragment = fragmentManager.findFragmentById(R.id.profile_fragment)!!
+        conversationFragment = fragmentManager.findFragmentById(R.id.conversations_fragment) as ConversationsFragment
+        profileFragment = fragmentManager.findFragmentById(R.id.profile_fragment) as ProfileFragment
+        geoStoryCreation = fragmentManager.findFragmentById(R.id.geo_story_creation_fragment) as GeoStoryCreationFragment
         val transaction = fragmentManager.beginTransaction()
         transaction.hide(profileFragment)
         transaction.hide(conversationFragment)
+        transaction.hide(geoStoryCreation)
         transaction.commit()
 
 
@@ -126,26 +129,35 @@ class MapActivity: AppCompatActivity() {
         mLocationOverlay.enableMyLocation()
         coroutineScope.launch{
             api.getFriendsFromWS()
-            api.getMyDataFromWS()
         }
         mLocationOverlay.runOnFirstFix {
             val myLocation = mLocationOverlay.myLocation
             if (myLocation != null) {
                 runOnUiThread {
-
-                    val drawable: Drawable = resources.getDrawable(R.drawable.person_placeholder, null)
+                    val selfDrawablePlaceHolder = ResourcesCompat.getDrawable(resources, R.drawable.person_placeholder, null)!!
                     val location = GeoPoint(mLocationOverlay.myLocation)
                     customOverlaySelf = CustomIconOverlay(
                         this,
                         location,
-                        0.0f, drawable,
+                        0.0f,
+                        selfDrawablePlaceHolder,
                         "",
                         api.myUserId,
                         R.font.my_font,
                         clickListener = null
-                    )
+                    ).apply {
+                        mapView = map
+                    }
                     map.overlays.add(customOverlaySelf)
                     centralizeMapInstant(location, api.myUserId)
+                    coroutineScope.launch {
+                        if (api.myPfpId != 0) {
+                            val bitmap = api.getPictureData(api.myPfpId)
+                            if (bitmap != null) {
+                                customOverlaySelf!!.updateDrawable(BitmapDrawable(resources, bitmap))
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -159,8 +171,8 @@ class MapActivity: AppCompatActivity() {
                 api.getFriendsFromWS()
                 val updatedRequests = api.getFriendRequestData()
                 val updatedFriends = api.getFriendsData()
-                (profileFragment as ProfileFragment).friendRequestAdapter.updateData(updatedRequests)
-                (profileFragment as ProfileFragment).friendAdapter.updateData(updatedFriends)
+                profileFragment.friendRequestAdapter.updateData(updatedRequests)
+                profileFragment.friendAdapter.updateData(updatedFriends)
             }
             toggleFragmentVisibility(profileFragment)
         }
@@ -168,10 +180,14 @@ class MapActivity: AppCompatActivity() {
             coroutineScope.launch {
                 api.getConversationsFromWS()
                 val updatedConversations = api.getConversationsData()
-                (conversationFragment as ConversationsFragment).conversationsAdapter.updateData(updatedConversations)
+                conversationFragment.conversationsAdapter.updateData(updatedConversations)
             }
             toggleFragmentVisibility(conversationFragment)
         }
+        createGeoStoryButton.setOnClickListener {
+            toggleFragmentVisibility(geoStoryCreation)
+        }
+
 
 
         map.addMapListener(object : MapListener {
@@ -236,15 +252,15 @@ class MapActivity: AppCompatActivity() {
         return super.onTouchEvent(event)
     }
     */
-    private fun centralizeMapAnimated(location: GeoPoint, targetId: Int){
-        Log.d("Tagme_custom_log", "centralizing on $targetId")
+    fun centralizeMapAnimated(location: GeoPoint, targetId: Int){
+        Log.d("Tagme", "centralizing on $targetId")
         if (!isAnimating) {
             isAnimating = true
             setCenteredTrue(targetId)
             mapController.animateTo(location, scaleFactor, 500)
             handler.postDelayed({
                 isAnimating = false
-            }, 650)
+            }, 550)
         }
     }
     private fun centralizeMapInstant(location: GeoPoint, targetId: Int){
@@ -255,25 +271,27 @@ class MapActivity: AppCompatActivity() {
 
     private fun setCenteredTrue(targetId: Int) {
         centeredTargetId = targetId
-        if (!isUiHidden) {
-            slideView(profileButton, View.GONE)
-            slideView(messagesButton, View.GONE)
-            slideView(centralizeButton, View.GONE)
+        if (!isUiHidden and (targetId != api.myUserId)) {
+            isUiHidden = true
+            slideView(profileButton, true)
+            slideView(messagesButton, true)
+            slideView(centralizeButton, true)
         }
     }
 
     private fun setCenteredFalse() {
         centeredTargetId = -1
         if (isUiHidden) {
-            slideView(profileButton, View.VISIBLE)
-            slideView(messagesButton, View.VISIBLE)
-            slideView(centralizeButton, View.VISIBLE)
+            isUiHidden = false
+            slideView(profileButton, false)
+            slideView(messagesButton, false)
+            slideView(centralizeButton, false)
         }
     }
 
-    private fun slideView(view: View, visibility: Int) {
+    private fun slideView(view: View, hide: Boolean) {
         val parentHeight = (view.parent as View).height.toFloat()
-        val animate: Animation = if (visibility == View.VISIBLE) {
+        val animate: Animation = if (!hide) {
             TranslateAnimation(
                 0f,
                 0f,
@@ -290,15 +308,6 @@ class MapActivity: AppCompatActivity() {
         }
         animate.duration = 500
         animate.fillAfter = true
-        animate.setAnimationListener(object : Animation.AnimationListener {
-            override fun onAnimationStart(animation: Animation?) {
-            }
-            override fun onAnimationEnd(animation: Animation?) {
-                view.visibility = visibility
-                isUiHidden = visibility != View.VISIBLE
-            }
-            override fun onAnimationRepeat(animation: Animation?) {}
-        })
         view.startAnimation(animate)
     }
 
@@ -378,20 +387,11 @@ class MapActivity: AppCompatActivity() {
         friendsData.forEach { friend ->
             if (friend.location != null) {
                 val overlay = friendOverlays[friend.userData.userId]
-                val friendDrawable: Drawable = if (friend.userData.profilePictureId != 0) {
-                    val imagePath = api.getPicturesData().find { it.pictureId == friend.userData.profilePictureId }?.imagePath
-                    if (imagePath != null) {
-                        val bitmap = BitmapFactory.decodeFile(imagePath)
-                        BitmapDrawable(resources, bitmap)
-                    } else {
-                        ResourcesCompat.getDrawable(resources, R.drawable.person_placeholder, null)!!
-                    }
-                } else {
-                    ResourcesCompat.getDrawable(resources, R.drawable.person_placeholder, null)!!
-                }
+                val placeholderDrawable = ResourcesCompat.getDrawable(resources, R.drawable.person_placeholder, null)!!
 
                 if (overlay != null) {
                     overlay.setLocation(GeoPoint(friend.location!!.latitude, friend.location!!.longitude))
+                    overlay.setSpeed(friend.location!!.speed)
                     if (centeredTargetId == overlay.getUserId()) {
                         centralizeMapAnimated(overlay.getLocation(), friend.userData.userId)
                     }
@@ -401,22 +401,31 @@ class MapActivity: AppCompatActivity() {
                         this,
                         friendLocation,
                         friend.location!!.speed,
-                        friendDrawable,
+                        placeholderDrawable,
                         friend.userData.nickname,
                         friend.userData.userId,
                         R.font.my_font,
                         clickListener = { customIconOverlay ->
                             centralizeMapAnimated(customIconOverlay.getLocation(), friend.userData.userId)
                         }
-                    )
+                    ).apply {
+                        mapView = map
+                    }
 
                     friendOverlays[friend.userData.userId] = newOverlay
                     map.overlays.add(newOverlay)
+                    if (friend.userData.profilePictureId != 0) {
+                        coroutineScope.launch {
+                            val bitmap = api.getPictureData(friend.userData.profilePictureId)
+                            if (bitmap != null) {
+                                friendOverlays[friend.userData.userId]!!.updateDrawable(BitmapDrawable(resources, bitmap))
+                            }
+                        }
+                    }
                 }
             }
         }
     }
-
 
     override fun onDestroy() {
         super.onDestroy()

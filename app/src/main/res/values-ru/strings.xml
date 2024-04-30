@@ -24,4 +24,14 @@
     <string name="register">Зарегистрироваться</string>
     <string name="location_request">Для работы приложения необходим доступ к геолокации</string>
     <string name="turn_location_on">Включить геолокацию</string>
+    <string name="profile">Профиль</string>
+    <string name="centralize">Центрировать</string>
+    <string name="message">Сообщения</string>
+    <string name="search">Поиск</string>
+    <string name="add_geo_story">Добавить гео историю</string>
+    <string name="privacy">Приватность</string>
+    <string name="privacy_friends_only">Только друзья</string>
+    <string name="privacy_global">Все пользователи</string>
+    <string name="photo_preview">Превью фото</string>
+    <string name="compressing">Сжатие...</string>
 </resources>

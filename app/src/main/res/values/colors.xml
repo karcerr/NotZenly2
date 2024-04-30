@@ -9,8 +9,9 @@
     <color name="white">#FFFFFFFF</color>
     <color name="red">#FF0000</color>
     <color name="grey">#95FFFFFF</color>
+    <color name="grey2">#C6C6C6</color>
     <color name="teal">#468281</color>
-    <color name="reddish">#A25F5F</color>
+    <color name="reddish">#FF5C5C</color>
     <color name="greenish">#4C974F</color>
     <color name="transparent">#00FFFFFF</color>
     <color name="teal_">#A9E5E5</color>

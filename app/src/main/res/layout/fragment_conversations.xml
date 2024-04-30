@@ -15,8 +15,10 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginHorizontal="10dp"
-            android:layout_marginVertical="10dp">
+                    android:padding="10dp"
+                    android:background="@color/teal"
+                    android:layout_marginBottom="10dp"
+            >
                 <ImageButton
                         android:id="@+id/back_arrow_button"
                         android:layout_width="wrap_content"

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginVertical="5dp"
+>
+    <ImageView
+            android:layout_width="0dp"
+            android:layout_weight=".5"
+            android:layout_height="match_parent"
+            android:src="@drawable/separator_small"
+            android:layout_gravity="center"
+            android:importantForAccessibility="no"
+            android:layout_marginEnd="10dp"
+    />
+    <TextView
+            android:id="@+id/dateTextView"
+            android:text="@string/date_placeholder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/my_font"
+            android:textColor="@color/teal"
+            android:layout_gravity="center_vertical"
+            android:maxWidth="250dp"
+    />
+    <ImageView
+            android:layout_width="0dp"
+            android:layout_weight=".5"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:src="@drawable/separator_small"
+            android:importantForAccessibility="no"
+            android:layout_marginStart="10dp"
+    />
+
+</LinearLayout>

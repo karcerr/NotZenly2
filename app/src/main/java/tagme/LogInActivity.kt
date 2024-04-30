@@ -27,6 +27,7 @@ class LogInActivity : AppCompatActivity() {
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
     private val permissions = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
     private var hasPermission = false
+    private var isAuthorized = false
 
     private lateinit var usernameInput : EditText
     private lateinit var passwordInput : EditText
@@ -50,20 +51,22 @@ class LogInActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.Main).launch {
             val connected = api.connectToServer(applicationContext)
             if (connected) {
-                Log.d("Tagme_custom_log", "Connected to the server")
+                Log.d("Tagme", "Connected to the server")
                 if (api.myToken != null) {
                     CoroutineScope(Dispatchers.Main).launch {
                         val answer = api.loginToken()
                         if (answer != null) {
                             if (answer.getString("status") == "success") {
+                                api.getMyDataFromWS()
                                 hideLoginShowGpsOverlay()
-                                Log.d("Tagme_custom_log", "Logged in via token")
+                                isAuthorized = true
+                                Log.d("Tagme", "Logged in via token")
                             }
                         }
                     }
                 }
             } else {
-                Log.d("Tagme_custom_log", "Failed to connect to the server")
+                Log.d("Tagme", "Failed to connect to the server")
             }
         }
         loginBtn.setOnClickListener {
@@ -83,7 +86,9 @@ class LogInActivity : AppCompatActivity() {
                     val answer = api.loginUser(username, password)
                     if (answer != null) {
                         if (answer.getString("status") == "success") {
+                            api.getMyDataFromWS()
                             hideLoginShowGpsOverlay()
+                            isAuthorized = true
                         } else {
                             errorText.visibility = View.VISIBLE
                             errorText.text = answer.getString("message")
@@ -110,7 +115,9 @@ class LogInActivity : AppCompatActivity() {
                     val answer = api.registerUser(username, password)
                     if (answer != null) {
                         if (answer.getString("status") == "success") {
+                            api.getMyDataFromWS()
                             hideLoginShowGpsOverlay()
+                            isAuthorized = true
                         } else {
                             errorText.visibility = View.VISIBLE
                             errorText.text = answer.getString("message")
@@ -130,6 +137,12 @@ class LogInActivity : AppCompatActivity() {
             } else {
                 showLocationSettings()
             }
+        }
+    }
+    private fun checkForPermAndLocation() {
+        if (hasPermission and isLocationEnabled()) {
+            startActivity(Intent(this, MapActivity::class.java))
+            finish()
         }
     }
 
@@ -171,6 +184,12 @@ class LogInActivity : AppCompatActivity() {
         } else {
             startActivity(Intent(this, MapActivity::class.java))
             finish()
+        }
+    }
+    override fun onResume() {
+        super.onResume()
+        if (isAuthorized) {
+            checkForPermAndLocation()
         }
     }
 }

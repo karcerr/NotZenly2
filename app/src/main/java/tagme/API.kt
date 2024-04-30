@@ -6,9 +6,7 @@ import android.graphics.BitmapFactory
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import org.json.JSONObject
@@ -20,13 +18,12 @@ import java.util.*
 
 class API private constructor(context: Context){
     private val sharedPreferences: SharedPreferences = context.getSharedPreferences("API_PREFS", Context.MODE_PRIVATE)
-    private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
     private var answerReceived = false
     private var answer = JSONObject()
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
     var myToken: String?
         get() = sharedPreferences.getString("TOKEN", null)
         set(value) {
@@ -50,7 +47,7 @@ class API private constructor(context: Context){
     private val friendsData = mutableListOf<FriendData>()
     private val friendsRequestsData = mutableListOf<FriendRequestData>()
     private val conversationsData = mutableListOf<ConversationData>()
-    var picsData: List<PictureData>
+    private var picsData: List<PictureData>
         get() {
             val jsonString = sharedPreferences.getString("PICTURES_DATA", null)
             return if (jsonString != null) {
@@ -74,16 +71,15 @@ class API private constructor(context: Context){
             val listener = object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
                     this@API.webSocket = webSocket
-                    Log.d("Tagme_custom_log", "onOpen trigger: $response")
+                    Log.d("Tagme_WS", "onOpen trigger: $response")
                 }
 
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                    Log.d("Tagme_custom_log", "onFailure trigger: $response")
+                    Log.d("Tagme_WS", "onFailure trigger: $response")
                 }
 
                 override fun onMessage(webSocket: WebSocket, text: String) {
-                    Log.d("Tagme_custom_log", "onMessage trigger: $text")
-
+                    Log.d("Tagme_WS", "onMessage trigger: $text")
                     val jsonObject = JSONObject(text)
                     answer = jsonObject
                     when (answer.getString("action")) {
@@ -113,7 +109,6 @@ class API private constructor(context: Context){
                         "get my data" -> when (answer.getString("status")) {
                             "success" -> parseMyData(answer.getString("message"))
                         }
-
                     }
                     answerReceived = true
                     synchronized(this@API) {
@@ -279,7 +274,7 @@ class API private constructor(context: Context){
             waitForServerAnswer()
         }
     }
-    suspend fun getPictureFromWS(id: Int): JSONObject? {
+    private suspend fun getPictureFromWS(id: Int): JSONObject? {
         return withContext(Dispatchers.IO) {
             val requestData = JSONObject().apply {
                 put("action", "get picture")
@@ -345,7 +340,7 @@ class API private constructor(context: Context){
 
     private suspend fun waitForServerAnswer(): JSONObject? {
         return synchronized(this) {
-            val timeoutDuration = 1000
+            val timeoutDuration = 10000
             val startTime = System.currentTimeMillis()
 
             while (!answerReceived) {
@@ -367,14 +362,6 @@ class API private constructor(context: Context){
             val id = friendObject.getInt("user_id")
             val nickname = friendObject.getString("nickname")
             val pictureId = friendObject.optInt("picture_id", 0)
-            if (pictureId != 0) {
-                val existingPicture = picsData.find { it.pictureId == pictureId }
-                if ((existingPicture == null) or (existingPicture?.imagePath == null)) {
-                    coroutineScope.launch {
-                        getPictureFromWS(pictureId)
-                    }
-                }
-            }
             val existingFriend = friendsData.find { it.userData.userId == id }
             if (existingFriend == null) {
                 friendsData.add(FriendData(UserData(id, nickname, pictureId), null))
@@ -390,9 +377,7 @@ class API private constructor(context: Context){
             val existingPicture = picsData.find { it.pictureId == pictureId }
             if (existingPicture == null) {
                 val pictureData: ByteArray = Base64.getDecoder().decode(pictureDataString)
-
                 val imagePath = saveImageToCache(context, pictureId.toString(), pictureData)
-
                 val newPictureData = PictureData(pictureId, imagePath)
                 val updatedPicturesData = picsData.toMutableList().apply {
                     add(newPictureData)
@@ -417,13 +402,13 @@ class API private constructor(context: Context){
             val existingFriend = friendsData.find { it.userData.userId == id }
             if (existingFriend != null) {
                 if (existingFriend.location == null) {
-                    existingFriend.location = LocationData(latitude, longitude, accuracy, speed.toFloat(), Timestamp(dateFormat.parse(timestamp).time))
+                    existingFriend.location = LocationData(latitude, longitude, accuracy, speed.toFloat(), Timestamp(dateFormat.parse(timestamp)!!.time))
                 } else {
                     existingFriend.location?.latitude = latitude
                     existingFriend.location?.longitude = longitude
                     existingFriend.location?.accuracy = accuracy
                     existingFriend.location?.speed = speed.toFloat()
-                    existingFriend.location?.timestamp = Timestamp(dateFormat.parse(timestamp).time)
+                    existingFriend.location?.timestamp = dateFormat.parse(timestamp)?.let { Timestamp(it.time) }
                 }
             }
         }
@@ -443,17 +428,33 @@ class API private constructor(context: Context){
         val result = JSONObject(jsonString).getJSONArray("result")
         for (i in 0 until result.length()) {
             val conversationObject = result.getJSONObject(i)
-            val user_id = conversationObject.getInt("user_id")
-            val conversation_id = conversationObject.getInt("conversation_id")
+            val userId = conversationObject.getInt("user_id")
+            val conversationId = conversationObject.getInt("conversation_id")
             val nickname = conversationObject.getString("nickname")
-            val picture_id = conversationObject.optInt("picture_id", 0)
-
-            val existingConversation = conversationsData.find { it.conversationID == conversation_id }
+            val profilePictureId = conversationObject.optInt("profile_picture_id", 0)
+            val lastMessagePictureId = conversationObject.optInt("msg_picture_id", 0)
+            val lastMessageText = conversationObject.optString("text", "")
+            val lastMessageAuthorId = conversationObject.optInt("author_id", 0)
+            val read = conversationObject.optBoolean("read", false)
+            val timestamp = conversationObject.getString("timestamp")
+            val existingConversation = conversationsData.find { it.conversationID == conversationId }
             if (existingConversation == null) {
-                conversationsData.add(ConversationData(conversation_id,
-                    UserData(user_id, nickname,
-                        picture_id), mutableListOf()
-                ))
+                if (lastMessageAuthorId != 0) {
+                    conversationsData.add(ConversationData(conversationId,
+                        UserData(userId, nickname, profilePictureId), mutableListOf(),
+                        LastMessageData(lastMessageAuthorId, lastMessageText, lastMessagePictureId,
+                            Timestamp(dateFormat.parse(timestamp)!!.time), read)))
+                } else {
+                    conversationsData.add(ConversationData(conversationId,
+                        UserData(userId, nickname, profilePictureId), mutableListOf(),
+                        null))
+                }
+            } else {
+                existingConversation.userData = UserData(userId, nickname, profilePictureId)
+                if (lastMessageAuthorId != 0) {
+                    existingConversation.lastMessage = LastMessageData(lastMessageAuthorId, lastMessageText, lastMessagePictureId,
+                        Timestamp(dateFormat.parse(timestamp)!!.time), read)
+                }
             }
         }
     }
@@ -478,20 +479,63 @@ class API private constructor(context: Context){
                             authorId,
                             text,
                             pictureId,
-                            Timestamp(dateFormat.parse(timestamp).time),
+                            Timestamp(dateFormat.parse(timestamp)!!.time),
                             ifRead
                         )
                     )
+                    existingConversation.messages.sortBy { it.timestamp }
+                    addSeparatorIfNeeded(existingConversation.messages)
+                } else {
+                    //TBA: editing of existing images
                 }
             }
-
         }
+    }
+    private fun addSeparatorIfNeeded(messages: MutableList<MessageData>) {
+        if (messages.isEmpty()) return
+        val currentMessage = messages.map{it.copy()}.last()
+        if (messages.size < 2) {
+            val separator = createSeparator(currentMessage)
+            messages.removeLast()
+            messages.add(separator)
+            messages.add(currentMessage)
+            return
+        }
+
+        val lastMessage = messages[messages.size - 2].copy()
+        val lastMessageDate = getDateString(lastMessage.timestamp)
+        val currentMessageDate = getDateString(currentMessage.timestamp)
+
+        if (lastMessageDate != currentMessageDate) {
+            val separator = createSeparator(currentMessage)
+            messages.removeLast()
+            messages.add(separator)
+            messages.add(currentMessage)
+        }
+    }
+
+    private fun createSeparator(referenceMessage: MessageData): MessageData {
+        return MessageData(
+            0,
+            0,
+            "",
+            null,
+            referenceMessage.timestamp,
+            true
+        )
+    }
+
+    private fun getDateString(timestamp: Timestamp): String {
+        val calendar = Calendar.getInstance()
+        calendar.time = timestamp
+        val dayOfYear = calendar.get(Calendar.DAY_OF_YEAR)
+        val year = calendar.get(Calendar.YEAR)
+        return "$year-$dayOfYear"
     }
     private fun parseFriendRequestData(jsonString: String) {
         val result = JSONObject(jsonString).getJSONArray("result")
-        val userIdsInResult = HashSet<Int>() // Store user ids present in the result
+        val userIdsInResult = HashSet<Int>()
 
-        // Parse result JSON and update or add FriendRequestData
         for (i in 0 until result.length()) {
             val requestObject = result.getJSONObject(i)
             val id = requestObject.getInt("user_id")
@@ -500,14 +544,6 @@ class API private constructor(context: Context){
             val pictureId = requestObject.optInt("picture_id", 0)
 
             userIdsInResult.add(id)
-            if (pictureId != 0) {
-                val existingPicture = picsData.find { it.pictureId == pictureId }
-                if ((existingPicture == null) or (existingPicture?.imagePath == null)) {
-                    coroutineScope.launch {
-                        getPictureFromWS(pictureId)
-                    }
-                }
-            }
             val existingFriendRequest = friendsRequestsData.find { it.userData.userId == id }
             if (existingFriendRequest != null) {
                 existingFriendRequest.userData.nickname = nickname
@@ -540,16 +576,16 @@ class API private constructor(context: Context){
     fun getConversationData(id: Int): ConversationData? {
         return conversationsData.find{it.conversationID == id}
     }
-    fun getPicturesData(): List<PictureData> {
-        return picsData
-    }
-    fun getPictureData(context: Context, pictureId: Int): Bitmap? {
-        val picture = picsData.find { it.pictureId == pictureId }
+
+    suspend fun getPictureData(pictureId: Int): Bitmap? {
+        var picture = picsData.find { it.pictureId == pictureId }
+        if (picture?.imagePath == null) {
+            getPictureFromWS(pictureId)
+            picture = picsData.find { it.pictureId == pictureId }
+        }
         return if (picture != null) {
             BitmapFactory.decodeFile(picture.imagePath)
-        } else {
-            null
-        }
+        } else null
     }
 
     data class LocationData(
@@ -581,8 +617,9 @@ class API private constructor(context: Context){
     )
     data class ConversationData(
         val conversationID: Int,
-        val userData: UserData,
-        var messages: MutableList<MessageData>
+        var userData: UserData,
+        var messages: MutableList<MessageData>,
+        var lastMessage: LastMessageData?
     )
     data class MessageData(
         val messageId: Int,
@@ -590,7 +627,14 @@ class API private constructor(context: Context){
         var text: String?,
         val imageId: Int?,
         val timestamp: Timestamp,
-        val readL: Boolean
+        val read: Boolean
+    )
+    data class LastMessageData(
+        val authorId: Int,
+        var text: String?,
+        val imageId: Int?,
+        val timestamp: Timestamp,
+        val read: Boolean
     )
 
 

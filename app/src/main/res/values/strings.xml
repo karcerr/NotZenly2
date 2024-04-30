@@ -25,5 +25,16 @@
     <string name="log_in">Log in</string>
     <string name="register">Register</string>
     <string name="location_request">The application requires access to geolocation to operate.</string>
-    <string name="turn_location_on">Включить геолокацию</string>
+    <string name="turn_location_on">Enable geolocation</string>
+    <string name="date_placeholder" translatable="false">01.02.2024</string>
+    <string name="profile">Profile</string>
+    <string name="centralize">Centralize</string>
+    <string name="message">Message</string>
+    <string name="search">search</string>
+    <string name="add_geo_story">Add geo story</string>
+    <string name="privacy">Privacy</string>
+    <string name="privacy_friends_only">privacy friends only</string>
+    <string name="privacy_global">privacy global</string>
+    <string name="photo_preview">Photo preview</string>
+    <string name="compressing">Compressing...</string>
 </resources>
