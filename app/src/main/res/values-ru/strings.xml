@@ -33,4 +33,5 @@
     <string name="privacy_friends_only">Только друзья</string>
     <string name="privacy_global">Все пользователи</string>
     <string name="photo_preview">Превью фото</string>
+    <string name="compressing">Сжатие...</string>
 </resources>

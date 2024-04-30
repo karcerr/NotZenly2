@@ -36,4 +36,5 @@
     <string name="privacy_friends_only">privacy friends only</string>
     <string name="privacy_global">privacy global</string>
     <string name="photo_preview">Photo preview</string>
+    <string name="compressing">Compressing...</string>
 </resources>

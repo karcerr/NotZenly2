@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
              android:layout_width="match_parent"
-             android:layout_height="match_parent"
+             android:layout_height="match_parent" xmlns:app="http://schemas.android.com/apk/res-auto"
              android:background="@drawable/geo_story_gradient_2"
 >
     <LinearLayout
@@ -45,10 +45,39 @@
             />
 
             <ImageView
+                    android:id="@+id/geo_story_preview_icon"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:src="@drawable/add_a_photo" android:importantForAccessibility="no"/>
+                    android:src="@drawable/add_a_photo"
+                    android:importantForAccessibility="no"
+            />
+            <LinearLayout
+                    android:id="@+id/compressing_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_gravity="center"
+                    android:visibility="gone"
+            >
+                <ProgressBar
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginVertical="10dp"
+                        android:progressTint="@color/red"
+                />
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/compressing"
+                        android:textAppearance="?android:textAppearanceMedium"
+                        android:fontFamily="@font/my_font"
+                        android:textSize="20sp"
+                        android:textColor="@color/black"
+                        android:textStyle="bold"
+                />
+            </LinearLayout>
         </FrameLayout>
 
         <LinearLayout
@@ -61,12 +90,12 @@
         >
             <TextView
                     android:layout_width="0dp"
+                    android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:text="@string/privacy"
                     android:textAppearance="?android:textAppearanceMedium"
                     android:fontFamily="@font/my_font"
                     android:textSize="40sp"
-                    android:layout_weight="1"
                     android:textColor="@color/white"
                     android:textStyle="bold"
                     android:layout_gravity="center"
@@ -89,7 +118,7 @@
                     android:src="@drawable/friends"
                     android:background="@color/transparent"
                     android:layout_marginHorizontal="5dp"
-                    android:tint="#5EFF77"
+                    app:tint="#5EFF77"
                     android:layout_gravity="center_vertical"
                     android:scaleType="fitCenter"
                     android:contentDescription="@string/privacy_friends_only"/>
