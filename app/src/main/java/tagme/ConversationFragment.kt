@@ -69,7 +69,7 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
                 adapter.setLastMessageIdListener(this@ConversationFragment)
                 recyclerView.adapter = adapter
                 recyclerView.scrollToPosition(adapter.itemCount - 1)
-
+                //recyclerView.smoothScrollToPosition(0) - прокрутка к новому сообщению
                 val picture = api.getPicturesData().find { it.pictureId == conversation.userData.profilePictureId }
                 if (picture != null) {
                     val bitmap = requireContext().let {

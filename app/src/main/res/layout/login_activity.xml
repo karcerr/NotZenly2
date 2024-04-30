@@ -4,7 +4,7 @@
                 android:layout_height="match_parent"
                 android:background="@drawable/login_background"
                 android:gravity="center"
-                android:padding="40dp">
+                android:paddingHorizontal="40dp">
 
 
     <!-- Просьба включить геолокацию, изначально невидима -->
@@ -15,40 +15,66 @@
                   android:id="@+id/login_layout">
 
         <ImageView
-                android:layout_width="160dp"
-                android:layout_height="160dp"
-                android:src="@drawable/icon_account_circle"
+                android:layout_width="234dp"
+                android:layout_height="227dp"
+                android:src="@drawable/Earth"
                 android:importantForAccessibility="no">
         </ImageView>
-        <EditText
-                android:id="@+id/username_input"
-                android:layout_width="match_parent"
+        <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
-                android:hint="@string/login"
-                android:textColorHint="@color/grey"
-                android:textColor="@color/white"
-                android:background="@drawable/rounded_corner"
-                android:padding="9dp"
-                android:inputType="text"
-                android:autofillHints="username"
-                android:fontFamily="@font/my_font"
-                android:textSize="20sp"
+                android:text="TagMe!"
+                android:textColor="#FFFFFF"
+                android:gravity="center"
+                android:textSize="55sp"
+                android:textAlignment="center"
+                android:textStyle="bold"
+                android:layout_marginTop="-15dp"
         />
-        <EditText
-                android:id="@+id/password_input"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="@string/password"
-                android:textColorHint="@color/grey"
-                android:textColor="@color/white"
-                android:textSize="20sp"
-                android:background="@drawable/rounded_corner"
-                android:padding="9dp"
-                android:inputType="textPassword"
-                android:autofillHints="password"
-                android:fontFamily="@font/my_font"/>
+        <FrameLayout android:layout_width="match_parent" android:layout_height="50dp" android:layout_marginTop="10dp">
+
+            <EditText
+                    android:id="@+id/username_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:hint="@string/login"
+                    android:textColorHint="@color/grey"
+                    android:textColor="@color/white"
+                    android:background="@drawable/input_rectangle"
+                    android:padding="9dp"
+                    android:inputType="text"
+                    android:autofillHints="username"
+                    android:fontFamily="@font/my_font"
+                    android:textSize="20sp"
+            />
+            <ImageView
+                    android:layout_width="wrap_content"
+                    android:src="@drawable/icon_profile_login"
+                    android:layout_gravity="end|center_vertical"
+                    android:layout_marginEnd="20dp"
+                    android:layout_height="wrap_content"/>
+        </FrameLayout>
+        <FrameLayout android:layout_width="match_parent" android:layout_height="50dp" android:layout_marginTop="10dp">
+            <EditText
+                    android:id="@+id/password_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:hint="@string/password"
+                    android:textColorHint="@color/grey"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:background="@drawable/input_rectangle"
+                    android:padding="9dp"
+                    android:inputType="textPassword"
+                    android:autofillHints="password"
+                    android:fontFamily="@font/my_font"/>
+            <ImageView
+                    android:layout_width="wrap_content"
+                    android:src="@drawable/key_vertical_password"
+                    android:layout_gravity="end|center_vertical"
+                    android:layout_marginEnd="25dp"
+                    android:layout_height="wrap_content"/>
+        </FrameLayout>
         <TextView
                 android:id="@+id/error_message"
                 android:layout_width="match_parent"
@@ -69,18 +95,29 @@
                 android:textSize="20sp"
                 android:textColor="@color/white"
                 android:fontFamily="@font/my_font"
-                android:background="@drawable/rounded_corner"
+                android:background="@drawable/rect_bg"
+        />
+        <ImageView
+                android:layout_width="match_parent"
+
+                android:layout_height="wrap_content"
+                android:src="@drawable/separator"
+                android:layout_marginVertical="15dp"
+                android:layout_gravity="center"
+                android:importantForAccessibility="no"
+
         />
         <Button
                 android:id="@+id/register_btn"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/register"
-                android:layout_marginTop="16dp"
+
                 android:textSize="20sp"
                 android:textColor="@color/white"
                 android:fontFamily="@font/my_font"
-                android:background="?android:attr/selectableItemBackground"
+                android:background="@drawable/rect_bg"
+
         />
     </LinearLayout>
     <LinearLayout
