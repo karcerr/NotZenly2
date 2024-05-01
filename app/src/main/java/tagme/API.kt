@@ -374,13 +374,11 @@ class API private constructor(context: Context){
             waitForServerAnswer()
         }
     }
-    suspend fun getGeoStoriesNearby(latitude: String, longitude: String): JSONObject? {
+    suspend fun getGeoStoriesNearby(): JSONObject? {
         return withContext(Dispatchers.IO) {
             val requestData = JSONObject().apply {
-                put("action", "get stories")
+                put("action", "get geo stories nearby")
                 put("token", myToken)
-                put("latitude", latitude)
-                put("longitude", longitude)
             }
             webSocket?.send(requestData.toString())
             waitForServerAnswer()
