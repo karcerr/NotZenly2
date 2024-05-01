@@ -19,15 +19,22 @@ class CustomIconOverlay(
     private var userId: Int,
     private val fontResId: Int,
     private val clickListener: ((CustomIconOverlay) -> Unit)?
-
 ) : Overlay(context) {
     private var intersectCount = 0
     private var visible = true
     private var accountedForIntersect = false
     private var overlayScale = calculateScaleFactor(drawable)
     var mapView: MapView? = null
-    private val textPaint = Paint().apply {
+    private val textPaintBlack = Paint().apply {
         color = Color.BLACK
+        textSize = 48f
+        isAntiAlias = true
+        typeface = ResourcesCompat.getFont(context, fontResId)
+        strokeWidth = 2f
+        style = Paint.Style.FILL_AND_STROKE
+    }
+    private val textPaintWhite = Paint().apply {
+        color = Color.WHITE
         textSize = 48f
         isAntiAlias = true
         typeface = ResourcesCompat.getFont(context, fontResId)
@@ -105,7 +112,7 @@ class CustomIconOverlay(
             val gradientStartColor = Color.parseColor("#34C1E0")
             val gradientEndColor = Color.parseColor("#3CB583")
             val angleRadians = Math.toRadians(275.0)
-            val gradient = LinearGradient(
+            val fillGradient = LinearGradient(
                 x0, y0, x1, y1,
                 gradientStartColor, gradientEndColor,
                 Shader.TileMode.CLAMP
@@ -113,25 +120,50 @@ class CustomIconOverlay(
             val strokePaint = Paint().apply {
                 style = Paint.Style.STROKE
                 strokeWidth = 15.0F
-                shader = gradient
+                shader = fillGradient
             }
-
+            val circleRadius = 40f
             val strokeRect = RectF(x0, y0, x1, y1)
             canvas.drawRoundRect(strokeRect, scaledWidth * 0.25f, scaledWidth * 0.25f, strokePaint)
-
             val cornerSize = scaledWidth * 0.25f
-            val path = Path().apply {
-                addRoundRect(
-                    RectF(it.x.toFloat() - scaledWidth / 2, it.y.toFloat() - scaledHeight / 2,
-                        it.x.toFloat() + scaledWidth / 2, it.y.toFloat() + scaledHeight / 2),
-                    cornerSize, cornerSize, Path.Direction.CW
-                )
+
+            val roundedRectPath = Path().apply {
+                addRoundRect(strokeRect, cornerSize, cornerSize, Path.Direction.CW)
                 close()
             }
-
-            canvas.clipPath(path)
+            val circlePath = Path().apply {
+                addCircle(x1, y1, circleRadius, Path.Direction.CW)
+                close()
+            }
+            val combinedPath = Path().apply {
+                op(roundedRectPath, circlePath, Path.Op.UNION)
+            }
+            canvas.clipPath(combinedPath)
 
             drawable.draw(canvas)
+            if (intersectCount > 0) {
+                val circleGradientStartColor = Color.parseColor("#9D51FF")
+                val circleGradientEndColor = Color.parseColor("#4EEAC5")
+                val circleGradient = LinearGradient(
+                    x1 - circleRadius, y1 - circleRadius, x1 + circleRadius, y1 + circleRadius,
+                    circleGradientStartColor, circleGradientEndColor,
+                    Shader.TileMode.CLAMP
+                )
+
+                val circleStrokePaint = Paint().apply {
+                    style = Paint.Style.STROKE
+                    strokeWidth = 10.0F
+                    shader = fillGradient
+                }
+
+                val circleFillPaint = Paint().apply {
+                    style = Paint.Style.FILL
+                    shader = circleGradient
+                }
+
+                canvas.drawCircle(x1, y1, circleRadius, circleFillPaint)
+                canvas.drawCircle(x1, y1, circleRadius, circleStrokePaint)
+            }
 
             canvas.restore()
 
@@ -142,10 +174,10 @@ class CustomIconOverlay(
             val nameText = name
             val intersectCountText = "+$intersectCount"
             if (speed.toInt() != 0)
-                canvas.drawText(speedText, it.x.toFloat(), (it.y + scaledHeight / 2 + 65).toFloat(), textPaint)
-            canvas.drawText(nameText, it.x.toFloat() - textPaint.measureText(nameText) / 2, (it.y - scaledHeight / 2 - 10).toFloat(), textPaint)
+                canvas.drawText(speedText, it.x.toFloat(), (it.y + scaledHeight / 2 + 65).toFloat(), textPaintBlack)
+            canvas.drawText(nameText, it.x.toFloat() - textPaintBlack.measureText(nameText) / 2, (it.y - scaledHeight / 2 - 10).toFloat(), textPaintBlack)
             if (intersectCount != 0) {
-                canvas.drawText(intersectCountText, it.x.toFloat(), (it.y + scaledHeight / 2 + 65).toFloat(), textPaint)
+                canvas.drawText(intersectCountText, x1 - (circleRadius / 2), y1 + (circleRadius / 2), textPaintWhite)
             }
             canvas.restore()
         }
