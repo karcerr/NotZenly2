@@ -35,7 +35,7 @@ class CustomIconOverlay(
     }
     private val textPaintWhite = Paint().apply {
         color = Color.WHITE
-        textSize = 48f
+        textSize = 32f
         isAntiAlias = true
         typeface = ResourcesCompat.getFont(context, fontResId)
         strokeWidth = 2f
@@ -177,7 +177,7 @@ class CustomIconOverlay(
                 canvas.drawText(speedText, it.x.toFloat(), (it.y + scaledHeight / 2 + 65).toFloat(), textPaintBlack)
             canvas.drawText(nameText, it.x.toFloat() - textPaintBlack.measureText(nameText) / 2, (it.y - scaledHeight / 2 - 10).toFloat(), textPaintBlack)
             if (intersectCount != 0) {
-                canvas.drawText(intersectCountText, x1 - (circleRadius / 2), y1 + (circleRadius / 2), textPaintWhite)
+                canvas.drawText(intersectCountText, x1 - (circleRadius / 2 - 5), y1 + (circleRadius / 2 - 7), textPaintWhite)
             }
             canvas.restore()
         }
