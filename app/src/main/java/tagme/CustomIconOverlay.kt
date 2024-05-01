@@ -78,6 +78,7 @@ class CustomIconOverlay(
             mapView.overlays?.forEach { overlay ->
                 if (overlay is CustomIconOverlay && overlay.visible && doOverlaysIntersect(this, overlay, currentPoint)) {
                     intersected = true
+                    return@forEach
                 }
             }
 
