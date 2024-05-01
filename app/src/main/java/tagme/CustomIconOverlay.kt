@@ -80,7 +80,7 @@ class CustomIconOverlay(
                 accountedForIntersect = true
                 mapView.overlays?.forEach { overlay ->
                     if (overlay is CustomIconOverlay && !overlay.accountedForIntersect && doOverlaysIntersect(this, overlay, currentPoint)) {
-                        intersectCount += 1
+                        intersectCount += (1 + overlay.intersectCount)
                         overlay.accountedForIntersect = true
                     }
                 }
@@ -96,19 +96,27 @@ class CustomIconOverlay(
             overlayScale = calculateScaleFactor(drawable)
             val scaledWidth = (drawable.intrinsicWidth * overlayScale).toInt()
             val scaledHeight = (drawable.intrinsicHeight * overlayScale).toInt()
-            drawable.setBounds(it.x - scaledWidth / 2, it.y - scaledHeight / 2,
-                it.x + scaledWidth / 2, it.y + scaledHeight / 2)
+            val x0 = (it.x - scaledWidth / 2).toFloat()
+            val y0 = (it.y - scaledHeight / 2).toFloat()
+            val x1 = (it.x + scaledWidth / 2).toFloat()
+            val y1 = (it.y + scaledHeight / 2).toFloat()
+            drawable.setBounds(x0.toInt(), y0.toInt(), x1.toInt(), y1.toInt())
+
+            val gradientStartColor = Color.parseColor("#34C1E0")
+            val gradientEndColor = Color.parseColor("#3CB583")
+            val angleRadians = Math.toRadians(275.0)
+            val gradient = LinearGradient(
+                x0, y0, x1, y1,
+                gradientStartColor, gradientEndColor,
+                Shader.TileMode.CLAMP
+            )
             val strokePaint = Paint().apply {
                 style = Paint.Style.STROKE
-                color = Color.BLACK
-                strokeWidth = 6.0F
+                strokeWidth = 15.0F
+                shader = gradient
             }
-            val strokeRect = RectF(
-                (it.x - scaledWidth / 2).toFloat(),
-                (it.y - scaledHeight / 2).toFloat(),
-                (it.x + scaledWidth / 2).toFloat(),
-                (it.y + scaledHeight / 2).toFloat()
-            )
+
+            val strokeRect = RectF(x0, y0, x1, y1)
             canvas.drawRoundRect(strokeRect, scaledWidth * 0.25f, scaledWidth * 0.25f, strokePaint)
 
             val cornerSize = scaledWidth * 0.25f
