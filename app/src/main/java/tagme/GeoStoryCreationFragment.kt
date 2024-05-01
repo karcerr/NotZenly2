@@ -2,8 +2,7 @@ package tagme
 
 import android.app.Activity.RESULT_OK
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
+import android.graphics.*
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -17,6 +16,7 @@ import android.widget.LinearLayout
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.palette.graphics.Palette
 import com.example.tagme.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -45,6 +45,8 @@ class GeoStoryCreationFragment : Fragment() {
         val coroutineScope = CoroutineScope(Dispatchers.Main)
         val privacyGlobal = view.findViewById<ImageButton>(R.id.global_privacy)
         val privacyFriendsOnly = view.findViewById<ImageButton>(R.id.friend_only_privacy)
+        val selectedColor = Color.parseColor("#5EFF77")
+        val unselectedColor = Color.parseColor("#C6C6C6")
         val geoStoryFrameLayout = view.findViewById<FrameLayout>(R.id.geo_story_frame)
         geoStoryPreview = view.findViewById(R.id.geo_story_preview)
         geoStoryPreviewIcon = view.findViewById(R.id.geo_story_preview_icon)
@@ -75,10 +77,29 @@ class GeoStoryCreationFragment : Fragment() {
                     val byt = outputStream.size()
                     Log.d("Tagme_PIC", byt.toString())
                     api.insertPictureIntoWS(outputStream)
+                    Log.d("Tagme_Geo_story", api.lastInsertedPicId.toString())
+                    if (api.lastInsertedPicId != 0) {
+                        val latitude = (requireActivity() as MapActivity).myLatitude
+                        val longitude = (requireActivity() as MapActivity).myLongitute
+                        api.createGeoStory(
+                            api.lastInsertedPicId,
+                            "global",
+                            latitude,
+                            longitude
+                        )
+                    }
                 }
             }
         }
+        privacyGlobal.setOnClickListener {
+            privacyGlobal.setColorFilter(selectedColor)
+            privacyFriendsOnly.setColorFilter(unselectedColor)
 
+        }
+        privacyFriendsOnly.setOnClickListener {
+            privacyGlobal.setColorFilter(unselectedColor)
+            privacyFriendsOnly.setColorFilter(selectedColor)
+        }
         return view
     }
     private fun pickImageGallery() {
@@ -91,7 +112,7 @@ class GeoStoryCreationFragment : Fragment() {
             val inputStream = requireContext().contentResolver.openInputStream(uri)
             inputStream?.use { stream ->
                 val originalBitmap = BitmapFactory.decodeStream(stream)
-                val compressedBitmap = compressBitmap(originalBitmap)
+                val compressedBitmap = compressBitmap(overlayGradient(compressBitmap(originalBitmap)))
                 originalBitmap.recycle()
                 requireActivity().runOnUiThread {
                     compressingStatus.visibility = View.GONE
@@ -103,10 +124,24 @@ class GeoStoryCreationFragment : Fragment() {
         }
     }
     private fun compressBitmap(bitmap: Bitmap): Bitmap {
-        val desiredHeight = 800
-        val aspectRatio = 9f / 16f
-        val desiredWidth = (desiredHeight * aspectRatio).toInt()
-        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, desiredWidth, desiredHeight, true)
+        val maxWidth = 450
+        val maxHeight = 800
+
+        val originalWidth = bitmap.width
+        val originalHeight = bitmap.height
+
+        val aspectRatio = originalWidth.toFloat() / originalHeight.toFloat()
+        val targetWidth: Int
+        val targetHeight: Int
+        if (aspectRatio > maxWidth.toFloat() / maxHeight.toFloat()) {
+            targetWidth = maxWidth
+            targetHeight = (maxWidth.toFloat() / aspectRatio).toInt()
+        } else {
+            targetWidth = (maxHeight.toFloat() * aspectRatio).toInt()
+            targetHeight = maxHeight
+        }
+
+        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
         outputStream = ByteArrayOutputStream()
         scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
         val initialByteArray = outputStream.toByteArray()
@@ -131,5 +166,48 @@ class GeoStoryCreationFragment : Fragment() {
         }
 
         return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+    }
+    private fun overlayGradient(bitmap: Bitmap): Bitmap {
+        val dominantColors = calculateDominantColors(bitmap)
+        Log.d("Tagme_PIC", "Dominant colors: $dominantColors")
+
+        val gradientBitmap = createGradientBitmap(450, 800, dominantColors.first, dominantColors.second)
+
+        val scaledGradientBitmap = Bitmap.createScaledBitmap(gradientBitmap, 450, 800, true)
+        val combinedBitmap = Bitmap.createBitmap(450, 800, Bitmap.Config.ARGB_8888)
+
+        val canvas = Canvas(combinedBitmap)
+        val paint = Paint(Paint.FILTER_BITMAP_FLAG)
+        canvas.drawBitmap(scaledGradientBitmap, 0f, 0f, paint)
+        val startX = (scaledGradientBitmap.width - bitmap.width) / 2f
+        val startY = (scaledGradientBitmap.height - bitmap.height) / 2f
+        canvas.drawBitmap(bitmap, startX, startY, paint)
+
+        return combinedBitmap
+    }
+    private fun createGradientBitmap(width: Int, height: Int, colorStart: Int, colorEnd: Int): Bitmap {
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val gradient = LinearGradient(0f, 0f, 0f, height.toFloat(), colorStart, colorEnd, Shader.TileMode.CLAMP)
+        val paint = Paint()
+        paint.shader = gradient
+        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
+        return bitmap
+    }
+    private fun calculateDominantColors(bitmap: Bitmap): Pair<Int, Int> {
+        val palette = Palette.from(bitmap).generate()
+        if (palette.swatches.isNullOrEmpty()) {
+            return Pair(Color.WHITE, Color.BLACK)
+        }
+        val dominantColors = mutableListOf<Int>()
+        palette.swatches.sortedByDescending { it.population }.take(2).forEach { swatch ->
+            dominantColors.add(swatch.rgb)
+        }
+
+        if (dominantColors.size == 1) {
+            dominantColors.add(dominantColors[0])
+        }
+
+        return Pair(dominantColors[0], dominantColors[1])
     }
 }

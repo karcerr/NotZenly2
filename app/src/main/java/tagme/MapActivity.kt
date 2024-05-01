@@ -55,6 +55,8 @@ class MapActivity: AppCompatActivity() {
     private lateinit var profileFragment: ProfileFragment
     private lateinit var conversationFragment: ConversationsFragment
     private lateinit var geoStoryCreation: GeoStoryCreationFragment
+    lateinit var myLatitude: String
+    lateinit var myLongitute: String
     private var scaleFactor = 15.0
     private var centeredTargetId = -1
     private var isAnimating = false
@@ -339,14 +341,14 @@ class MapActivity: AppCompatActivity() {
                 val location = getCurrentLocation()
 
                 location?.let {
-                    val latitude = it.latitude.toString()
-                    val longitude = it.longitude.toString()
+                    myLatitude = it.latitude.toString()
+                    myLongitute = it.longitude.toString()
                     val accuracy = it.accuracy.toString()
                     val speed = it.speed.toString()
-
                     try {
-                        api.sendLocationToWS(latitude, longitude, accuracy, speed)
+                        api.sendLocationToWS(myLatitude, myLongitute, accuracy, speed)
                         api.getLocationsFromWS()
+                        api.getGeoStoriesNearby(myLatitude, myLongitute)
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
@@ -362,7 +364,7 @@ class MapActivity: AppCompatActivity() {
         coroutineScope.coroutineContext.cancelChildren()
     }
 
-    private suspend fun getCurrentLocation(): Location? {
+    suspend fun getCurrentLocation(): Location? {
         return withContext(Dispatchers.IO) {
             if (ActivityCompat.checkSelfPermission(
                     this@MapActivity,
