@@ -22,7 +22,8 @@ class CustomIconOverlay(
 ) : Overlay(context) {
     private var intersectCount = 0
     private var visible = true
-    private var accountedForIntersect = false
+    private var closestVisibleOverlay : CustomIconOverlay? = null
+
     private var overlayScale = calculateScaleFactor(drawable)
     var mapView: MapView? = null
     private val textPaintBlack = Paint().apply {
@@ -75,25 +76,31 @@ class CustomIconOverlay(
 
         point?.let { currentPoint ->
             var intersected = false
+            var minDistanceToVisible = Double.MAX_VALUE
+            var closestVisibleOverlayTemp: CustomIconOverlay? = null
             mapView.overlays?.forEach { overlay ->
                 if (overlay is CustomIconOverlay && overlay.visible && doOverlaysIntersect(this, overlay, currentPoint)) {
+                    val overlayPoint = projection.toPixels(overlay.location, null)
+                    val distance = sqrt(
+                        (currentPoint.x - overlayPoint.x).toDouble().pow(2.0) +
+                                (currentPoint.y - overlayPoint.y).toDouble().pow(2.0)
+                    )
+                    if (distance < minDistanceToVisible) {
+                        minDistanceToVisible = distance
+                        closestVisibleOverlayTemp = overlay
+                    }
                     intersected = true
-                    return@forEach
                 }
             }
 
             visible = !intersected
-            intersectCount = 0
-            if (visible) {
-                accountedForIntersect = true
-                mapView.overlays?.forEach { overlay ->
-                    if (overlay is CustomIconOverlay && !overlay.accountedForIntersect && doOverlaysIntersect(this, overlay, currentPoint)) {
-                        intersectCount += (1 + overlay.intersectCount)
-                        overlay.accountedForIntersect = true
-                    }
-                }
-            } else {
-                accountedForIntersect = false
+            if (closestVisibleOverlay != null) {
+                closestVisibleOverlay!!.intersectCount --
+                closestVisibleOverlay = null
+            }
+            if (intersected) {
+                closestVisibleOverlay = closestVisibleOverlayTemp
+                closestVisibleOverlay!!.intersectCount ++
             }
         }
 
