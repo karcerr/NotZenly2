@@ -125,8 +125,9 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
                         editText.text.clear()
                     } else {
                         val errorText = answer?.getString("message")
-                        Toast.makeText(requireContext(), "Error: $errorText", Toast.LENGTH_LONG)
+                        Toast.makeText(requireContext(), "Error: $errorText", Toast.LENGTH_LONG).show()
                     }
+                    api.getConversationsFromWS()
                 }
             }
         }
@@ -137,7 +138,7 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
         messageUpdateRunnable = Runnable {
             CoroutineScope(Dispatchers.Main).launch {
                 val conversationId = requireArguments().getInt(ARG_CONVERSATION_ID)
-               // api.getNewMessagesFromWS(conversationId, lastMessageId)
+                api.getNewMessagesFromWS(conversationId, lastMessageId)
                 val updatedMessages = api.getConversationData(conversationId)?.messages
                 val updatedMessagesDeepCopy = updatedMessages?.map {it.copy()}
                 if (updatedMessagesDeepCopy != null) {

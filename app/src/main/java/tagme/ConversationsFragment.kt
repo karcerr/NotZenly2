@@ -28,7 +28,7 @@ import java.time.format.DateTimeFormatter
 class ConversationsFragment : Fragment() {
     lateinit var conversationsAdapter: ConversationsAdapter
     private lateinit var api: API
-    private val conversationUpdateInterval = 1000L
+    private val conversationUpdateInterval = 1500L
     private var conversationUpdateHandler: Handler? = null
     private var conversationUpdateRunnable: Runnable? = null
     private lateinit var recyclerView: RecyclerView

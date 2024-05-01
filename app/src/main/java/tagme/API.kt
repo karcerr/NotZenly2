@@ -16,6 +16,7 @@ import java.io.FileOutputStream
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.Semaphore
 
 class API private constructor(context: Context){
     private val sharedPreferences: SharedPreferences = context.getSharedPreferences("API_PREFS", Context.MODE_PRIVATE)
@@ -27,6 +28,9 @@ class API private constructor(context: Context){
     private var lastInsertedPictureDataString = ""
     var lastInsertedPicId = 0
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
+    private val MAX_CONCURRENT_REQUESTS = 6
+    private val semaphore = Semaphore(MAX_CONCURRENT_REQUESTS)
+
     var myToken: String?
         get() = sharedPreferences.getString("TOKEN", null)
         set(value) {
@@ -130,259 +134,174 @@ class API private constructor(context: Context){
     }
 
     suspend fun registerUser(username: String, password: String): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            val requestData = JSONObject().apply {
-                put("action", "register")
-                put("username", username)
-                put("password", password)
-            }
-            myNickname = username
-            webSocket?.send(requestData.toString())
-
-            waitForServerAnswer()
+        val requestData = JSONObject().apply {
+            put("action", "register")
+            put("username", username)
+            put("password", password)
         }
+        myNickname = username
+        return sendRequestToWS(requestData)
     }
 
     suspend fun loginUser(username: String, password: String): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            val requestData = JSONObject().apply {
-                put("action", "login")
-                put("username", username)
-                put("password", password)
-            }
-            myNickname = username
-            webSocket?.send(requestData.toString())
-
-            waitForServerAnswer()
+        val requestData = JSONObject().apply {
+            put("action", "login")
+            put("username", username)
+            put("password", password)
         }
+        myNickname = username
+        return sendRequestToWS(requestData)
     }
     suspend fun loginToken(): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            val requestData = JSONObject().apply {
-                put("action", "validate token")
-                put("token", myToken)
-            }
-            webSocket?.send(requestData.toString())
-
-            waitForServerAnswer()
+        val requestData = JSONObject().apply {
+            put("action", "validate token")
+            put("token", myToken)
         }
+        return sendRequestToWS(requestData)
     }
     suspend fun sendLocationToWS(latitude: String, longitude: String, accuracy: String, speed: String): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            val requestData = JSONObject().apply {
-                put("action", "send location")
-                put("token", myToken)
-                put("latitude", latitude)
-                put("longitude", longitude)
-                put("accuracy", accuracy)
-                put("speed", speed)
-            }
-
-            webSocket?.send(requestData.toString())
-
-            waitForServerAnswer()
+        val requestData = JSONObject().apply {
+            put("action", "send location")
+            put("token", myToken)
+            put("latitude", latitude)
+            put("longitude", longitude)
+            put("accuracy", accuracy)
+            put("speed", speed)
         }
+        return sendRequestToWS(requestData)
     }
     suspend fun getLocationsFromWS(): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            val requestData = JSONObject().apply {
-                put("action", "get locations")
-                put("token", myToken)
-            }
-
-            webSocket?.send(requestData.toString())
-
-            waitForServerAnswer()
+        val requestData = JSONObject().apply {
+            put("action", "get locations")
+            put("token", myToken)
         }
+        return sendRequestToWS(requestData)
     }
     suspend fun getFriendsFromWS(): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            val requestData = JSONObject().apply {
-                put("action", "get friends")
-                put("token", myToken)
-            }
-
-            webSocket?.send(requestData.toString())
-
-            waitForServerAnswer()
+        val requestData = JSONObject().apply {
+            put("action", "get friends")
+            put("token", myToken)
         }
+        return sendRequestToWS(requestData)
     }
     suspend fun getConversationsFromWS(): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            val requestData = JSONObject().apply {
-                put("action", "get conversations")
-                put("token", myToken)
-            }
-
-            webSocket?.send(requestData.toString())
-
-            waitForServerAnswer()
+        val requestData = JSONObject().apply {
+            put("action", "get conversations")
+            put("token", myToken)
         }
+        return sendRequestToWS(requestData)
     }
     suspend fun sendFriendRequestToWS(username: String): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            val requestData = JSONObject().apply {
-                put("action", "add friend")
-                put("token", myToken)
-                put("nickname", username)
-            }
-
-            webSocket?.send(requestData.toString())
-
-            waitForServerAnswer()
+        val requestData = JSONObject().apply {
+            put("action", "add friend")
+            put("token", myToken)
+            put("nickname", username)
         }
+        return sendRequestToWS(requestData)
     }
     suspend fun getFriendRequestsFromWS(): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            val requestData = JSONObject().apply {
-                put("action", "get friend requests")
-                put("token", myToken)
-            }
-
-            webSocket?.send(requestData.toString())
-
-            waitForServerAnswer()
+        val requestData = JSONObject().apply {
+            put("action", "get friend requests")
+            put("token", myToken)
         }
+        return sendRequestToWS(requestData)
     }
     suspend fun acceptFriendRequest(id: Int): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            val requestData = JSONObject().apply {
-                put("action", "accept request")
-                put("token", myToken)
-                put("user2_id", id)
-            }
-            webSocket?.send(requestData.toString())
-
-            waitForServerAnswer()
+        val requestData = JSONObject().apply {
+            put("action", "accept request")
+            put("token", myToken)
+            put("user2_id", id)
         }
+        return sendRequestToWS(requestData)
     }
     suspend fun denyFriendRequest(id: Int): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            val requestData = JSONObject().apply {
-                put("action", "deny request")
-                put("token", myToken)
-                put("user2_id", id)
-            }
-            webSocket?.send(requestData.toString())
-
-            waitForServerAnswer()
+        val requestData = JSONObject().apply {
+            put("action", "deny request")
+            put("token", myToken)
+            put("user2_id", id)
         }
+        return sendRequestToWS(requestData)
     }
     suspend fun cancelFriendRequest(id: Int): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            val requestData = JSONObject().apply {
-                put("action", "cancel request")
-                put("token", myToken)
-                put("user2_id", id)
-            }
-            webSocket?.send(requestData.toString())
-
-            waitForServerAnswer()
+        val requestData = JSONObject().apply {
+            put("action", "cancel request")
+            put("token", myToken)
+            put("user2_id", id)
         }
+        return sendRequestToWS(requestData)
     }
     private suspend fun getPictureFromWS(id: Int): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            val requestData = JSONObject().apply {
-                put("action", "get picture")
-                put("token", myToken)
-                put("picture_id", id)
-            }
-            webSocket?.send(requestData.toString())
-
-            waitForServerAnswer()
+        val requestData = JSONObject().apply {
+            put("action", "get picture")
+            put("token", myToken)
+            put("picture_id", id)
         }
+        return sendRequestToWS(requestData)
     }
     suspend fun getMyDataFromWS(): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            val requestData = JSONObject().apply {
-                put("action", "get my data")
-                put("token", myToken)
-            }
-            webSocket?.send(requestData.toString())
-
-            waitForServerAnswer()
+        val requestData = JSONObject().apply {
+            put("action", "get my data")
+            put("token", myToken)
         }
+        return sendRequestToWS(requestData)
     }
     suspend fun getMessagesFromWS(conversationId: Int, lastMsgId: Int): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            val requestData = JSONObject().apply {
-                put("action", "get messages")
-                put("token", myToken)
-                put("conversation_id", conversationId)
-                put("last_message_id", lastMsgId)
-            }
-            webSocket?.send(requestData.toString())
-
-            waitForServerAnswer()
+        val requestData = JSONObject().apply {
+            put("action", "get messages")
+            put("token", myToken)
+            put("conversation_id", conversationId)
+            put("last_message_id", lastMsgId)
         }
+        return sendRequestToWS(requestData)
     }
     suspend fun getNewMessagesFromWS(conversationId: Int, lastMsgId: Int): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            val requestData = JSONObject().apply {
-                put("action", "get new messages")
-                put("token", myToken)
-                put("conversation_id", conversationId)
-                put("last_message_id", lastMsgId)
-            }
-            webSocket?.send(requestData.toString())
-
-            waitForServerAnswer()
+        val requestData = JSONObject().apply {
+            put("action", "get new messages")
+            put("token", myToken)
+            put("conversation_id", conversationId)
+            put("last_message_id", lastMsgId)
         }
+        return sendRequestToWS(requestData)
     }
 
     suspend fun sendMessageToWS(conversationId: Int, text: String): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            val requestData = JSONObject().apply {
-                put("action", "send message")
-                put("token", myToken)
-                put("conversation_id", conversationId)
-                put("text", text)
-            }
-            webSocket?.send(requestData.toString())
-
-            waitForServerAnswer()
+        val requestData = JSONObject().apply {
+            put("action", "send message")
+            put("token", myToken)
+            put("conversation_id", conversationId)
+            put("text", text)
         }
+        return sendRequestToWS(requestData)
     }
     suspend fun insertPictureIntoWS(picture: ByteArrayOutputStream): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            lastInsertedPicId = 0
-            val base64ImageData = Base64.getEncoder().encodeToString(picture.toByteArray())
-            lastInsertedPictureDataString = base64ImageData
-            val requestData = JSONObject().apply {
-                put("action", "insert picture")
-                put("token", myToken)
-                put("picture", base64ImageData)
-            }
-            webSocket?.send(requestData.toString())
-
-            waitForServerAnswer()
+        lastInsertedPicId = 0
+        val base64ImageData = Base64.getEncoder().encodeToString(picture.toByteArray())
+        lastInsertedPictureDataString = base64ImageData
+        val requestData = JSONObject().apply {
+            put("action", "insert picture")
+            put("token", myToken)
+            put("picture", base64ImageData)
         }
+        return sendRequestToWS(requestData)
     }
 
     suspend fun createGeoStory(picId: Int, privacy: String, latitude: String, longitude: String): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            val requestData = JSONObject().apply {
-                put("action", "create geo story")
-                put("token", myToken)
-                put("picture_id", picId)
-                put("privacy", privacy)
-                put("latitude", latitude)
-                put("longitude", longitude)
-            }
-            webSocket?.send(requestData.toString())
-
-            waitForServerAnswer()
+        val requestData = JSONObject().apply {
+            put("action", "create geo story")
+            put("token", myToken)
+            put("picture_id", picId)
+            put("privacy", privacy)
+            put("latitude", latitude)
+            put("longitude", longitude)
         }
+        return sendRequestToWS(requestData)
     }
     suspend fun getGeoStoriesNearby(): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            val requestData = JSONObject().apply {
-                put("action", "get geo stories nearby")
-                put("token", myToken)
-            }
-            webSocket?.send(requestData.toString())
-            waitForServerAnswer()
+        val requestData = JSONObject().apply {
+            put("action", "get geo stories nearby")
+            put("token", myToken)
         }
+        return sendRequestToWS(requestData)
     }
 
     private suspend fun waitForServerAnswer(): JSONObject? {
@@ -730,5 +649,16 @@ class API private constructor(context: Context){
         }
 
         return file.absolutePath
+    }
+    private suspend fun sendRequestToWS(request: JSONObject): JSONObject? {
+        return withContext(Dispatchers.IO) {
+            try {
+                semaphore.acquire()
+                webSocket?.send(request.toString())
+                waitForServerAnswer()
+            } finally {
+                semaphore.release()
+            }
+        }
     }
 }
