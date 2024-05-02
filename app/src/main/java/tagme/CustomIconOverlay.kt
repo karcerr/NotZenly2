@@ -2,7 +2,6 @@ package tagme
 import android.content.Context
 import android.graphics.*
 import android.graphics.drawable.Drawable
-import android.util.Log
 import android.view.MotionEvent
 import androidx.core.content.res.ResourcesCompat
 import org.osmdroid.util.GeoPoint
@@ -127,7 +126,6 @@ class CustomIconOverlay(
             )
             var intersectCircleY = y1
             if (storyId != 0) {
-                Log.d("Tagme_Icons", "Geostory: $storyId, Itersects: $intersectCount")
                 y0 += scaledHeight / 4
                 intersectCircleY = y0 + 80
                 // flipped triangle
@@ -215,7 +213,7 @@ class CustomIconOverlay(
                 val circleGradientStartColor = Color.parseColor("#9D51FF")
                 val circleGradientEndColor = Color.parseColor("#4EEAC5")
                 val circleGradient = LinearGradient(
-                    x1 - intersectCircleRadius, y1 - intersectCircleRadius, x1 + intersectCircleRadius, y1 + intersectCircleRadius,
+                    x1 - intersectCircleRadius, intersectCircleY, x1 + intersectCircleRadius, intersectCircleY + intersectCircleRadius,
                     circleGradientStartColor, circleGradientEndColor,
                     Shader.TileMode.CLAMP
                 )

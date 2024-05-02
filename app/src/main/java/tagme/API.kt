@@ -481,6 +481,7 @@ class API private constructor(context: Context){
     }
     private fun parseGeoStoriesNearby(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
+        geoStoriesData.clear()
         for (i in 0 until result.length()) {
             val geoStoryObject = result.getJSONObject(i)
             val geoStoryId = geoStoryObject.getInt("geo_story_id")
@@ -502,7 +503,6 @@ class API private constructor(context: Context){
                         null,
                     )
                 )
-                Log.d("Tagme_geo", "GeoStory was added: $geoStoriesData")
             }
         }
     }
