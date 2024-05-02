@@ -353,7 +353,8 @@ class API private constructor(context: Context){
                 val updatedPicturesData = picsData.toMutableList().apply {
                     add(newPictureData)
                 }
-                Log.d("Tagme_WS_Pic", "Image $newPictureData")
+                Log.d("Tagme_WS_Pic", "Image $pictureId encoded: $pictureDataString")
+                Log.d("Tagme_WS_Pic", "Image $pictureId decoded: ${pictureData}")
                 picsData = updatedPicturesData
             }
         }
@@ -388,6 +389,7 @@ class API private constructor(context: Context){
         val existingPicture = picsData.find { it.pictureId == lastInsertedPicId }
         if (existingPicture == null) {
             val pictureData: ByteArray = Base64.getDecoder().decode(lastInsertedPictureDataString)
+            lastInsertedPictureDataString = ""
             val imagePath = saveImageToCache(context , lastInsertedPicId.toString(), pictureData)
             val newPictureData = PictureData(lastInsertedPicId, imagePath)
             val updatedPicturesData = picsData.toMutableList().apply {
