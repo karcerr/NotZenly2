@@ -49,7 +49,9 @@
                     android:background="@null"
                     android:layout_gravity="end"
                     android:contentDescription="@string/settings_button"/>
+
         </LinearLayout>
+
         <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/profile_picture"
                 android:layout_width="256dp"
@@ -100,6 +102,7 @@
                     android:textColor="@color/white"
                     android:textStyle="bold"
                     android:layout_gravity="center_vertical"
+                    android:layout_marginBottom="20dp"
             />
 
             <ImageButton
@@ -198,21 +201,22 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#B3000000"
-        android:visibility="gone"/>
+        android:visibility="visible"/>
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/add_friend_window"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:backgroundTint="#559D2EFF"
-        android:background="@drawable/rounded_corner"
+        android:visibility="visible"
+        android:background="@drawable/add_friend_background"
         android:layout_gravity="center"
         android:padding="15dp"
         android:clickable="true"
         android:focusable="true"
         android:focusableInTouchMode="true"
     >
-    <EditText
+
+        <EditText
             android:id="@+id/nickname_edit_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -220,22 +224,32 @@
             android:textColorHint="@color/grey"
             android:textSize="20sp"
             android:autofillHints=""
-            android:background="@drawable/rounded_corner"
+            android:background="@drawable/enter_nick_rectangle"
             android:fontFamily="@font/my_font"
             android:padding="16dp"
-            android:layout_marginBottom="6dp"
+            android:layout_marginTop="50dp"
             android:textColor="@color/white"
             app:layout_constraintTop_toTopOf="parent"
             android:inputType="text"
     />
+        <TextView
+                android:id="@+id/title_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/add_friend"
+                android:textSize="30sp"
+                android:textColor="@color/cardview_dark_background"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="-7dp" />
     <TextView
             android:id="@+id/status_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:visibility="gone"
+            android:visibility="visible"
             android:textColor="@color/white"
             android:textSize="23sp"
-            android:layout_marginTop="6dp"
             android:layout_marginBottom="6dp"
             android:fontFamily="@font/my_font"
             app:layout_constraintTop_toBottomOf="@id/nickname_edit_text"
@@ -244,20 +258,19 @@
     />
     <Button
             android:id="@+id/send_request_button"
-            android:layout_width="wrap_content"
+            android:layout_width="380dp"
             android:layout_height="wrap_content"
             android:text="@string/send_request"
             android:textSize="20sp"
-            android:background="@drawable/rounded_corner"
-            android:backgroundTint="@color/purple_500"
+            android:background="@drawable/send_request_background"
             android:fontFamily="@font/my_font"
-            android:layout_marginTop="6dp"
-            android:padding="8dp"
+            android:padding="16dp"
             android:textColor="@color/white"
             app:layout_constraintTop_toBottomOf="@id/status_text"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
+
     />
 </androidx.constraintlayout.widget.ConstraintLayout>
 </FrameLayout>

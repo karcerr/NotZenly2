@@ -34,4 +34,5 @@
     <string name="privacy_global">Все пользователи</string>
     <string name="photo_preview">Превью фото</string>
     <string name="compressing">Сжатие...</string>
+    <string name="add_friend">Добавить друга</string>
 </resources>
