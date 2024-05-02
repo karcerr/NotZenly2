@@ -34,4 +34,5 @@
     <string name="privacy_global">global</string>
     <string name="photo_preview">Photo preview</string>
     <string name="compressing">Compressing...</string>
+    <string name="add_friend">Add friend</string>
 </resources>
