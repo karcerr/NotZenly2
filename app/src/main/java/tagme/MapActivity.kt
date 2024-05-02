@@ -466,7 +466,7 @@ class MapActivity: AppCompatActivity() {
                 val newOverlay = CustomIconOverlay(
                     this,
                     geoStoryLocation,
-                    0F,
+                    null,
                     placeholderDrawable,
                     null,
                     0,
