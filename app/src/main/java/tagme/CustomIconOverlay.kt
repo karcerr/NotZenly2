@@ -15,8 +15,9 @@ class CustomIconOverlay(
     private var location: GeoPoint,
     private var speed: Float,
     private var drawable: Drawable,
-    private var name: String,
-    private var userId: Int,
+    private var name: String?,
+    private val userId: Int,
+    private val storyId: Int,
     private val fontResId: Int,
     private val clickListener: ((CustomIconOverlay) -> Unit)?
 ) : Overlay(context) {
@@ -73,11 +74,12 @@ class CustomIconOverlay(
         val point = projection?.toPixels(location, null)
 
         val rotation = -(mapView?.mapOrientation ?: 0f)
-
+        val intersectCircleRadius = 40f
         point?.let { currentPoint ->
             var intersected = false
             var minDistanceToVisible = Double.MAX_VALUE
             var closestVisibleOverlayTemp: CustomIconOverlay? = null
+
             mapView.overlays?.forEach { overlay ->
                 if (overlay is CustomIconOverlay && overlay.visible && doOverlaysIntersect(this, overlay, currentPoint)) {
                     val overlayPoint = projection.toPixels(overlay.location, null)
@@ -112,48 +114,102 @@ class CustomIconOverlay(
             val scaledWidth = (drawable.intrinsicWidth * overlayScale).toInt()
             val scaledHeight = (drawable.intrinsicHeight * overlayScale).toInt()
             val x0 = (it.x - scaledWidth / 2).toFloat()
-            val y0 = (it.y - scaledHeight / 2).toFloat()
+            var y0 = (it.y - scaledHeight / 2).toFloat()
             val x1 = (it.x + scaledWidth / 2).toFloat()
             val y1 = (it.y + scaledHeight / 2).toFloat()
-            drawable.setBounds(x0.toInt(), y0.toInt(), x1.toInt(), y1.toInt())
-
             val gradientStartColor = Color.parseColor("#34C1E0")
             val gradientEndColor = Color.parseColor("#3CB583")
-            val angleRadians = Math.toRadians(275.0)
             val fillGradient = LinearGradient(
                 x0, y0, x1, y1,
                 gradientStartColor, gradientEndColor,
                 Shader.TileMode.CLAMP
             )
-            val strokePaint = Paint().apply {
-                style = Paint.Style.STROKE
-                strokeWidth = 15.0F
-                shader = fillGradient
-            }
-            val circleRadius = 40f
-            val strokeRect = RectF(x0, y0, x1, y1)
-            canvas.drawRoundRect(strokeRect, scaledWidth * 0.25f, scaledWidth * 0.25f, strokePaint)
-            val cornerSize = scaledWidth * 0.25f
+            drawable.setBounds(x0.toInt(), y0.toInt(), x1.toInt(), y1.toInt())
+            if (storyId != 0) {
+                y0 += scaledHeight / 4
+                // Draw flipped triangle
+                val trianglePath = Path().apply {
+                    moveTo(it.x.toFloat() - 80, y0)
+                    lineTo(it.x.toFloat(), y1)
+                    lineTo(it.x.toFloat() + 80, y0)
+                    close()
+                }
+                val trianglePaint = Paint().apply {
+                    color = gradientEndColor
+                    style = Paint.Style.FILL
+                }
+                canvas.drawPath(trianglePath, trianglePaint)
+                val circleRadius = 80f
+                val circleX = it.x.toFloat()
+                val circleY = y0 + (scaledHeight - 2 * circleRadius)
+                val circlePaint = Paint().apply {
+                    shader = RadialGradient(
+                        circleX, circleY, circleRadius,
+                        gradientStartColor, gradientEndColor,
+                        Shader.TileMode.CLAMP
+                    )
+                    style = Paint.Style.FILL
+                }
+                canvas.drawCircle(circleX, circleY, circleRadius, circlePaint)
+                val circlePath = Path().apply {
+                    addCircle(circleX, circleY, circleRadius, Path.Direction.CW)
+                    close()
+                }
+                val circleIntersectPath = Path().apply {
+                    addCircle(x1, y1, intersectCircleRadius, Path.Direction.CW)
+                    close()
+                }
+                val combinedPath = Path().apply {
+                    op(trianglePath, circlePath, Path.Op.UNION)
+                }
+                if (intersectCount > 0)
+                    combinedPath.apply {
+                        op(this, circleIntersectPath, Path.Op.UNION)
+                    }
 
-            val roundedRectPath = Path().apply {
-                addRoundRect(strokeRect, cornerSize, cornerSize, Path.Direction.CW)
-                close()
-            }
-            val circlePath = Path().apply {
-                addCircle(x1, y1, circleRadius, Path.Direction.CW)
-                close()
-            }
-            val combinedPath = Path().apply {
-                op(roundedRectPath, circlePath, Path.Op.UNION)
-            }
-            canvas.clipPath(combinedPath)
 
-            drawable.draw(canvas)
+                val strokePaint = Paint().apply {
+                    color = Color.BLACK
+                    style = Paint.Style.STROKE
+                    strokeWidth = 5f
+                }
+                canvas.drawCircle(circleX, circleY, circleRadius, strokePaint)
+                canvas.clipPath(combinedPath)
+                drawable.draw(canvas)
+            } else {
+
+                val strokePaint = Paint().apply {
+                    style = Paint.Style.STROKE
+                    strokeWidth = 15.0F
+                    shader = fillGradient
+                }
+                val strokeRect = RectF(x0, y0, x1, y1)
+                canvas.drawRoundRect(strokeRect, scaledWidth * 0.25f, scaledWidth * 0.25f, strokePaint)
+                val cornerSize = scaledWidth * 0.25f
+
+                val roundedRectPath = Path().apply {
+                    addRoundRect(strokeRect, cornerSize, cornerSize, Path.Direction.CW)
+                    close()
+                }
+                val circlePath = Path().apply {
+                    addCircle(x1, y1, intersectCircleRadius, Path.Direction.CW)
+                    close()
+                }
+                val combinedPath = Path().apply {
+                    op(roundedRectPath, circlePath, Path.Op.UNION)
+                }
+                if (intersectCount > 0)
+                    canvas.clipPath(combinedPath)
+                else
+                    canvas.clipPath(roundedRectPath)
+
+                drawable.draw(canvas)
+            }
             if (intersectCount > 0) {
                 val circleGradientStartColor = Color.parseColor("#9D51FF")
                 val circleGradientEndColor = Color.parseColor("#4EEAC5")
                 val circleGradient = LinearGradient(
-                    x1 - circleRadius, y1 - circleRadius, x1 + circleRadius, y1 + circleRadius,
+                    x1 - intersectCircleRadius, y1 - intersectCircleRadius, x1 + intersectCircleRadius, y1 + intersectCircleRadius,
                     circleGradientStartColor, circleGradientEndColor,
                     Shader.TileMode.CLAMP
                 )
@@ -169,8 +225,8 @@ class CustomIconOverlay(
                     shader = circleGradient
                 }
 
-                canvas.drawCircle(x1, y1, circleRadius, circleFillPaint)
-                canvas.drawCircle(x1, y1, circleRadius, circleStrokePaint)
+                canvas.drawCircle(x1, y1, intersectCircleRadius, circleFillPaint)
+                canvas.drawCircle(x1, y1, intersectCircleRadius, circleStrokePaint)
             }
 
             canvas.restore()
@@ -183,9 +239,9 @@ class CustomIconOverlay(
             val intersectCountText = "+$intersectCount"
             if (speed.toInt() != 0)
                 canvas.drawText(speedText, it.x.toFloat(), (it.y + scaledHeight / 2 + 65).toFloat(), textPaintBlack)
-            canvas.drawText(nameText, it.x.toFloat() - textPaintBlack.measureText(nameText) / 2, (it.y - scaledHeight / 2 - 10).toFloat(), textPaintBlack)
+            canvas.drawText(nameText!!, it.x.toFloat() - textPaintBlack.measureText(nameText) / 2, (it.y - scaledHeight / 2 - 10).toFloat(), textPaintBlack)
             if (intersectCount != 0) {
-                canvas.drawText(intersectCountText, x1 - (circleRadius / 2 - 5), y1 + (circleRadius / 2 - 7), textPaintWhite)
+                canvas.drawText(intersectCountText, x1 - (intersectCircleRadius / 2 - 5), y1 + (intersectCircleRadius / 2 - 7), textPaintWhite)
             }
             canvas.restore()
         }
@@ -235,6 +291,9 @@ class CustomIconOverlay(
     }
     fun getUserId(): Int {
         return userId
+    }
+    fun getStoryId(): Int {
+        return storyId
     }
     fun updateDrawable(newDrawable: Drawable) {
         drawable = newDrawable

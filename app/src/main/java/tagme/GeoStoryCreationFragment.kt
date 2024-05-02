@@ -34,7 +34,7 @@ class GeoStoryCreationFragment : Fragment() {
     private lateinit var outputStream: ByteArrayOutputStream
     private var imageCompressed: Boolean = false
     companion object{
-        val MAX_SIZE_BEFORE_ENCODING = 150 * 1024
+        val MAX_SIZE_BEFORE_ENCODING = 100 * 1024
     }
     override fun onCreateView(
         inflater: LayoutInflater,
