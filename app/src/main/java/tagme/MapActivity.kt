@@ -59,6 +59,7 @@ class MapActivity: AppCompatActivity() {
     lateinit var myLongitute: String
     private var scaleFactor = 15.0
     private var centeredTargetId = -1
+    private var isCenteredUser = false
     private var isAnimating = false
     private var isUiHidden = false
     private var customOverlaySelf: CustomIconOverlay? = null
@@ -69,6 +70,7 @@ class MapActivity: AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     //these are for storing friends and drawing overlays:
     private val friendOverlays: MutableMap<Int, CustomIconOverlay> = mutableMapOf()
+    private val geoStoryOverlays: MutableMap<Int, CustomIconOverlay> = mutableMapOf()
     private lateinit var fragmentManager : FragmentManager
     private val handler = Handler(Looper.getMainLooper())
 
@@ -130,8 +132,8 @@ class MapActivity: AppCompatActivity() {
                         if (location.hasSpeed()) {
                             customOverlaySelf?.setSpeed(location.speed)
                         }
-                        if (centeredTargetId == api.myUserId) {
-                            customOverlaySelf?.let { centralizeMapAnimated(it.getLocation(), centeredTargetId) }
+                        if (centeredTargetId == api.myUserId && isCenteredUser) {
+                            customOverlaySelf?.let { centralizeMapAnimated(it.getLocation(), centeredTargetId, true) }
                         }
                     }
                 }
@@ -154,6 +156,7 @@ class MapActivity: AppCompatActivity() {
                         selfDrawablePlaceHolder,
                         "",
                         api.myUserId,
+                        0,
                         R.font.my_font,
                         clickListener = null
                     ).apply {
@@ -174,7 +177,7 @@ class MapActivity: AppCompatActivity() {
         }
 
         centralizeButton.setOnClickListener{
-            customOverlaySelf?.let { centralizeMapAnimated(it.getLocation(), api.myUserId) }
+            customOverlaySelf?.let { centralizeMapAnimated(it.getLocation(), api.myUserId, true) }
         }
         profileButton.setOnClickListener {
             coroutineScope.launch {
@@ -263,25 +266,30 @@ class MapActivity: AppCompatActivity() {
         return super.onTouchEvent(event)
     }
     */
-    fun centralizeMapAnimated(location: GeoPoint, targetId: Int){
+    fun centralizeMapAnimated(location: GeoPoint, targetId: Int, isCenterTargetFriend: Boolean){
         Log.d("Tagme", "centralizing on $targetId")
         if (!isAnimating) {
             isAnimating = true
-            setCenteredTrue(targetId)
+            setCenteredTrue(targetId, isCenterTargetFriend)
             mapController.animateTo(location, scaleFactor, 500)
             handler.postDelayed({
                 isAnimating = false
             }, 550)
         }
     }
+    fun openGeoStory(targetId: Int){
+        Log.d("Tagme", "Opening geo story: $targetId")
+    }
     private fun centralizeMapInstant(location: GeoPoint, targetId: Int){
         centeredTargetId = targetId
+        isCenteredUser = true
         mapController.setCenter(location)
         mapController.setZoom(scaleFactor)
     }
 
-    private fun setCenteredTrue(targetId: Int) {
+    private fun setCenteredTrue(targetId: Int, isCenteredOnFriend: Boolean) {
         centeredTargetId = targetId
+        isCenteredUser = isCenteredOnFriend
         if (!isUiHidden and (targetId != api.myUserId)) {
             isUiHidden = true
             slideView(profileButtonFrame, true)
@@ -292,6 +300,7 @@ class MapActivity: AppCompatActivity() {
 
     private fun setCenteredFalse() {
         centeredTargetId = -1
+        isCenteredUser = false
         if (isUiHidden) {
             isUiHidden = false
             slideView(profileButtonFrame, false)
@@ -356,6 +365,8 @@ class MapActivity: AppCompatActivity() {
                 delay(3000)
                 val friendsData = api.getFriendsData()
                 updateFriendOverlays(friendsData)
+                val updatedGeoStories = api.getGeoStoriesData()
+                updateGeoStoryOverlays(updatedGeoStories)
             }
         }
     }
@@ -403,8 +414,8 @@ class MapActivity: AppCompatActivity() {
                 if (overlay != null) {
                     overlay.setLocation(GeoPoint(friend.location!!.latitude, friend.location!!.longitude))
                     overlay.setSpeed(friend.location!!.speed)
-                    if (centeredTargetId == overlay.getUserId()) {
-                        centralizeMapAnimated(overlay.getLocation(), friend.userData.userId)
+                    if (centeredTargetId == overlay.getUserId() && isCenteredUser) {
+                        centralizeMapAnimated(overlay.getLocation(), friend.userData.userId, true)
                     }
                 } else {
                     val friendLocation = GeoPoint(friend.location!!.latitude, friend.location!!.longitude)
@@ -415,9 +426,10 @@ class MapActivity: AppCompatActivity() {
                         placeholderDrawable,
                         friend.userData.nickname,
                         friend.userData.userId,
+                        0,
                         R.font.my_font,
                         clickListener = { customIconOverlay ->
-                            centralizeMapAnimated(customIconOverlay.getLocation(), friend.userData.userId)
+                            centralizeMapAnimated(customIconOverlay.getLocation(), friend.userData.userId, true)
                         }
                     ).apply {
                         mapView = map
@@ -431,6 +443,49 @@ class MapActivity: AppCompatActivity() {
                             if (bitmap != null) {
                                 friendOverlays[friend.userData.userId]!!.updateDrawable(BitmapDrawable(resources, bitmap))
                             }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    private fun updateGeoStoryOverlays(geoStoryData: List<API.GeoStoryData>) {
+        val outdatedIds = geoStoryOverlays.keys - geoStoryData.map { it.geoStoryId }.toSet()
+        outdatedIds.forEach { id ->
+            val overlay = geoStoryOverlays.remove(id)
+            map.overlays.remove(overlay)
+        }
+
+        geoStoryData.forEach { geoStory ->
+            val overlay = geoStoryOverlays[geoStory.geoStoryId]
+            val placeholderDrawable = ResourcesCompat.getDrawable(resources, R.drawable.person_placeholder, null)!!
+            val geoStoryLocation = GeoPoint(geoStory.latitude, geoStory.longitude)
+            if (overlay != null) {
+                overlay.setLocation(geoStoryLocation)
+            } else {
+                val newOverlay = CustomIconOverlay(
+                    this,
+                    geoStoryLocation,
+                    0F,
+                    placeholderDrawable,
+                    null,
+                    0,
+                    geoStory.geoStoryId,
+                    R.font.my_font,
+                    clickListener = { customIconOverlay ->
+                        centralizeMapAnimated(customIconOverlay.getLocation(), geoStory.geoStoryId, false)
+                    }
+                ).apply {
+                    mapView = map
+                }
+
+                geoStoryOverlays[geoStory.geoStoryId] = newOverlay
+                map.overlays.add(newOverlay)
+                if (geoStory.pictureId != 0) {
+                    coroutineScope.launch {
+                        val bitmap = api.getPictureData(geoStory.pictureId)
+                        if (bitmap != null) {
+                            geoStoryOverlays[geoStory.geoStoryId]!!.updateDrawable(BitmapDrawable(resources, bitmap))
                         }
                     }
                 }

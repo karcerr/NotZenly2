@@ -54,6 +54,7 @@ class API private constructor(context: Context){
     private val friendsData = mutableListOf<FriendData>()
     private val friendsRequestsData = mutableListOf<FriendRequestData>()
     private val conversationsData = mutableListOf<ConversationData>()
+    private val geoStoriesData = mutableListOf<GeoStoryData>()
     private var picsData: List<PictureData>
         get() {
             val jsonString = sharedPreferences.getString("PICTURES_DATA", null)
@@ -118,6 +119,9 @@ class API private constructor(context: Context){
                         }
                         "insert picture" -> when (answer.getString("status")) {
                             "success" -> parseInsertedPictureId(context, answer.getString("message"))
+                        }
+                        "get geo stories nearby" -> when (answer.getString("status")) {
+                            "success" -> parseGeoStoriesNearby(answer.getString("message"))
                         }
                     }
                     answerReceived = true
@@ -306,7 +310,7 @@ class API private constructor(context: Context){
 
     private suspend fun waitForServerAnswer(): JSONObject? {
         return synchronized(this) {
-            val timeoutDuration = 10000
+            val timeoutDuration = 15000
             val startTime = System.currentTimeMillis()
 
             while (!answerReceived) {
@@ -338,9 +342,9 @@ class API private constructor(context: Context){
         val result = JSONObject(jsonString).getJSONArray("result")
 
         for (i in 0 until result.length()) {
-            val friendObject = result.getJSONObject(i)
-            val pictureId = friendObject.getInt("picture_id")
-            val pictureDataString = friendObject.getString("picture")
+            val picObject = result.getJSONObject(i)
+            val pictureId = picObject.getInt("picture_id")
+            val pictureDataString = picObject.getString("picture")
             val existingPicture = picsData.find { it.pictureId == pictureId }
             if (existingPicture == null) {
                 val pictureData: ByteArray = Base64.getDecoder().decode(pictureDataString)
@@ -349,6 +353,7 @@ class API private constructor(context: Context){
                 val updatedPicturesData = picsData.toMutableList().apply {
                     add(newPictureData)
                 }
+                Log.d("Tagme_WS_Pic", "Image $newPictureData")
                 picsData = updatedPicturesData
             }
         }
@@ -442,12 +447,12 @@ class API private constructor(context: Context){
         for (i in 0 until result.length()) {
             val messageObject = result.getJSONObject(i)
             val conversationId = messageObject.getInt("conversation_id")
-            val messageId = messageObject.getInt("message_id")
             val authorId = messageObject.getInt("author_id")
+            val messageId = messageObject.getInt("message_id")
             val text = messageObject.getString("text")
-            val pictureId = messageObject.optInt("picture_id", 0)
             val timestamp = messageObject.getString("timestamp")
             val ifRead = messageObject.getBoolean("read")
+            val pictureId = messageObject.optInt("picture_id", 0)
             val existingConversation = conversationsData.find { it.conversationID == conversationId }
             val existingMessage = existingConversation?.messages?.find{it.messageId == messageId}
             if (existingConversation != null) {
@@ -467,6 +472,33 @@ class API private constructor(context: Context){
                 } else {
                     //TBA: editing of existing images
                 }
+            }
+        }
+    }
+    private fun parseGeoStoriesNearby(jsonString: String){
+        val result = JSONObject(jsonString).getJSONArray("result")
+        for (i in 0 until result.length()) {
+            val geoStoryObject = result.getJSONObject(i)
+            val geoStoryId = geoStoryObject.getInt("geo_story_id")
+            val pictureId = geoStoryObject.optInt("picture_id", 0)
+            val latitude = geoStoryObject.getDouble("latitude")
+            val longitude = geoStoryObject.getDouble("longitude")
+
+            val existingGeoStory = geoStoriesData.find { it.geoStoryId == geoStoryId }
+            if (existingGeoStory == null) {
+                geoStoriesData.add(
+                    GeoStoryData(
+                        geoStoryId,
+                        null,
+                        pictureId,
+                        null,
+                        null,
+                        latitude,
+                        longitude,
+                        null,
+                    )
+                )
+                Log.d("Tagme_geo", "GeoStory was added: $geoStoriesData")
             }
         }
     }
@@ -546,6 +578,9 @@ class API private constructor(context: Context){
     fun getFriendsData(): MutableList<FriendData> {
         return friendsData
     }
+    fun getGeoStoriesData(): MutableList<GeoStoryData> {
+        return geoStoriesData
+    }
     fun getFriendRequestData(): MutableList<FriendRequestData> {
         return friendsRequestsData
     }
@@ -558,7 +593,7 @@ class API private constructor(context: Context){
 
     suspend fun getPictureData(pictureId: Int): Bitmap? {
         var picture = picsData.find { it.pictureId == pictureId }
-        if (picture?.imagePath == null) {
+        if (picture == null || picture.imagePath == null) {
             getPictureFromWS(pictureId)
             picture = picsData.find { it.pictureId == pictureId }
         }
@@ -572,6 +607,16 @@ class API private constructor(context: Context){
         var longitude: Double,
         var accuracy: Double,
         var speed: Float,
+        var timestamp: Timestamp?
+    )
+    data class GeoStoryData(
+        val geoStoryId: Int,
+        var creatorData: UserData?,
+        val pictureId: Int,
+        var privacy: String?,
+        var views: Int?,
+        val latitude: Double,
+        val longitude: Double,
         var timestamp: Timestamp?
     )
     data class UserData(

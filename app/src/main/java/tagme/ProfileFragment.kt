@@ -160,7 +160,7 @@ class FriendAdapter(
         }
         holder.locateButton.setOnClickListener {
             val friendLocation = GeoPoint(friend.location!!.latitude, friend.location!!.longitude)
-            mapActivity.centralizeMapAnimated(friendLocation, friend.userData.userId)
+            mapActivity.centralizeMapAnimated(friendLocation, friend.userData.userId, true)
             mapActivity.onBackPressedDispatcher.onBackPressed()
         }
         holder.messageButton.setOnClickListener {
