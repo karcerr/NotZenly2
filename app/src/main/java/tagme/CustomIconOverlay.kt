@@ -4,9 +4,11 @@ import android.graphics.*
 import android.graphics.drawable.Drawable
 import android.view.MotionEvent
 import androidx.core.content.res.ResourcesCompat
+import com.example.tagme.R
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Overlay
+
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -240,9 +242,15 @@ class CustomIconOverlay(
                     (it.y - scaledHeight / 2 - 10).toFloat(),
                     textPaintBlack
                 )
-                val speedText = "${speed?.toInt()}m/s"
-                if (speed?.toInt() != 0)
-                    canvas.drawText(speedText, it.x.toFloat(), (it.y + scaledHeight / 2 + 65).toFloat(), textPaintBlack)
+                if (speed != null && speed!!.toInt() != 0) {
+                    val speedText = context.getString(R.string.speed_format, (speed!! * 3.6).toInt())
+                    canvas.drawText(
+                        speedText,
+                        it.x.toFloat(),
+                        (it.y + scaledHeight / 2 + 65).toFloat(),
+                        textPaintBlack
+                    )
+                }
             }
 
             if (intersectCount != 0) {
