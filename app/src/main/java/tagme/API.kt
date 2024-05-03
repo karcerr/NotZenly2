@@ -120,7 +120,7 @@ class API private constructor(context: Context){
                         "insert picture" -> when (answer.getString("status")) {
                             "success" -> parseInsertedPictureId(context, answer.getString("message"))
                         }
-                        "get geo stories nearby" -> when (answer.getString("status")) {
+                        "get geo stories" -> when (answer.getString("status")) {
                             "success" -> parseGeoStoriesNearby(answer.getString("message"))
                         }
                     }
@@ -300,9 +300,9 @@ class API private constructor(context: Context){
         }
         return sendRequestToWS(requestData)
     }
-    suspend fun getGeoStoriesNearby(): JSONObject? {
+    suspend fun getGeoStories(): JSONObject? {
         val requestData = JSONObject().apply {
-            put("action", "get geo stories nearby")
+            put("action", "get geo stories")
             put("token", myToken)
         }
         return sendRequestToWS(requestData)
@@ -414,10 +414,14 @@ class API private constructor(context: Context){
     }
     private fun parseConversationsData(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
+        val encounteredConversationIds = mutableListOf<Int>()
+
         for (i in 0 until result.length()) {
             val conversationObject = result.getJSONObject(i)
             val userId = conversationObject.getInt("user_id")
             val conversationId = conversationObject.getInt("conversation_id")
+            encounteredConversationIds.add(conversationId)
+
             val nickname = conversationObject.getString("nickname")
             val profilePictureId = conversationObject.optInt("profile_picture_id", 0)
             val lastMessagePictureId = conversationObject.optInt("msg_picture_id", 0)
@@ -445,6 +449,7 @@ class API private constructor(context: Context){
                 }
             }
         }
+        conversationsData.removeIf { conversation -> !encounteredConversationIds.contains(conversation.conversationID) }
     }
     private fun parseMessagesData(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
@@ -481,10 +486,13 @@ class API private constructor(context: Context){
     }
     private fun parseGeoStoriesNearby(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
-        geoStoriesData.clear()
+        val encounteredGeoStoryIds = mutableListOf<Int>()
+
         for (i in 0 until result.length()) {
             val geoStoryObject = result.getJSONObject(i)
             val geoStoryId = geoStoryObject.getInt("geo_story_id")
+            encounteredGeoStoryIds.add(geoStoryId)
+
             val pictureId = geoStoryObject.optInt("picture_id", 0)
             val latitude = geoStoryObject.getDouble("latitude")
             val longitude = geoStoryObject.getDouble("longitude")
@@ -505,6 +513,7 @@ class API private constructor(context: Context){
                 )
             }
         }
+        geoStoriesData.removeIf { geoStory -> !encounteredGeoStoryIds.contains(geoStory.geoStoryId) }
     }
     private fun addSeparatorIfNeeded(messages: MutableList<MessageData>) {
         if (messages.isEmpty()) return

@@ -1,13 +1,19 @@
 package tagme
 
+import android.app.Activity
 import android.content.Context
-import android.graphics.Color
+import android.content.Intent
+import android.graphics.*
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -16,13 +22,22 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.tagme.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
+import java.io.ByteArrayOutputStream
 
 class ProfileFragment : Fragment() {
     lateinit var friendAdapter: FriendAdapter
     lateinit var friendRequestAdapter: FriendRequestAdapter
+    private lateinit var outputStream: ByteArrayOutputStream
+    private lateinit var myProfilePic: ImageView
+    private var imageCompressed: Boolean = false
+    private lateinit var imagePickerLauncher: ActivityResultLauncher<Intent>
     private lateinit var api: API
+    companion object{
+        val MAX_SIZE_BEFORE_ENCODING = 100 * 1024
+    }
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -34,7 +49,7 @@ class ProfileFragment : Fragment() {
         val addFriendButton = view.findViewById<ImageButton>(R.id.add_friend_button)
         val addFriendWindow = view.findViewById<View>(R.id.add_friend_window)
         val nicknameText = view.findViewById<TextView>(R.id.nickname_text)
-        val myProfilePic = view.findViewById<ImageView>(R.id.profile_picture)
+        myProfilePic = view.findViewById(R.id.profile_picture)
         val darkOverlay = view.findViewById<View>(R.id.dark_overlay)
         val requestInput = view.findViewById<EditText>(R.id.nickname_edit_text)
         val backButton = view.findViewById<ImageButton>(R.id.back_arrow_button)
@@ -50,9 +65,22 @@ class ProfileFragment : Fragment() {
                 }
             }
         }
-
+        imagePickerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val data: Intent? = result.data
+                data?.data?.let { uri ->
+                    compressImage(uri)
+                }
+            }
+        }
         val friendRecyclerView: RecyclerView = view.findViewById(R.id.friends_recycler_view)
-        friendAdapter = FriendAdapter(requireContext(), api.getFriendsData(), api, requireActivity().supportFragmentManager, requireActivity() as MapActivity)
+        friendAdapter = FriendAdapter(
+            requireContext(),
+            api.getFriendsData(),
+            api,
+            requireActivity().supportFragmentManager,
+            requireActivity() as MapActivity
+        )
         friendRecyclerView.adapter = friendAdapter
         friendRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
 
@@ -97,13 +125,94 @@ class ProfileFragment : Fragment() {
                 }
             }
         }
-
+        myProfilePic.setOnClickListener {
+            imageCompressed = false
+            pickImageGallery()
+        }
         backButton.setOnClickListener{
             requireActivity().onBackPressedDispatcher.onBackPressed()
         }
         return view
     }
+    private fun pickImageGallery() {
+        val intent = Intent(Intent.ACTION_PICK)
+        intent.type = "image/*"
+        imagePickerLauncher.launch(intent)
+    }
+    private fun compressImage(uri: Uri) {
+        GlobalScope.launch(Dispatchers.IO) {
+            val inputStream = requireContext().contentResolver.openInputStream(uri)
+            inputStream?.use { stream ->
+                val originalBitmap = BitmapFactory.decodeStream(stream)
+                val compressedBitmap = (compressBitmap(originalBitmap))
+                originalBitmap.recycle()
+                requireActivity().runOnUiThread {
+                    //compressingStatus.visibility = View.GONE
+                    val roundedImageBitmap = applyRoundedCorners(compressedBitmap, 20f)
+                    imageCompressed = true
+                    myProfilePic.setImageBitmap(roundedImageBitmap)
+                }
+            }
+        }
+    }
+    private fun applyRoundedCorners(bitmap: Bitmap, radius: Float): Bitmap {
+        val roundedBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(roundedBitmap)
+        val paint = Paint()
+        paint.isAntiAlias = true
+        val rectF = RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat())
+        val shader = BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+        val path = Path()
+        path.addRoundRect(rectF, radius, radius, Path.Direction.CW)
+        canvas.drawPath(path, paint)
+        paint.shader = shader
+        canvas.drawPath(path, paint)
+        return roundedBitmap
+    }
+    private fun compressBitmap(bitmap: Bitmap): Bitmap {
+        val maxWidth = 600
+        val maxHeight = 600
+
+        val originalWidth = bitmap.width
+        val originalHeight = bitmap.height
+
+        val aspectRatio = originalWidth.toFloat() / originalHeight.toFloat()
+        val targetWidth: Int
+        val targetHeight: Int
+        if (aspectRatio > maxWidth.toFloat() / maxHeight.toFloat()) {
+            targetWidth = maxWidth
+            targetHeight = (maxWidth.toFloat() / aspectRatio).toInt()
+        } else {
+            targetWidth = (maxHeight.toFloat() * aspectRatio).toInt()
+            targetHeight = maxHeight
+        }
+
+        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
+        outputStream = ByteArrayOutputStream()
+        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+        val initialByteArray = outputStream.toByteArray()
+        requireActivity().runOnUiThread {
+            myProfilePic.setImageResource(R.drawable.photo_bg)
+        }
+        if (initialByteArray.size <= MAX_SIZE_BEFORE_ENCODING) {
+            Log.d("Tagme_PIC", "Image size is already within the desired range.")
+            return BitmapFactory.decodeByteArray(initialByteArray, 0, initialByteArray.size)
+        }
+        var quality = 100
+        var byteArray = initialByteArray
+        Log.d("Tagme_PIC", "Before compressing: ${byteArray.size}")
+        while (byteArray.size > MAX_SIZE_BEFORE_ENCODING && quality > 0) {
+            outputStream.reset()
+            quality -= if (quality <= 20) 5 else 10
+            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+            byteArray = outputStream.toByteArray()
+            Log.d("Tagme_PIC", "Compressing: $quality ${byteArray.size}")
+        }
+
+        return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+    }
 }
+
 class MyLinearLayoutManager(context: Context) : LinearLayoutManager(context) {
     override fun canScrollVertically(): Boolean {
         return false
@@ -114,7 +223,7 @@ class FriendAdapter(
     private var friendList: MutableList<API.FriendData>,
     private val api: API,
     private val childFragmentManager: FragmentManager,
-    private val mapActivity: MapActivity
+    private val mapActivity: MapActivity,
 ) : RecyclerView.Adapter<FriendAdapter.FriendViewHolder>() {
     inner class FriendViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTextView: TextView = itemView.findViewById(R.id.friend_name)
@@ -164,7 +273,15 @@ class FriendAdapter(
             mapActivity.onBackPressedDispatcher.onBackPressed()
         }
         holder.messageButton.setOnClickListener {
-
+            val conversation = api.getConversationsData().find { it.userData.userId == friend.userData.userId }
+            if (conversation != null) {
+                val conversationFragment =
+                    ConversationFragment.newInstance(conversation.conversationID, conversation.userData.nickname)
+                mapActivity.supportFragmentManager.beginTransaction()
+                    .replace(R.id.profile_fragment, conversationFragment)
+                    .addToBackStack(null)
+                    .commit()
+            }
         }
     }
 
@@ -174,7 +291,6 @@ class FriendAdapter(
 }
 class FriendRequestAdapter(
     private val context: Context,
-
     private var requestList: MutableList<API.FriendRequestData>,
     private val api: API,
     private val friendAdapter: FriendAdapter,

@@ -357,7 +357,7 @@ class MapActivity: AppCompatActivity() {
                     try {
                         api.sendLocationToWS(myLatitude, myLongitute, accuracy, speed)
                         api.getLocationsFromWS()
-                        api.getGeoStoriesNearby()
+                        api.getGeoStories()
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }

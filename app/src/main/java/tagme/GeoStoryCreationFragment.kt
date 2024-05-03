@@ -9,10 +9,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.LinearLayout
+import android.widget.*
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
@@ -30,7 +27,6 @@ class GeoStoryCreationFragment : Fragment() {
     private lateinit var geoStoryPreviewIcon: ImageView
     private lateinit var compressingStatus: LinearLayout
     private lateinit var imagePickerLauncher: ActivityResultLauncher<Intent>
-    private lateinit var imageBitmap: Bitmap
     private lateinit var outputStream: ByteArrayOutputStream
     private var imageCompressed: Boolean = false
     companion object{
@@ -45,6 +41,7 @@ class GeoStoryCreationFragment : Fragment() {
         val coroutineScope = CoroutineScope(Dispatchers.Main)
         val privacyGlobal = view.findViewById<ImageButton>(R.id.global_privacy)
         val privacyFriendsOnly = view.findViewById<ImageButton>(R.id.friend_only_privacy)
+        var privacy = "friends only"
         val selectedColor = Color.parseColor("#5EFF77")
         val unselectedColor = Color.parseColor("#C6C6C6")
         val geoStoryFrameLayout = view.findViewById<FrameLayout>(R.id.geo_story_frame)
@@ -74,19 +71,25 @@ class GeoStoryCreationFragment : Fragment() {
         publishButton.setOnClickListener{
             coroutineScope.launch {
                 if (imageCompressed) {
-                    val byt = outputStream.size()
-                    Log.d("Tagme_PIC", byt.toString())
                     api.insertPictureIntoWS(outputStream)
-                    Log.d("Tagme_Geo_story", api.lastInsertedPicId.toString())
                     if (api.lastInsertedPicId != 0) {
                         val latitude = (requireActivity() as MapActivity).myLatitude
                         val longitude = (requireActivity() as MapActivity).myLongitute
-                        api.createGeoStory(
+                        val result = api.createGeoStory(
                             api.lastInsertedPicId,
-                            "global",
+                            privacy,
                             latitude,
                             longitude
                         )
+                        val message = result?.getString("message")
+                        if (message == "success") {
+                            geoStoryPreview.setImageResource(R.drawable.photo_bg)
+                            geoStoryPreviewIcon.visibility = View.VISIBLE
+                            compressingStatus.visibility = View.GONE
+                            requireActivity().onBackPressedDispatcher.onBackPressed()
+                        } else {
+                            Toast.makeText(requireActivity(), "Something went wrong", Toast.LENGTH_LONG).show()
+                        }
                     }
                 }
             }
@@ -94,11 +97,13 @@ class GeoStoryCreationFragment : Fragment() {
         privacyGlobal.setOnClickListener {
             privacyGlobal.setColorFilter(selectedColor)
             privacyFriendsOnly.setColorFilter(unselectedColor)
+            privacy = "global"
 
         }
         privacyFriendsOnly.setOnClickListener {
             privacyGlobal.setColorFilter(unselectedColor)
             privacyFriendsOnly.setColorFilter(selectedColor)
+            privacy = "friends only"
         }
         return view
     }
@@ -116,9 +121,9 @@ class GeoStoryCreationFragment : Fragment() {
                 originalBitmap.recycle()
                 requireActivity().runOnUiThread {
                     compressingStatus.visibility = View.GONE
-                    imageBitmap = compressedBitmap
+                    val roundedImageBitmap = applyRoundedCorners(compressedBitmap, 20f)
                     imageCompressed = true
-                    geoStoryPreview.setImageBitmap(imageBitmap)
+                    geoStoryPreview.setImageBitmap(roundedImageBitmap)
                 }
             }
         }
@@ -169,7 +174,6 @@ class GeoStoryCreationFragment : Fragment() {
     }
     private fun overlayGradient(bitmap: Bitmap): Bitmap {
         val dominantColors = calculateDominantColors(bitmap)
-        Log.d("Tagme_PIC", "Dominant colors: $dominantColors")
 
         val gradientBitmap = createGradientBitmap(450, 800, dominantColors.first, dominantColors.second)
 
@@ -209,5 +213,19 @@ class GeoStoryCreationFragment : Fragment() {
         }
 
         return Pair(dominantColors[0], dominantColors[1])
+    }
+    private fun applyRoundedCorners(bitmap: Bitmap, radius: Float): Bitmap {
+        val roundedBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(roundedBitmap)
+        val paint = Paint()
+        paint.isAntiAlias = true
+        val rectF = RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat())
+        val shader = BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+        val path = Path()
+        path.addRoundRect(rectF, radius, radius, Path.Direction.CW)
+        canvas.drawPath(path, paint)
+        paint.shader = shader
+        canvas.drawPath(path, paint)
+        return roundedBitmap
     }
 }
