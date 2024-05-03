@@ -35,6 +35,7 @@ class ProfileFragment : Fragment() {
     private var imageCompressed: Boolean = false
     private lateinit var imagePickerLauncher: ActivityResultLauncher<Intent>
     private lateinit var api: API
+    private lateinit var parentActivity: MapActivity
     companion object{
         val MAX_SIZE_BEFORE_ENCODING = 100 * 1024
     }
@@ -53,7 +54,8 @@ class ProfileFragment : Fragment() {
         val darkOverlay = view.findViewById<View>(R.id.dark_overlay)
         val requestInput = view.findViewById<EditText>(R.id.nickname_edit_text)
         val backButton = view.findViewById<ImageButton>(R.id.back_arrow_button)
-        api = (requireActivity() as MapActivity).api
+        parentActivity = requireActivity() as MapActivity
+        api = parentActivity.api
         val sendRequestButton = view.findViewById<Button>(R.id.send_request_button)
         val statusText = view.findViewById<TextView>(R.id.status_text)
         nicknameText.text = api.myNickname
@@ -78,14 +80,19 @@ class ProfileFragment : Fragment() {
             requireContext(),
             api.getFriendsData(),
             api,
-            requireActivity().supportFragmentManager,
-            requireActivity() as MapActivity
+            parentActivity.supportFragmentManager,
+            parentActivity
         )
         friendRecyclerView.adapter = friendAdapter
         friendRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
 
         val friendRequestsRecyclerView: RecyclerView = view.findViewById(R.id.friend_requests_recycler_view)
-        friendRequestAdapter = FriendRequestAdapter(requireContext(), api.getFriendRequestData(), api, friendAdapter, requireActivity().supportFragmentManager)
+        friendRequestAdapter = FriendRequestAdapter(
+            requireContext(),
+            api.getFriendRequestData(),
+            api,
+            friendAdapter,
+            parentActivity.supportFragmentManager)
         friendRequestsRecyclerView.adapter = friendRequestAdapter
         friendRequestsRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
         addFriendButton.setOnClickListener {
@@ -128,9 +135,22 @@ class ProfileFragment : Fragment() {
         myProfilePic.setOnClickListener {
             imageCompressed = false
             pickImageGallery()
+            coroutineScope.launch {
+                while (!imageCompressed) {
+                    kotlinx.coroutines.delay(100)
+                }
+                api.insertPictureIntoWS(outputStream)
+                if (api.lastInsertedPicId != 0) {
+                    val message = api.setProfilePictureWS(api.lastInsertedPicId)?.getString("message")
+                    if (message == "success") {
+                        Toast.makeText(parentActivity, "Profile picture was updated!", Toast.LENGTH_LONG).show()
+                        api.myPfpId = api.lastInsertedPicId
+                    }
+                }
+            }
         }
         backButton.setOnClickListener{
-            requireActivity().onBackPressedDispatcher.onBackPressed()
+            parentActivity.onBackPressedDispatcher.onBackPressed()
         }
         return view
     }
@@ -146,7 +166,7 @@ class ProfileFragment : Fragment() {
                 val originalBitmap = BitmapFactory.decodeStream(stream)
                 val compressedBitmap = (compressBitmap(originalBitmap))
                 originalBitmap.recycle()
-                requireActivity().runOnUiThread {
+                parentActivity.runOnUiThread {
                     //compressingStatus.visibility = View.GONE
                     val roundedImageBitmap = applyRoundedCorners(compressedBitmap, 20f)
                     imageCompressed = true
@@ -191,7 +211,7 @@ class ProfileFragment : Fragment() {
         outputStream = ByteArrayOutputStream()
         scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
         val initialByteArray = outputStream.toByteArray()
-        requireActivity().runOnUiThread {
+        parentActivity.runOnUiThread {
             myProfilePic.setImageResource(R.drawable.photo_bg)
         }
         if (initialByteArray.size <= MAX_SIZE_BEFORE_ENCODING) {
@@ -240,11 +260,6 @@ class FriendAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FriendViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.friend_item, parent, false)
         return FriendViewHolder(view)
-    }
-    private fun removeItem(position: Int) {
-        friendList.removeAt(position)
-        notifyItemRemoved(position)
-        notifyItemRangeChanged(position, friendList.size)
     }
 
     override fun onBindViewHolder(holder: FriendViewHolder, position: Int) {

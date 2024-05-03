@@ -249,6 +249,14 @@ class API private constructor(context: Context){
         }
         return sendRequestToWS(requestData)
     }
+    suspend fun setProfilePictureWS(picId: Int): JSONObject? {
+        val requestData = JSONObject().apply {
+            put("action", "set profile picture")
+            put("token", myToken)
+            put("picture_id", picId)
+        }
+        return sendRequestToWS(requestData)
+    }
     suspend fun getMessagesFromWS(conversationId: Int, lastMsgId: Int): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "get messages")

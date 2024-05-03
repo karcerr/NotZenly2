@@ -124,7 +124,6 @@ class ConversationsAdapter(
                 val oldItem = conversationList[oldItemPosition]
                 val newItem = newConversationListSorted[newItemPosition]
                 val didChange = (oldItem.lastMessage == newItem.lastMessage && oldItem.userData == newItem.userData)
-                val didListChange2 = (conversationList == newConversationListSorted)
                 return didChange
             }
         })
