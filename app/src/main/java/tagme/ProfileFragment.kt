@@ -52,7 +52,13 @@ class ProfileFragment : Fragment() {
         }
 
         val friendRecyclerView: RecyclerView = view.findViewById(R.id.friends_recycler_view)
-        friendAdapter = FriendAdapter(requireContext(), api.getFriendsData(), api, requireActivity().supportFragmentManager, requireActivity() as MapActivity)
+        friendAdapter = FriendAdapter(
+            requireContext(),
+            api.getFriendsData(),
+            api,
+            requireActivity().supportFragmentManager,
+            requireActivity() as MapActivity
+        )
         friendRecyclerView.adapter = friendAdapter
         friendRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
 
@@ -114,7 +120,7 @@ class FriendAdapter(
     private var friendList: MutableList<API.FriendData>,
     private val api: API,
     private val childFragmentManager: FragmentManager,
-    private val mapActivity: MapActivity
+    private val mapActivity: MapActivity,
 ) : RecyclerView.Adapter<FriendAdapter.FriendViewHolder>() {
     inner class FriendViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTextView: TextView = itemView.findViewById(R.id.friend_name)
@@ -164,7 +170,15 @@ class FriendAdapter(
             mapActivity.onBackPressedDispatcher.onBackPressed()
         }
         holder.messageButton.setOnClickListener {
-
+            val conversation = api.getConversationsData().find { it.userData.userId == friend.userData.userId }
+            if (conversation != null) {
+                val conversationFragment =
+                    ConversationFragment.newInstance(conversation.conversationID, conversation.userData.nickname)
+                mapActivity.supportFragmentManager.beginTransaction()
+                    .replace(R.id.profile_fragment, conversationFragment)
+                    .addToBackStack(null)
+                    .commit()
+            }
         }
     }
 
