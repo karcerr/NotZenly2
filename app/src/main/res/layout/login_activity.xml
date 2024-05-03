@@ -7,6 +7,7 @@
                 android:gravity="center"
                 android:paddingHorizontal="40dp">
     <LinearLayout
+
             android:id="@+id/compressing_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
