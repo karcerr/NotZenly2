@@ -6,10 +6,9 @@ import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
-import android.widget.ImageButton
-import android.widget.TextView
-import android.widget.Toast
+import android.view.animation.Animation
+import android.view.animation.TranslateAnimation
+import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -31,7 +30,7 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
     private lateinit var recyclerView: RecyclerView
     private var messageUpdateHandler: Handler? = null
     private var messageUpdateRunnable: Runnable? = null
-
+    private lateinit var newMessageImage: ImageView
 
     companion object {
         private const val MESSAGE_UPDATE_INTERVAL_MS = 1000L
@@ -61,15 +60,29 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
         val conversationId = requireArguments().getInt(ARG_CONVERSATION_ID)
         val editText: EditText = view.findViewById(R.id.message_edit_text)
         val sendMessageButton: ImageButton = view.findViewById(R.id.send_msg_button)
+        newMessageImage = view.findViewById(R.id.new_msg_dot)
+        val scrollDownFrame: FrameLayout = view.findViewById(R.id.scroll_down_frame)
+        val scrollDownButton: ImageButton = view.findViewById(R.id.scroll_down_button)
+        var scrollDownFrameShown = false
         nickname.text = requireArguments().getString(ARG_NICKNAME)
         recyclerView = view.findViewById(R.id.messageRecyclerView)
         recyclerView.layoutManager = LinearLayoutManager(context)
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-
                 val isAtBottom = !recyclerView.canScrollVertically(1)
                 (recyclerView.adapter as? MessageAdapter)?.bottomSticking = isAtBottom
+                if (isAtBottom) {
+                    newMessageImage.visibility = View.GONE
+                }
+                if (!isAtBottom && !scrollDownFrameShown) {
+                    scrollDownFrame.visibility = View.VISIBLE
+                    scrollDownFrameShown = true
+                    slideView(scrollDownFrame, false, 500)
+                } else if (isAtBottom && scrollDownFrameShown) {
+                    scrollDownFrameShown = false
+                    slideView(scrollDownFrame, true, 500)
+                }
+                super.onScrolled(recyclerView, dx, dy)
             }
         })
         recyclerView.addOnLayoutChangeListener { _, _, _, _, bottom, _, _, _, oldBottom ->
@@ -82,6 +95,9 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
                     }
                 }
             }
+        }
+        scrollDownButton.setOnClickListener {
+            recyclerView.smoothScrollToPosition(recyclerView.adapter!!.itemCount - 1)
         }
         CoroutineScope(Dispatchers.Main).launch {
             api.getMessagesFromWS(conversationId, -1)
@@ -96,7 +112,7 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
                 adapter.setLastMessageIdListener(this@ConversationFragment)
                 recyclerView.adapter = adapter
                 recyclerView.scrollToPosition(adapter.itemCount - 1)
-
+                slideView(scrollDownFrame, true, 0)
                 val bitmap = api.getPictureData(conversation.userData.profilePictureId)
                 if (bitmap != null) {
                     pfp.setImageBitmap(bitmap)
@@ -164,7 +180,31 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
         messageUpdateHandler = null
     }
     override fun onLastMessageIdChanged(lastMessageId: Int) {
-        this.lastMessageId = max(this.lastMessageId, lastMessageId)
+        if (lastMessageId > this.lastMessageId) {
+            this.lastMessageId = max(this.lastMessageId, lastMessageId)
+            newMessageImage.visibility = View.VISIBLE
+        }
+    }
+    private fun slideView(view: View, hide: Boolean, duration: Long) {
+        val parentHeight = (view.parent as View).height.toFloat()
+        val animate: Animation = if (!hide) {
+            TranslateAnimation(
+                0f,
+                0f,
+                parentHeight,
+                0f
+            )
+        } else {
+            TranslateAnimation(
+                0f,
+                0f,
+                0f,
+                parentHeight
+            )
+        }
+        animate.duration = duration
+        animate.fillAfter = true
+        view.startAnimation(animate)
     }
 }
 class MessageAdapter(
