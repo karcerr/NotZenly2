@@ -120,7 +120,7 @@ class API private constructor(context: Context){
                         "insert picture" -> when (answer.getString("status")) {
                             "success" -> parseInsertedPictureId(context, answer.getString("message"))
                         }
-                        "get geo stories nearby" -> when (answer.getString("status")) {
+                        "get geo stories" -> when (answer.getString("status")) {
                             "success" -> parseGeoStoriesNearby(answer.getString("message"))
                         }
                     }
@@ -300,9 +300,9 @@ class API private constructor(context: Context){
         }
         return sendRequestToWS(requestData)
     }
-    suspend fun getGeoStoriesNearby(): JSONObject? {
+    suspend fun getGeoStories(): JSONObject? {
         val requestData = JSONObject().apply {
-            put("action", "get geo stories nearby")
+            put("action", "get geo stories")
             put("token", myToken)
         }
         return sendRequestToWS(requestData)

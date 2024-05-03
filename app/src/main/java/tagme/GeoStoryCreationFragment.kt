@@ -27,7 +27,6 @@ class GeoStoryCreationFragment : Fragment() {
     private lateinit var geoStoryPreviewIcon: ImageView
     private lateinit var compressingStatus: LinearLayout
     private lateinit var imagePickerLauncher: ActivityResultLauncher<Intent>
-    private lateinit var imageBitmap: Bitmap
     private lateinit var outputStream: ByteArrayOutputStream
     private var imageCompressed: Boolean = false
     companion object{
@@ -122,9 +121,9 @@ class GeoStoryCreationFragment : Fragment() {
                 originalBitmap.recycle()
                 requireActivity().runOnUiThread {
                     compressingStatus.visibility = View.GONE
-                    imageBitmap = compressedBitmap
+                    val roundedImageBitmap = applyRoundedCorners(compressedBitmap, 20f)
                     imageCompressed = true
-                    geoStoryPreview.setImageBitmap(imageBitmap)
+                    geoStoryPreview.setImageBitmap(roundedImageBitmap)
                 }
             }
         }
@@ -214,5 +213,19 @@ class GeoStoryCreationFragment : Fragment() {
         }
 
         return Pair(dominantColors[0], dominantColors[1])
+    }
+    private fun applyRoundedCorners(bitmap: Bitmap, radius: Float): Bitmap {
+        val roundedBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(roundedBitmap)
+        val paint = Paint()
+        paint.isAntiAlias = true
+        val rectF = RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat())
+        val shader = BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+        val path = Path()
+        path.addRoundRect(rectF, radius, radius, Path.Direction.CW)
+        canvas.drawPath(path, paint)
+        paint.shader = shader
+        canvas.drawPath(path, paint)
+        return roundedBitmap
     }
 }
