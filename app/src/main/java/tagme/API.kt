@@ -27,7 +27,6 @@ class API private constructor(context: Context){
     private var answer = JSONObject()
     private var lastInsertedPictureDataString = ""
     var lastInsertedPicId = 0
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
     private val MAX_CONCURRENT_REQUESTS = 6
     private val semaphore = Semaphore(MAX_CONCURRENT_REQUESTS)
 
@@ -70,7 +69,7 @@ class API private constructor(context: Context){
         }
     suspend fun connectToServer(context: Context): Boolean {
         return withContext(Dispatchers.IO) {
-            val url = "ws://141.8.193.201:8765"  // WebSocket server URL
+            val url = "ws://141.8.193.201:8765"
 
             val request = Request.Builder()
                 .url(url)
@@ -379,17 +378,18 @@ class API private constructor(context: Context){
             val longitude = locationObject.getDouble("longitude")
             val accuracy = locationObject.getDouble("accuracy")
             val speed = locationObject.getDouble("speed")
-            val timestamp = locationObject.getString("timestamp")
+            val timestampString = locationObject.getString("timestamp")
+            val timestamp = parseAndConvertTimestamp(timestampString)
             val existingFriend = friendsData.find { it.userData.userId == id }
             if (existingFriend != null) {
                 if (existingFriend.location == null) {
-                    existingFriend.location = LocationData(latitude, longitude, accuracy, speed.toFloat(), Timestamp(dateFormat.parse(timestamp)!!.time))
+                    existingFriend.location = LocationData(latitude, longitude, accuracy, speed.toFloat(), timestamp)
                 } else {
                     existingFriend.location?.latitude = latitude
                     existingFriend.location?.longitude = longitude
                     existingFriend.location?.accuracy = accuracy
                     existingFriend.location?.speed = speed.toFloat()
-                    existingFriend.location?.timestamp = dateFormat.parse(timestamp)?.let { Timestamp(it.time) }
+                    existingFriend.location?.timestamp = timestamp
                 }
             }
         }
@@ -436,14 +436,13 @@ class API private constructor(context: Context){
             val lastMessageText = conversationObject.optString("text", "")
             val lastMessageAuthorId = conversationObject.optInt("author_id", 0)
             val read = conversationObject.optBoolean("read", false)
-            val timestamp = conversationObject.getString("timestamp")
+            val timestampString = conversationObject.optString("timestamp", "")
             val existingConversation = conversationsData.find { it.conversationID == conversationId }
             if (existingConversation == null) {
                 if (lastMessageAuthorId != 0) {
                     conversationsData.add(ConversationData(conversationId,
                         UserData(userId, nickname, profilePictureId), mutableListOf(),
-                        LastMessageData(lastMessageAuthorId, lastMessageText, lastMessagePictureId,
-                            Timestamp(dateFormat.parse(timestamp)!!.time), read)))
+                        LastMessageData(lastMessageAuthorId, lastMessageText, lastMessagePictureId, parseAndConvertTimestamp(timestampString), read)))
                 } else {
                     conversationsData.add(ConversationData(conversationId,
                         UserData(userId, nickname, profilePictureId), mutableListOf(),
@@ -453,7 +452,7 @@ class API private constructor(context: Context){
                 existingConversation.userData = UserData(userId, nickname, profilePictureId)
                 if (lastMessageAuthorId != 0) {
                     existingConversation.lastMessage = LastMessageData(lastMessageAuthorId, lastMessageText, lastMessagePictureId,
-                        Timestamp(dateFormat.parse(timestamp)!!.time), read)
+                        parseAndConvertTimestamp(timestampString), read)
                 }
             }
         }
@@ -467,7 +466,8 @@ class API private constructor(context: Context){
             val authorId = messageObject.getInt("author_id")
             val messageId = messageObject.getInt("message_id")
             val text = messageObject.getString("text")
-            val timestamp = messageObject.getString("timestamp")
+            val timestampString = messageObject.getString("timestamp")
+            val timestamp = parseAndConvertTimestamp(timestampString)
             val ifRead = messageObject.getBoolean("read")
             val pictureId = messageObject.optInt("picture_id", 0)
             val existingConversation = conversationsData.find { it.conversationID == conversationId }
@@ -480,7 +480,7 @@ class API private constructor(context: Context){
                             authorId,
                             text,
                             pictureId,
-                            Timestamp(dateFormat.parse(timestamp)!!.time),
+                            timestamp,
                             ifRead
                         )
                     )
@@ -647,7 +647,7 @@ class API private constructor(context: Context){
     )
     data class PictureData(
         val pictureId: Int,
-        val imagePath: String? // Path to the cached image
+        val imagePath: String?
     )
 
 
@@ -684,11 +684,9 @@ class API private constructor(context: Context){
 
 
     companion object {
-        // Singleton instance
         @Volatile
         private var instance: API? = null
 
-        // Function to get the singleton instance
         fun getInstance(context: Context): API {
             return instance ?: synchronized(this) {
                 instance ?: API(context.applicationContext).also { instance = it }
@@ -725,6 +723,21 @@ class API private constructor(context: Context){
             } finally {
                 semaphore.release()
             }
+        }
+    }
+    private fun parseAndConvertTimestamp(timestampString: String): Timestamp {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault())
+        dateFormat.timeZone = TimeZone.getTimeZone("GMT+3")
+        val parsedTimestamp = dateFormat.parse(timestampString)
+        if (parsedTimestamp != null) {
+            val calendar = Calendar.getInstance()
+            calendar.time = parsedTimestamp
+            val phoneTimeZone = calendar.timeZone
+            val offset = phoneTimeZone.getOffset(calendar.timeInMillis)
+            val adjustedTimestamp = Timestamp(parsedTimestamp.time + offset)
+            return adjustedTimestamp
+        }else {
+            throw IllegalArgumentException("Failed to parse timestamp: $timestampString")
         }
     }
 }
