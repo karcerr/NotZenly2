@@ -9,10 +9,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.LinearLayout
+import android.widget.*
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
@@ -45,6 +42,7 @@ class GeoStoryCreationFragment : Fragment() {
         val coroutineScope = CoroutineScope(Dispatchers.Main)
         val privacyGlobal = view.findViewById<ImageButton>(R.id.global_privacy)
         val privacyFriendsOnly = view.findViewById<ImageButton>(R.id.friend_only_privacy)
+        var privacy = "friends only"
         val selectedColor = Color.parseColor("#5EFF77")
         val unselectedColor = Color.parseColor("#C6C6C6")
         val geoStoryFrameLayout = view.findViewById<FrameLayout>(R.id.geo_story_frame)
@@ -74,19 +72,25 @@ class GeoStoryCreationFragment : Fragment() {
         publishButton.setOnClickListener{
             coroutineScope.launch {
                 if (imageCompressed) {
-                    val byt = outputStream.size()
-                    Log.d("Tagme_PIC", byt.toString())
                     api.insertPictureIntoWS(outputStream)
-                    Log.d("Tagme_Geo_story", api.lastInsertedPicId.toString())
                     if (api.lastInsertedPicId != 0) {
                         val latitude = (requireActivity() as MapActivity).myLatitude
                         val longitude = (requireActivity() as MapActivity).myLongitute
-                        api.createGeoStory(
+                        val result = api.createGeoStory(
                             api.lastInsertedPicId,
-                            "global",
+                            privacy,
                             latitude,
                             longitude
                         )
+                        val message = result?.getString("message")
+                        if (message == "success") {
+                            geoStoryPreview.setImageResource(R.drawable.photo_bg)
+                            geoStoryPreviewIcon.visibility = View.VISIBLE
+                            compressingStatus.visibility = View.GONE
+                            requireActivity().onBackPressedDispatcher.onBackPressed()
+                        } else {
+                            Toast.makeText(requireActivity(), "Something went wrong", Toast.LENGTH_LONG).show()
+                        }
                     }
                 }
             }
@@ -94,11 +98,13 @@ class GeoStoryCreationFragment : Fragment() {
         privacyGlobal.setOnClickListener {
             privacyGlobal.setColorFilter(selectedColor)
             privacyFriendsOnly.setColorFilter(unselectedColor)
+            privacy = "global"
 
         }
         privacyFriendsOnly.setOnClickListener {
             privacyGlobal.setColorFilter(unselectedColor)
             privacyFriendsOnly.setColorFilter(selectedColor)
+            privacy = "friends only"
         }
         return view
     }
@@ -169,7 +175,6 @@ class GeoStoryCreationFragment : Fragment() {
     }
     private fun overlayGradient(bitmap: Bitmap): Bitmap {
         val dominantColors = calculateDominantColors(bitmap)
-        Log.d("Tagme_PIC", "Dominant colors: $dominantColors")
 
         val gradientBitmap = createGradientBitmap(450, 800, dominantColors.first, dominantColors.second)
 
