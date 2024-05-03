@@ -38,4 +38,5 @@
     <string name="photo_preview">Photo preview</string>
     <string name="compressing">Compressing...</string>
     <string name="add_friend">Add friend</string>
+    <string name="tagme">TagMe!</string>
 </resources>
