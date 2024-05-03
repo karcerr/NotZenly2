@@ -51,7 +51,7 @@ class CustomIconOverlay(
 
             val distance = sqrt((x - it.x).toDouble().pow(2.0) + (y - it.y).toDouble().pow(2.0))
 
-            val iconRadius = (drawable.intrinsicWidth * overlayScale / 2).toFloat()
+            val iconRadius = (drawable.intrinsicWidth * overlayScale / 2)
 
             if (distance <= iconRadius) {
                 clickListener?.invoke(this)
