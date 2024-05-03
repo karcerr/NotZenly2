@@ -62,7 +62,7 @@ class MapActivity: AppCompatActivity() {
     private var isCenteredUser = false
     private var isAnimating = false
     private var isUiHidden = false
-    private var customOverlaySelf: CustomIconOverlay? = null
+    var customOverlaySelf: CustomIconOverlay? = null
     //private var lastY = -1f
     //these are for constant sending location:
     private val coroutineScope = CoroutineScope(Dispatchers.Main)

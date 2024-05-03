@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.*
+import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -145,6 +146,7 @@ class ProfileFragment : Fragment() {
                     if (message == "success") {
                         Toast.makeText(parentActivity, "Profile picture was updated!", Toast.LENGTH_LONG).show()
                         api.myPfpId = api.lastInsertedPicId
+                        parentActivity.customOverlaySelf!!.updateDrawable(BitmapDrawable(resources, api.getPictureData(api.myPfpId)))
                     }
                 }
             }
