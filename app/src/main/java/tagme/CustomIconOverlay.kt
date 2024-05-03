@@ -8,6 +8,7 @@ import com.example.tagme.R
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Overlay
+import kotlin.math.min
 
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -232,8 +233,8 @@ class CustomIconOverlay(
 
             canvas.save()
             canvas.rotate(rotation, it.x.toFloat(), it.y.toFloat())
-
-            val intersectCountText = "+$intersectCount"
+            val simplifiedIntersectCount = min(intersectCount, 99)
+            val intersectCountText = "+$simplifiedIntersectCount"
             if (storyId == 0) {
                 val nameText = name
                 canvas.drawText(
