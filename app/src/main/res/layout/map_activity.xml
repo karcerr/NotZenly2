@@ -155,6 +155,7 @@
                             android:src="@drawable/distance_icon"
                             android:importantForAccessibility="no"
                             android:layout_marginStart="10dp"
+                            android:layout_marginEnd="4dp"
                     />
                     <TextView
                             android:id="@+id/distance_text"
@@ -172,7 +173,9 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:src="@drawable/speed_icon"
-                            android:importantForAccessibility="no"/>
+                            android:importantForAccessibility="no"
+                            android:layout_marginEnd="4dp"
+                    />
                     <TextView
                             android:id="@+id/speed_text"
                             android:layout_width="0dp"

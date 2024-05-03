@@ -311,7 +311,7 @@ class MapActivity: AppCompatActivity() {
                     clickedFriendNicknameTextView.text = clickedFriend.userData.nickname
                     if (clickedFriend.location != null) {
                         val speed =( clickedFriend.location!!.speed * 3.6).toInt()
-                        clickedFriendSpeedTextView.text = "$speed км/ч"
+                        clickedFriendSpeedTextView.text = getString(R.string.speed_format, speed)
                         val results = FloatArray(1)
                         Location.distanceBetween(
                             myLatitude.toDouble(),
@@ -321,7 +321,7 @@ class MapActivity: AppCompatActivity() {
                             results
                         )
                         val distanceInKm = String.format("%.1f", results[0] / 1000)
-                        clickedFriendDistanceTextView.text = "$distanceInKm км"
+                        clickedFriendDistanceTextView.text = getString(R.string.distance_format, distanceInKm)
                     }
                 }
             }
