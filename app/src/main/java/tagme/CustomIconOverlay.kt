@@ -35,14 +35,7 @@ class CustomIconOverlay(
         strokeWidth = 2f
         style = Paint.Style.FILL_AND_STROKE
     }
-    private val textPaintWhite = Paint().apply {
-        color = Color.WHITE
-        textSize = 32f
-        isAntiAlias = true
-        typeface = ResourcesCompat.getFont(context, fontResId)
-        strokeWidth = 2f
-        style = Paint.Style.FILL_AND_STROKE
-    }
+
 
 
     override fun onSingleTapConfirmed(e: MotionEvent?, mapView: MapView?): Boolean {
@@ -250,11 +243,21 @@ class CustomIconOverlay(
                 if (speed?.toInt() != 0)
                     canvas.drawText(speedText, it.x.toFloat(), (it.y + scaledHeight / 2 + 65).toFloat(), textPaintBlack)
             }
+
             if (intersectCount != 0) {
+                val greaterThanTen = (intersectCount >= 10).toInt()
+                val textPaintWhite = Paint().apply {
+                    color = Color.WHITE
+                    textSize =  32f - (6f * greaterThanTen)
+                    isAntiAlias = true
+                    typeface = ResourcesCompat.getFont(context, fontResId)
+                    strokeWidth = 2f
+                    style = Paint.Style.FILL_AND_STROKE
+                }
                 canvas.drawText(
                     intersectCountText,
-                    x1 - (intersectCircleRadius / 2 - 5),
-                    intersectCircleY + (intersectCircleRadius / 2 - 7),
+                    x1 - (intersectCircleRadius / 2 - 5 + (5 * greaterThanTen)),
+                    intersectCircleY + (intersectCircleRadius / 2 - 7 - (3 * greaterThanTen)),
                     textPaintWhite
                 )
             }
@@ -315,3 +318,4 @@ class CustomIconOverlay(
         mapView?.invalidate()
     }
 }
+fun Boolean.toInt() = if (this) 1 else 0
