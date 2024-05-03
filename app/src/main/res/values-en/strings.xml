@@ -35,4 +35,6 @@
     <string name="photo_preview">Photo preview</string>
     <string name="compressing">Compressing...</string>
     <string name="add_friend">Add friend</string>
+    <string name="speed_format">%d km/h</string>
+    <string name="distance_format">%s km</string>
 </resources>

@@ -15,6 +15,8 @@ import android.view.animation.Animation
 import android.view.animation.TranslateAnimation
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.res.ResourcesCompat
@@ -50,11 +52,14 @@ class MapActivity: AppCompatActivity() {
     private lateinit var profileButtonFrame: FrameLayout
     private lateinit var messagesButton: ImageButton
     private lateinit var messagesButtonFrame: FrameLayout
-    private lateinit var createGeoStoryButton: ImageButton
+    private lateinit var onCLickedOverlays: LinearLayout
     private lateinit var createGeoStoryButtonFrame: FrameLayout
     private lateinit var profileFragment: ProfileFragment
     private lateinit var conversationFragment: ConversationsFragment
     private lateinit var geoStoryCreation: GeoStoryCreationFragment
+    private lateinit var clickedFriendNicknameTextView: TextView
+    private lateinit var clickedFriendDistanceTextView: TextView
+    private lateinit var clickedFriendSpeedTextView: TextView
     lateinit var myLatitude: String
     lateinit var myLongitute: String
     private var scaleFactor = 15.0
@@ -89,8 +94,11 @@ class MapActivity: AppCompatActivity() {
         profileButtonFrame = findViewById(R.id.profile_button_frame)
         messagesButton = findViewById(R.id.messages_button)
         messagesButtonFrame = findViewById(R.id.messages_button_frame)
-        createGeoStoryButton = findViewById(R.id.create_geo_story_button)
         createGeoStoryButtonFrame = findViewById(R.id.create_geo_story_button_frame)
+        onCLickedOverlays = findViewById(R.id.overlay_on_clicked_menus)
+        clickedFriendNicknameTextView = findViewById(R.id.nickname_text)
+        clickedFriendDistanceTextView = findViewById(R.id.distance_text)
+        clickedFriendSpeedTextView = findViewById(R.id.speed_text)
         // Initializing and hiding fragments
         fragmentManager = supportFragmentManager
         conversationFragment = fragmentManager.findFragmentById(R.id.conversations_fragment) as ConversationsFragment
@@ -133,7 +141,7 @@ class MapActivity: AppCompatActivity() {
                             customOverlaySelf?.setSpeed(location.speed)
                         }
                         if (centeredTargetId == api.myUserId && isCenteredUser) {
-                            customOverlaySelf?.let { centralizeMapAnimated(it.getLocation(), centeredTargetId, true) }
+                            customOverlaySelf?.let { centralizeMapAnimated(it.getLocation(), centeredTargetId, isCenterTargetFriend = true, withZoom = true) }
                         }
                     }
                 }
@@ -177,7 +185,7 @@ class MapActivity: AppCompatActivity() {
         }
 
         centralizeButton.setOnClickListener{
-            customOverlaySelf?.let { centralizeMapAnimated(it.getLocation(), api.myUserId, true) }
+            customOverlaySelf?.let { centralizeMapAnimated(it.getLocation(), api.myUserId, isCenterTargetFriend = true, withZoom = true) }
         }
         profileButton.setOnClickListener {
             coroutineScope.launch {
@@ -198,7 +206,7 @@ class MapActivity: AppCompatActivity() {
             }
             toggleFragmentVisibility(conversationFragment)
         }
-        createGeoStoryButton.setOnClickListener {
+        createGeoStoryButtonFrame.setOnClickListener {
             toggleFragmentVisibility(geoStoryCreation)
         }
 
@@ -266,12 +274,13 @@ class MapActivity: AppCompatActivity() {
         return super.onTouchEvent(event)
     }
     */
-    fun centralizeMapAnimated(location: GeoPoint, targetId: Int, isCenterTargetFriend: Boolean){
+    fun centralizeMapAnimated(location: GeoPoint, targetId: Int, isCenterTargetFriend: Boolean, withZoom: Boolean){
         Log.d("Tagme", "centralizing on $targetId")
         if (!isAnimating) {
             isAnimating = true
             setCenteredTrue(targetId, isCenterTargetFriend)
-            mapController.animateTo(location, scaleFactor, 500)
+            val zoomLevel = if(withZoom) scaleFactor else map.zoomLevelDouble
+            mapController.animateTo(location, zoomLevel, 500)
             handler.postDelayed({
                 isAnimating = false
             }, 550)
@@ -290,11 +299,33 @@ class MapActivity: AppCompatActivity() {
     private fun setCenteredTrue(targetId: Int, isCenteredOnFriend: Boolean) {
         centeredTargetId = targetId
         isCenteredUser = isCenteredOnFriend
-        if (!isUiHidden and (targetId != api.myUserId)) {
+        if (!isUiHidden && (targetId != api.myUserId)) {
             isUiHidden = true
             slideView(profileButtonFrame, true)
             slideView(messagesButtonFrame, true)
             slideView(centralizeButtonFrame, true)
+            onCLickedOverlays.visibility = View.VISIBLE
+            if (isCenteredOnFriend) {
+                val clickedFriend = api.getFriendsData().find{it.userData.userId == targetId}
+                if (clickedFriend != null) {
+                    clickedFriendNicknameTextView.text = clickedFriend.userData.nickname
+                    if (clickedFriend.location != null) {
+                        val speed =( clickedFriend.location!!.speed * 3.6).toInt()
+                        clickedFriendSpeedTextView.text = "$speed км/ч"
+                        val results = FloatArray(1)
+                        Location.distanceBetween(
+                            myLatitude.toDouble(),
+                            myLongitute.toDouble(),
+                            clickedFriend.location!!.latitude,
+                            clickedFriend.location!!.longitude,
+                            results
+                        )
+                        val distanceInKm = String.format("%.1f", results[0] / 1000)
+                        clickedFriendDistanceTextView.text = "$distanceInKm км"
+                    }
+                }
+            }
+            slideView(onCLickedOverlays, false)
         }
     }
 
@@ -306,6 +337,8 @@ class MapActivity: AppCompatActivity() {
             slideView(profileButtonFrame, false)
             slideView(messagesButtonFrame, false)
             slideView(centralizeButtonFrame, false)
+            onCLickedOverlays.visibility = View.VISIBLE
+            slideView(onCLickedOverlays, true)
         }
     }
 
@@ -375,7 +408,7 @@ class MapActivity: AppCompatActivity() {
         coroutineScope.coroutineContext.cancelChildren()
     }
 
-    suspend fun getCurrentLocation(): Location? {
+    private suspend fun getCurrentLocation(): Location? {
         return withContext(Dispatchers.IO) {
             if (ActivityCompat.checkSelfPermission(
                     this@MapActivity,
@@ -415,7 +448,7 @@ class MapActivity: AppCompatActivity() {
                     overlay.setLocation(GeoPoint(friend.location!!.latitude, friend.location!!.longitude))
                     overlay.setSpeed(friend.location!!.speed)
                     if (centeredTargetId == overlay.getUserId() && isCenteredUser) {
-                        centralizeMapAnimated(overlay.getLocation(), friend.userData.userId, true)
+                        centralizeMapAnimated(overlay.getLocation(), friend.userData.userId, isCenterTargetFriend = true, withZoom = false)
                     }
                 } else {
                     val friendLocation = GeoPoint(friend.location!!.latitude, friend.location!!.longitude)
@@ -429,7 +462,7 @@ class MapActivity: AppCompatActivity() {
                         0,
                         R.font.my_font,
                         clickListener = { customIconOverlay ->
-                            centralizeMapAnimated(customIconOverlay.getLocation(), friend.userData.userId, true)
+                            centralizeMapAnimated(customIconOverlay.getLocation(), friend.userData.userId, isCenterTargetFriend = true, withZoom = false)
                         }
                     ).apply {
                         mapView = map
@@ -473,7 +506,7 @@ class MapActivity: AppCompatActivity() {
                     geoStory.geoStoryId,
                     R.font.my_font,
                     clickListener = { customIconOverlay ->
-                        centralizeMapAnimated(customIconOverlay.getLocation(), geoStory.geoStoryId, false)
+                        centralizeMapAnimated(customIconOverlay.getLocation(), geoStory.geoStoryId, isCenterTargetFriend = false, withZoom = false)
                     }
                 ).apply {
                     mapView = map

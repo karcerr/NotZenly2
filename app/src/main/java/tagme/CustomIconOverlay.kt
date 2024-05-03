@@ -39,6 +39,7 @@ class CustomIconOverlay(
 
 
     override fun onSingleTapConfirmed(e: MotionEvent?, mapView: MapView?): Boolean {
+        if (!visible) return super.onSingleTapConfirmed(e, mapView)
         val projection = mapView?.projection
         val point = projection?.toPixels(location, null)
 

@@ -35,4 +35,6 @@
     <string name="photo_preview">Превью фото</string>
     <string name="compressing">Сжатие...</string>
     <string name="add_friend">Добавить друга</string>
+    <string name="speed_format">%d км/ч</string>
+    <string name="distance_format">%s км</string>
 </resources>
