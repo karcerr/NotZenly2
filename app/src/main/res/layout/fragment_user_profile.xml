@@ -18,7 +18,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 android:layout_marginHorizontal="17dp"
                 android:layout_marginTop="17dp"
-                android:background="android:color/transparent"
+                android:background="@color/transparent"
                 android:id="@+id/imageView2"/>
 
         <ImageButton
@@ -29,7 +29,7 @@
                 app:layout_constraintTop_toTopOf="parent"
                 android:layout_marginTop="15dp"
                 android:layout_marginHorizontal="8dp"
-                android:background="android:color/transparent"
+                android:background="@color/transparent"
                 android:id="@+id/imageView3"
                 app:layout_constraintEnd_toEndOf="parent"/>
         <TextView
@@ -101,11 +101,10 @@
                 android:textSize="24sp"
                 android:text="@string/add_friend"
                 android:textColor="@color/white"
-                android:textAppearance=" "
                 android:textStyle="bold"
                 android:textAlignment="textStart"
                 android:layout_marginStart="14dp"
-                android:background="android:color/transparent"
+                android:background="@color/transparent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"/>
                 <ImageView
@@ -130,12 +129,11 @@
             android:layout_height="66dp"
                 android:textSize="24sp"
                 android:text="@string/send_a_message_button"
-                android:textAppearance=" "
                 android:textStyle="bold"
                 android:textAlignment="textStart"
                 android:layout_marginStart="14dp"
                 android:textColor="@color/white"
-                android:background="android:color/transparent"
+                android:background="@color/transparent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"/>
             <ImageView
