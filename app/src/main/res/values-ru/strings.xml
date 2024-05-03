@@ -37,4 +37,5 @@
     <string name="add_friend">Добавить друга</string>
     <string name="speed_format">%d км/ч</string>
     <string name="distance_format">%s км</string>
+    <string name="empty_login_password">Введите логин и пароль</string>
 </resources>

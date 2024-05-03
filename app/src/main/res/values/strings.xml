@@ -41,5 +41,6 @@
     <string name="tagme" translatable="false">TagMe!</string>
     <string name="speed_format">%d km/h</string>
     <string name="distance_format">%s km</string>
+    <string name="empty_login_password">Enter login and password</string>
 
 </resources>
