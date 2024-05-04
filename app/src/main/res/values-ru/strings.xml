@@ -42,4 +42,7 @@
     <string name="In_friend_from">"Вы подружились "</string>
     <string name="blocked">Заблокирован</string>
     <string name="unblock">"Разблокировать "</string>
+    <string name="speed_format">%d км/ч</string>
+    <string name="distance_format">%s км</string>
+    <string name="empty_login_password">Введите логин и пароль</string>
 </resources>
