@@ -1,6 +1,7 @@
 package tagme
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.drawable.BitmapDrawable
 import android.location.Location
@@ -10,19 +11,21 @@ import android.os.Looper
 import android.transition.Slide
 import android.util.Log
 import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.view.animation.Animation
 import android.view.animation.TranslateAnimation
-import android.widget.FrameLayout
-import android.widget.ImageButton
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.tagme.R
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -60,6 +63,8 @@ class MapActivity: AppCompatActivity() {
     private lateinit var clickedFriendNicknameTextView: TextView
     private lateinit var clickedFriendDistanceTextView: TextView
     private lateinit var clickedFriendSpeedTextView: TextView
+    private lateinit var overlappedIconsAdapter: OverlappedIconsAdapter
+    private lateinit var recyclerView: RecyclerView
     lateinit var myLatitude: String
     lateinit var myLongitute: String
     private var scaleFactor = 15.0
@@ -104,6 +109,10 @@ class MapActivity: AppCompatActivity() {
         conversationFragment = fragmentManager.findFragmentById(R.id.conversations_fragment) as ConversationsFragment
         profileFragment = fragmentManager.findFragmentById(R.id.profile_fragment) as ProfileFragment
         geoStoryCreation = fragmentManager.findFragmentById(R.id.geo_story_creation_fragment) as GeoStoryCreationFragment
+        overlappedIconsAdapter = OverlappedIconsAdapter(this, mutableListOf(), api, this)
+        recyclerView = findViewById(R.id.overlapped_icons_recyclerview)
+        recyclerView.adapter = overlappedIconsAdapter
+        recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         val transaction = fragmentManager.beginTransaction()
         transaction.hide(profileFragment)
         transaction.hide(conversationFragment)
@@ -141,7 +150,7 @@ class MapActivity: AppCompatActivity() {
                             customOverlaySelf?.setSpeed(location.speed)
                         }
                         if (centeredTargetId == api.myUserId && isCenteredUser) {
-                            customOverlaySelf?.let { centralizeMapAnimated(it.getLocation(), centeredTargetId, isCenterTargetFriend = true, withZoom = true) }
+                            customOverlaySelf?.let { centralizeMapAnimated(it.getLocation(), centeredTargetId, isCenterTargetFriend = true, withZoom = true, mutableListOf()) }
                         }
                     }
                 }
@@ -185,7 +194,7 @@ class MapActivity: AppCompatActivity() {
         }
 
         centralizeButton.setOnClickListener{
-            customOverlaySelf?.let { centralizeMapAnimated(it.getLocation(), api.myUserId, isCenterTargetFriend = true, withZoom = true) }
+            customOverlaySelf?.let { centralizeMapAnimated(it.getLocation(), api.myUserId, isCenterTargetFriend = true, withZoom = true, mutableListOf()) }
         }
         profileButton.setOnClickListener {
             coroutineScope.launch {
@@ -210,8 +219,6 @@ class MapActivity: AppCompatActivity() {
             toggleFragmentVisibility(geoStoryCreation)
         }
 
-
-
         map.addMapListener(object : MapListener {
             override fun onScroll(event: ScrollEvent?): Boolean {
                 if (!isAnimating and (centeredTargetId != -1)) {
@@ -227,6 +234,8 @@ class MapActivity: AppCompatActivity() {
                 return true
             }
         })
+
+
     }
     private fun toggleFragmentVisibility(fragment: Fragment) {
         val transaction = fragmentManager.beginTransaction()
@@ -274,11 +283,17 @@ class MapActivity: AppCompatActivity() {
         return super.onTouchEvent(event)
     }
     */
-    fun centralizeMapAnimated(location: GeoPoint, targetId: Int, isCenterTargetFriend: Boolean, withZoom: Boolean){
+    fun centralizeMapAnimated(
+        location: GeoPoint,
+        targetId: Int,
+        isCenterTargetFriend: Boolean,
+        withZoom: Boolean,
+        intersectedOverlays: MutableList<Pair<Int, Int>>
+    ){
         Log.d("Tagme", "centralizing on $targetId")
         if (!isAnimating) {
             isAnimating = true
-            setCenteredTrue(targetId, isCenterTargetFriend)
+            setCenteredTrue(targetId, isCenterTargetFriend, intersectedOverlays)
             val zoomLevel = if(withZoom) scaleFactor else map.zoomLevelDouble
             mapController.animateTo(location, zoomLevel, 500)
             handler.postDelayed({
@@ -296,36 +311,40 @@ class MapActivity: AppCompatActivity() {
         mapController.setZoom(scaleFactor)
     }
 
-    private fun setCenteredTrue(targetId: Int, isCenteredOnFriend: Boolean) {
+    private fun setCenteredTrue(targetId: Int, isCenteredOnUser: Boolean, intersectedOverlays: MutableList<Pair<Int, Int>>) {
         centeredTargetId = targetId
-        isCenteredUser = isCenteredOnFriend
-        if (!isUiHidden && (targetId != api.myUserId)) {
-            isUiHidden = true
-            slideView(profileButtonFrame, true)
-            slideView(messagesButtonFrame, true)
-            slideView(centralizeButtonFrame, true)
-            onCLickedOverlays.visibility = View.VISIBLE
-            slideView(onCLickedOverlays, false)
-        }
-        if (isCenteredOnFriend) {
-            val clickedFriend = api.getFriendsData().find{it.userData.userId == targetId}
-            if (clickedFriend != null) {
-                clickedFriendNicknameTextView.text = clickedFriend.userData.nickname
-                if (clickedFriend.location != null) {
-                    val speed =( clickedFriend.location!!.speed * 3.6).toInt()
-                    clickedFriendSpeedTextView.text = getString(R.string.speed_format, speed)
-                    val results = FloatArray(1)
-                    Location.distanceBetween(
-                        myLatitude.toDouble(),
-                        myLongitute.toDouble(),
-                        clickedFriend.location!!.latitude,
-                        clickedFriend.location!!.longitude,
-                        results
-                    )
-                    val distanceInKm = String.format("%.1f", results[0] / 1000)
-                    clickedFriendDistanceTextView.text = getString(R.string.distance_format, distanceInKm)
+        isCenteredUser = isCenteredOnUser
+        if (targetId != api.myUserId) {
+            if (!isUiHidden) {
+                isUiHidden = true
+                slideView(profileButtonFrame, true)
+                slideView(messagesButtonFrame, true)
+                slideView(centralizeButtonFrame, true)
+                onCLickedOverlays.visibility = View.VISIBLE
+                slideView(onCLickedOverlays, false)
+            }
+            if (isCenteredOnUser) {
+                val clickedFriend = api.getFriendsData().find{it.userData.userId == targetId}
+                if (clickedFriend != null) {
+                    clickedFriendNicknameTextView.text = clickedFriend.userData.nickname
+                    if (clickedFriend.location != null) {
+                        val speed =( clickedFriend.location!!.speed * 3.6).toInt()
+                        clickedFriendSpeedTextView.text = getString(R.string.speed_format, speed)
+                        val results = FloatArray(1)
+                        Location.distanceBetween(
+                            myLatitude.toDouble(),
+                            myLongitute.toDouble(),
+                            clickedFriend.location!!.latitude,
+                            clickedFriend.location!!.longitude,
+                            results
+                        )
+                        val distanceInKm = String.format("%.1f", results[0] / 1000)
+                        clickedFriendDistanceTextView.text = getString(R.string.distance_format, distanceInKm)
+                    }
                 }
             }
+
+            overlappedIconsAdapter.updateData(intersectedOverlays)
         }
     }
 
@@ -448,7 +467,7 @@ class MapActivity: AppCompatActivity() {
                     overlay.setLocation(GeoPoint(friend.location!!.latitude, friend.location!!.longitude))
                     overlay.setSpeed(friend.location!!.speed)
                     if (centeredTargetId == overlay.getUserId() && isCenteredUser) {
-                        centralizeMapAnimated(overlay.getLocation(), friend.userData.userId, isCenterTargetFriend = true, withZoom = false)
+                        centralizeMapAnimated(overlay.getLocation(), friend.userData.userId, isCenterTargetFriend = true, withZoom = false, overlay.getIntersectedIds())
                     }
                 } else {
                     val friendLocation = GeoPoint(friend.location!!.latitude, friend.location!!.longitude)
@@ -462,7 +481,7 @@ class MapActivity: AppCompatActivity() {
                         0,
                         R.font.my_font,
                         clickListener = { customIconOverlay ->
-                            centralizeMapAnimated(customIconOverlay.getLocation(), friend.userData.userId, isCenterTargetFriend = true, withZoom = false)
+                            centralizeMapAnimated(customIconOverlay.getLocation(), friend.userData.userId, isCenterTargetFriend = true, withZoom = false, customIconOverlay.getIntersectedIds())
                         }
                     ).apply {
                         mapView = map
@@ -506,7 +525,7 @@ class MapActivity: AppCompatActivity() {
                     geoStory.geoStoryId,
                     R.font.my_font,
                     clickListener = { customIconOverlay ->
-                        centralizeMapAnimated(customIconOverlay.getLocation(), geoStory.geoStoryId, isCenterTargetFriend = false, withZoom = false)
+                        centralizeMapAnimated(customIconOverlay.getLocation(), geoStory.geoStoryId, isCenterTargetFriend = false, withZoom = false, customIconOverlay.getIntersectedIds())
                     }
                 ).apply {
                     mapView = map
@@ -530,5 +549,53 @@ class MapActivity: AppCompatActivity() {
         super.onDestroy()
         friendOverlays.clear()
         coroutineScope.cancel()
+    }
+}
+class OverlappedIconsAdapter(
+    private val context: Context,
+    private var itemList: MutableList<Pair<Int, Int>>,
+    private val api: API,
+    private val parentActivity: AppCompatActivity
+) : RecyclerView.Adapter<OverlappedIconsAdapter.OverlappedIconViewHolder>() {
+    inner class OverlappedIconViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val pictureImageView: ImageView = itemView.findViewById(R.id.overlapped_picture)
+        val itemLayout: LinearLayout = itemView.findViewById(R.id.overlapped_icon_layout)
+        val coroutineScope = CoroutineScope(Dispatchers.Main)
+    }
+    fun updateData(newItemList: MutableList<Pair<Int, Int>>) {
+        itemList = newItemList
+        notifyDataSetChanged()
+    }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OverlappedIconViewHolder {
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.overlapped_icon_item, parent, false)
+        return OverlappedIconViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: OverlappedIconViewHolder, position: Int) {
+        val item = itemList[position]
+        val userId = item.first
+        val geoStoryId = item.second
+
+        val picId = if(userId == 0) api.getGeoStoriesData().find {it.geoStoryId == geoStoryId}?.pictureId else
+            api.getFriendsData().find { it.userData.userId == userId }?.userData?.profilePictureId
+
+        val drawablePlaceholder = ContextCompat.getDrawable(context, R.drawable.person_placeholder)
+        holder.pictureImageView.setImageDrawable(drawablePlaceholder)
+        if (picId != null) {
+            holder.coroutineScope.launch {
+                val bitmap = api.getPictureData(picId)
+                if (bitmap != null) {
+                    holder.pictureImageView.setImageBitmap(bitmap)
+                }
+            }
+        }
+        holder.itemLayout.setOnClickListener {
+            //TODO
+            Log.d("Tagme_overlapped", "$itemList, $item")
+        }
+    }
+
+    override fun getItemCount(): Int {
+        return itemList.size
     }
 }

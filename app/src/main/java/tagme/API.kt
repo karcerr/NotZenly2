@@ -16,6 +16,7 @@ import java.io.FileOutputStream
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Semaphore
 
 class API private constructor(context: Context){
@@ -67,8 +68,9 @@ class API private constructor(context: Context){
             val jsonString = serializePicturesData(value)
             sharedPreferences.edit().putString("PICTURES_DATA", jsonString).apply()
         }
-    suspend fun connectToServer(context: Context): Boolean {
-        return withContext(Dispatchers.IO) {
+    suspend fun connectToServer(context: Context): CompletableFuture<Boolean> {
+        val future = CompletableFuture<Boolean>()
+        withContext(Dispatchers.IO) {
             val url = "ws://141.8.193.201:8765"
 
             val request = Request.Builder()
@@ -79,10 +81,12 @@ class API private constructor(context: Context){
                 override fun onOpen(webSocket: WebSocket, response: Response) {
                     this@API.webSocket = webSocket
                     Log.d("Tagme_WS", "onOpen trigger: $response")
+                    future.complete(true)
                 }
 
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                     Log.d("Tagme_WS", "onFailure trigger: $response")
+                    future.complete(true)
                 }
 
                 override fun onMessage(webSocket: WebSocket, text: String) {
@@ -131,9 +135,8 @@ class API private constructor(context: Context){
             }
 
             client.newWebSocket(request, listener)
-
-            true
         }
+        return future
     }
 
     suspend fun registerUser(username: String, password: String): JSONObject? {

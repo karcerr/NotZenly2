@@ -65,7 +65,7 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
         val scrollDownButton: ImageButton = view.findViewById(R.id.scroll_down_button)
         var scrollDownFrameShown = false
         nickname.text = requireArguments().getString(ARG_NICKNAME)
-        recyclerView = view.findViewById(R.id.messageRecyclerView)
+        recyclerView = view.findViewById(R.id.message_recycler_view)
         recyclerView.layoutManager = LinearLayoutManager(context)
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {

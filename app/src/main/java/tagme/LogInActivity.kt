@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat
 import com.example.tagme.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 
 class LogInActivity : AppCompatActivity() {
@@ -52,24 +53,22 @@ class LogInActivity : AppCompatActivity() {
 
         val api = API.getInstance(applicationContext)
         CoroutineScope(Dispatchers.Main).launch {
-            val connected = api.connectToServer(applicationContext)
+            val future = api.connectToServer(applicationContext)
+            val connected = future.await()
             if (connected) {
-                Log.d("Tagme", "Connected to the server")
-                if (api.myToken != null) {
-                    CoroutineScope(Dispatchers.Main).launch {
-                        val answer = api.loginToken()
-                        if (answer != null) {
-                            if (answer.getString("status") == "success") {
-                                api.getMyDataFromWS()
-                                hideLoginShowGpsOverlay()
-                                isAuthorized = true
-                                Log.d("Tagme", "Logged in via token")
-                            }
+                val myToken = api.myToken
+                if (myToken != null) {
+                    val answer = api.loginToken()
+                    if (answer != null) {
+                        if (answer.getString("status") == "success") {
+                            api.getMyDataFromWS()
+                            hideLoginShowGpsOverlay()
+                            isAuthorized = true
                         }
                     }
                 }
             } else {
-                Log.d("Tagme", "Failed to connect to the server")
+                Log.d("Tagme_", "Failed to connect to the server")
             }
         }
         loginBtn.setOnClickListener {

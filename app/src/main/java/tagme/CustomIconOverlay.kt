@@ -325,6 +325,10 @@ class CustomIconOverlay(
     fun getStoryId(): Int {
         return storyId
     }
+    fun getIntersectedIds(): MutableList<Pair<Int, Int>> {
+        return intersectedOverlays
+    }
+
     fun updateDrawable(newDrawable: Drawable) {
         drawable = newDrawable
         mapView?.invalidate()
