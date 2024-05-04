@@ -130,14 +130,17 @@
                     app:layout_constraintStart_toStartOf="parent">
                 <TextView
                         android:id="@+id/nickname_text"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/nickname"
                         android:textColor="@color/white"
                         android:textStyle="bold"
+                        android:autoSizeTextType="uniform"
+                        android:maxLines="1"
                         android:textAppearance="?android:textAppearanceMedium"
                         android:fontFamily="@font/my_font"
                         android:textSize="35sp"
+                        android:gravity="center_vertical"
                         android:layout_marginStart="10dp"
                 />
                 <LinearLayout

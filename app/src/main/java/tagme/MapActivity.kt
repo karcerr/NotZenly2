@@ -305,27 +305,27 @@ class MapActivity: AppCompatActivity() {
             slideView(messagesButtonFrame, true)
             slideView(centralizeButtonFrame, true)
             onCLickedOverlays.visibility = View.VISIBLE
-            if (isCenteredOnFriend) {
-                val clickedFriend = api.getFriendsData().find{it.userData.userId == targetId}
-                if (clickedFriend != null) {
-                    clickedFriendNicknameTextView.text = clickedFriend.userData.nickname
-                    if (clickedFriend.location != null) {
-                        val speed =( clickedFriend.location!!.speed * 3.6).toInt()
-                        clickedFriendSpeedTextView.text = getString(R.string.speed_format, speed)
-                        val results = FloatArray(1)
-                        Location.distanceBetween(
-                            myLatitude.toDouble(),
-                            myLongitute.toDouble(),
-                            clickedFriend.location!!.latitude,
-                            clickedFriend.location!!.longitude,
-                            results
-                        )
-                        val distanceInKm = String.format("%.1f", results[0] / 1000)
-                        clickedFriendDistanceTextView.text = getString(R.string.distance_format, distanceInKm)
-                    }
+            slideView(onCLickedOverlays, false)
+        }
+        if (isCenteredOnFriend) {
+            val clickedFriend = api.getFriendsData().find{it.userData.userId == targetId}
+            if (clickedFriend != null) {
+                clickedFriendNicknameTextView.text = clickedFriend.userData.nickname
+                if (clickedFriend.location != null) {
+                    val speed =( clickedFriend.location!!.speed * 3.6).toInt()
+                    clickedFriendSpeedTextView.text = getString(R.string.speed_format, speed)
+                    val results = FloatArray(1)
+                    Location.distanceBetween(
+                        myLatitude.toDouble(),
+                        myLongitute.toDouble(),
+                        clickedFriend.location!!.latitude,
+                        clickedFriend.location!!.longitude,
+                        results
+                    )
+                    val distanceInKm = String.format("%.1f", results[0] / 1000)
+                    clickedFriendDistanceTextView.text = getString(R.string.distance_format, distanceInKm)
                 }
             }
-            slideView(onCLickedOverlays, false)
         }
     }
 
