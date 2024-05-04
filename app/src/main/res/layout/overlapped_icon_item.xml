@@ -1,21 +1,12 @@
-<LinearLayout
+<com.google.android.material.imageview.ShapeableImageView
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:id="@+id/overlapped_picture"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/person_placeholder"
+        app:shapeAppearanceOverlay="@style/roundImageView"
+        android:layout_margin="6dp"
         android:background="@drawable/geo_story_gradient"
-        android:id="@+id/overlapped_icon_layout"
-        android:orientation="horizontal"
-        android:layout_marginVertical="10dp"
-        android:layout_marginHorizontal="5dp"
->
-    <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/overlapped_picture"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:src="@drawable/person_placeholder"
-            app:shapeAppearanceOverlay="@style/roundImageView"
-            android:padding="0dp"
-            android:layout_margin="6dp"
-    />
-</LinearLayout>
+        android:scaleType="centerCrop"
+/>

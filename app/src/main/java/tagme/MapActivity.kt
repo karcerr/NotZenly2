@@ -113,6 +113,7 @@ class MapActivity: AppCompatActivity() {
         recyclerView = findViewById(R.id.overlapped_icons_recyclerview)
         recyclerView.adapter = overlappedIconsAdapter
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+
         val transaction = fragmentManager.beginTransaction()
         transaction.hide(profileFragment)
         transaction.hide(conversationFragment)
@@ -559,7 +560,6 @@ class OverlappedIconsAdapter(
 ) : RecyclerView.Adapter<OverlappedIconsAdapter.OverlappedIconViewHolder>() {
     inner class OverlappedIconViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val pictureImageView: ImageView = itemView.findViewById(R.id.overlapped_picture)
-        val itemLayout: LinearLayout = itemView.findViewById(R.id.overlapped_icon_layout)
         val coroutineScope = CoroutineScope(Dispatchers.Main)
     }
     fun updateData(newItemList: MutableList<Pair<Int, Int>>) {
@@ -589,7 +589,7 @@ class OverlappedIconsAdapter(
                 }
             }
         }
-        holder.itemLayout.setOnClickListener {
+        holder.pictureImageView.setOnClickListener {
             //TODO
             Log.d("Tagme_overlapped", "$itemList, $item")
         }
