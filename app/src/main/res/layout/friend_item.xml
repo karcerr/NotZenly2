@@ -19,7 +19,9 @@
             app:strokeWidth="2dp"
             android:padding="1dp"
             app:strokeColor="@color/white"
-            android:layout_margin="8dp"/>
+            android:layout_margin="8dp"
+            android:scaleType="centerCrop"
+    />
     <TextView
             android:id="@+id/friend_name"
             android:text="Friend name"
