@@ -25,8 +25,8 @@
                     android:contentDescription="@string/go_back_button"/>
         </LinearLayout>
         <FrameLayout
-                android:layout_width="315dp"
-                android:layout_height="560dp"
+                android:layout_width="300dp"
+                android:layout_height="380dp"
                 android:layout_margin="8dp"
                 android:layout_gravity="center"
                 android:background="?attr/selectableItemBackground"
@@ -38,7 +38,7 @@
                     android:id="@+id/geo_story_preview"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:padding="6dp"
+                    android:padding="4dp"
                     android:background="@drawable/geo_story_gradient"
                     android:src="@drawable/photo_bg"
                     android:contentDescription="@string/photo_preview"
@@ -102,8 +102,8 @@
 
             <ImageButton
                     android:id="@+id/global_privacy"
-                    android:layout_width="46dp"
-                    android:layout_height="46dp"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
                     android:src="@drawable/planet"
                     android:background="@color/transparent"
                     android:layout_marginEnd="5dp"
