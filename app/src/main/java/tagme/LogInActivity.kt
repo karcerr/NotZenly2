@@ -21,10 +21,11 @@ import androidx.core.content.ContextCompat
 import com.example.tagme.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 
 class LogInActivity : AppCompatActivity() {
-    private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
+
     private val permissions = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
     private var hasPermission = false
     private var isAuthorized = false
@@ -36,6 +37,9 @@ class LogInActivity : AppCompatActivity() {
     private lateinit var registerBtn : Button
     private lateinit var loginLayout : LinearLayout
     private lateinit var enableGpsLayout : LinearLayout
+    companion object{
+        private const val REQUEST_PERMISSIONS_REQUEST_CODE = 1
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.login_activity)
@@ -49,31 +53,29 @@ class LogInActivity : AppCompatActivity() {
 
         val api = API.getInstance(applicationContext)
         CoroutineScope(Dispatchers.Main).launch {
-            val connected = api.connectToServer(applicationContext)
+            val future = api.connectToServer(applicationContext)
+            val connected = future.await()
             if (connected) {
-                Log.d("Tagme", "Connected to the server")
-                if (api.myToken != null) {
-                    CoroutineScope(Dispatchers.Main).launch {
-                        val answer = api.loginToken()
-                        if (answer != null) {
-                            if (answer.getString("status") == "success") {
-                                api.getMyDataFromWS()
-                                hideLoginShowGpsOverlay()
-                                isAuthorized = true
-                                Log.d("Tagme", "Logged in via token")
-                            }
+                val myToken = api.myToken
+                if (myToken != null) {
+                    val answer = api.loginToken()
+                    if (answer != null) {
+                        if (answer.getString("status") == "success") {
+                            api.getMyDataFromWS()
+                            hideLoginShowGpsOverlay()
+                            isAuthorized = true
                         }
                     }
                 }
             } else {
-                Log.d("Tagme", "Failed to connect to the server")
+                Log.d("Tagme_", "Failed to connect to the server")
             }
         }
         loginBtn.setOnClickListener {
             val username = usernameInput.text.toString()
             val password = passwordInput.text.toString()
             if (username == "" || password == "") {
-                errorText.text = "Введите логин и пароль"
+                errorText.text = getString(R.string.empty_login_password)
                 errorText.visibility = View.VISIBLE
                 if (password == "") {
                     passwordInput.setHintTextColor(Color.RED)

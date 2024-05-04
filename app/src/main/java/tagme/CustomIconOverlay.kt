@@ -2,11 +2,15 @@ package tagme
 import android.content.Context
 import android.graphics.*
 import android.graphics.drawable.Drawable
+import android.util.Log
 import android.view.MotionEvent
 import androidx.core.content.res.ResourcesCompat
+import com.example.tagme.R
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Overlay
+import kotlin.math.min
+
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -21,7 +25,7 @@ class CustomIconOverlay(
     private val fontResId: Int,
     private val clickListener: ((CustomIconOverlay) -> Unit)?
 ) : Overlay(context) {
-    private var intersectCount = 0
+    private var intersectedOverlays: MutableList<Pair<Int, Int>> = mutableListOf()
     private var visible = true
     private var closestVisibleOverlay : CustomIconOverlay? = null
 
@@ -39,6 +43,7 @@ class CustomIconOverlay(
 
 
     override fun onSingleTapConfirmed(e: MotionEvent?, mapView: MapView?): Boolean {
+        if (!visible) return super.onSingleTapConfirmed(e, mapView)
         val projection = mapView?.projection
         val point = projection?.toPixels(location, null)
 
@@ -48,9 +53,10 @@ class CustomIconOverlay(
 
             val distance = sqrt((x - it.x).toDouble().pow(2.0) + (y - it.y).toDouble().pow(2.0))
 
-            val iconRadius = (drawable.intrinsicWidth * overlayScale / 2).toFloat()
+            val iconRadius = (drawable.intrinsicWidth * overlayScale / 2)
 
             if (distance <= iconRadius) {
+                Log.d("Tagme_icons", intersectedOverlays.toString())
                 clickListener?.invoke(this)
                 return true
             }
@@ -90,12 +96,12 @@ class CustomIconOverlay(
 
             visible = !intersected
             if (closestVisibleOverlay != null) {
-                closestVisibleOverlay!!.intersectCount --
+                closestVisibleOverlay!!.intersectedOverlays.remove(userId to storyId)
                 closestVisibleOverlay = null
             }
             if (intersected) {
                 closestVisibleOverlay = closestVisibleOverlayTemp
-                closestVisibleOverlay!!.intersectCount ++
+                closestVisibleOverlay!!.intersectedOverlays.add(userId to storyId)
             }
         }
 
@@ -159,7 +165,7 @@ class CustomIconOverlay(
                 val combinedPath = Path().apply {
                     op(trianglePath, circlePath, Path.Op.UNION)
                 }
-                if (intersectCount > 0)
+                if (intersectedOverlays.isNotEmpty())
                     combinedPath.apply {
                         op(this, circleIntersectPath, Path.Op.UNION)
                     }
@@ -195,14 +201,14 @@ class CustomIconOverlay(
                 val combinedPath = Path().apply {
                     op(roundedRectPath, circlePath, Path.Op.UNION)
                 }
-                if (intersectCount > 0)
+                if (intersectedOverlays.isNotEmpty())
                     canvas.clipPath(combinedPath)
                 else
                     canvas.clipPath(roundedRectPath)
 
                 drawable.draw(canvas)
             }
-            if (intersectCount > 0) {
+            if (intersectedOverlays.isNotEmpty()) {
                 val circleGradientStartColor = Color.parseColor("#9D51FF")
                 val circleGradientEndColor = Color.parseColor("#4EEAC5")
                 val circleGradient = LinearGradient(
@@ -229,8 +235,8 @@ class CustomIconOverlay(
 
             canvas.save()
             canvas.rotate(rotation, it.x.toFloat(), it.y.toFloat())
-
-            val intersectCountText = "+$intersectCount"
+            val simplifiedIntersectCount = min(intersectedOverlays.count(), 99)
+            val intersectCountText = "+$simplifiedIntersectCount"
             if (storyId == 0) {
                 val nameText = name
                 canvas.drawText(
@@ -239,13 +245,19 @@ class CustomIconOverlay(
                     (it.y - scaledHeight / 2 - 10).toFloat(),
                     textPaintBlack
                 )
-                val speedText = "${speed?.toInt()}m/s"
-                if (speed?.toInt() != 0)
-                    canvas.drawText(speedText, it.x.toFloat(), (it.y + scaledHeight / 2 + 65).toFloat(), textPaintBlack)
+                if (speed != null && speed!!.toInt() != 0) {
+                    val speedText = context.getString(R.string.speed_format, (speed!! * 3.6).toInt())
+                    canvas.drawText(
+                        speedText,
+                        it.x.toFloat(),
+                        (it.y + scaledHeight / 2 + 65).toFloat(),
+                        textPaintBlack
+                    )
+                }
             }
 
-            if (intersectCount != 0) {
-                val greaterThanTen = (intersectCount >= 10).toInt()
+            if (intersectedOverlays.isNotEmpty()) {
+                val greaterThanTen = (intersectedOverlays.count() >= 10).toInt()
                 val textPaintWhite = Paint().apply {
                     color = Color.WHITE
                     textSize =  32f - (6f * greaterThanTen)
@@ -313,6 +325,10 @@ class CustomIconOverlay(
     fun getStoryId(): Int {
         return storyId
     }
+    fun getIntersectedIds(): MutableList<Pair<Int, Int>> {
+        return intersectedOverlays
+    }
+
     fun updateDrawable(newDrawable: Drawable) {
         drawable = newDrawable
         mapView?.invalidate()

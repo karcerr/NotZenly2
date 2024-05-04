@@ -16,7 +16,9 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-    />
+    >
+
+    </org.osmdroid.views.MapView>
     <!-- Bottom Buttons overlay -->
     <LinearLayout
             android:id="@+id/topButtonsOverlay"
@@ -33,7 +35,6 @@
                 android:background="@drawable/map_button_2"
                 android:layout_marginHorizontal="20dp"
                 android:layout_marginVertical="16dp"
-                android:id="@+id/create_geo_story_button_frame"
         >
             <ImageButton
                     android:id="@+id/create_geo_story_button"
@@ -72,6 +73,154 @@
         </FrameLayout>
 
     </LinearLayout>
+    <!-- 2 Popping up menus  -->
+    <LinearLayout
+            android:id="@+id/overlay_on_clicked_menus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_margin="20dp"
+    >
+        <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/overlapped_icons_recyclerview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/geo_story_gradient"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+        />
+
+
+        <LinearLayout
+                android:id="@+id/friend_clicked_overlay"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:background="@drawable/geo_story_gradient"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginVertical="10dp"
+                android:baselineAligned="false">
+            <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="start"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent">
+                <TextView
+                        android:id="@+id/nickname_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/nickname"
+                        android:textColor="@color/white"
+                        android:textStyle="bold"
+                        android:autoSizeTextType="uniform"
+                        android:maxLines="1"
+                        android:textAppearance="?android:textAppearanceMedium"
+                        android:fontFamily="@font/my_font"
+                        android:textSize="35sp"
+                        android:gravity="center_vertical"
+                        android:layout_marginStart="10dp"
+                />
+                <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent">
+                    <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/distance_icon"
+                            android:importantForAccessibility="no"
+                            android:layout_marginStart="10dp"
+                            android:layout_marginEnd="4dp"
+                    />
+                    <TextView
+                            android:id="@+id/distance_text"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:textColor="@color/white"
+                            android:textStyle="bold"
+                            android:textAppearance="?android:textAppearanceMedium"
+                            android:fontFamily="@font/my_font"
+                            android:textSize="15sp"
+                            android:layout_gravity="center"
+                    />
+                    <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/speed_icon"
+                            android:importantForAccessibility="no"
+                            android:layout_marginEnd="4dp"
+                    />
+                    <TextView
+                            android:id="@+id/speed_text"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:textColor="@color/white"
+                            android:textStyle="bold"
+                            android:textAppearance="?android:textAppearanceMedium"
+                            android:fontFamily="@font/my_font"
+                            android:textSize="15sp"
+                            android:layout_gravity="center"
+                    />
+                </LinearLayout>
+            </LinearLayout>
+            <FrameLayout
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:background="@drawable/map_button_2"
+                    android:layout_marginHorizontal="20dp"
+                    android:layout_marginVertical="16dp"
+                    android:id="@+id/friend_profile_button"
+            >
+                <ImageButton
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/profile_button"
+                        android:background="@null"
+                        android:scaleType="fitCenter"
+                        android:layout_gravity="center"
+                        android:padding="8dp"
+                />
+            </FrameLayout>
+            <FrameLayout
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:background="@drawable/map_button_2"
+                    android:layout_marginEnd="20dp"
+                    android:layout_marginVertical="16dp"
+                    android:id="@+id/friend_message_button"
+            >
+                <ImageButton
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/messages_button"
+                        android:background="@null"
+                        android:scaleType="fitCenter"
+                        android:layout_gravity="center"
+                        android:padding="10dp"
+                />
+            </FrameLayout>
+
+        </LinearLayout>
+    </LinearLayout>
     <!-- Bottom Buttons overlay -->
     <LinearLayout
             android:id="@+id/buttonsOverlay"
@@ -79,6 +228,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center"
+            android:visibility="visible"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent">
@@ -172,11 +322,6 @@
             android:name="tagme.GeoStoryCreationFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:layout_constraintBottom_toTopOf="@id/buttonsOverlay"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/topButtonsOverlay" />
-
-
+    />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
