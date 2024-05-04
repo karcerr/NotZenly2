@@ -39,5 +39,12 @@
     <string name="compressing">Compressing...</string>
     <string name="add_friend">Add friend</string>
     <string name="tagme" translatable="false">TagMe!</string>
+    <string name="block">block</string>
+    <string name="In_friends">in friends</string>
+    <string name="check_on_map">check on map</string>
+    <string name="delete_from_friends">delete from friends</string>
+    <string name="In_friend_from">In friend from</string>
+    <string name="blocked">blocked</string>
+    <string name="unblock">unblock</string>
 
 </resources>
