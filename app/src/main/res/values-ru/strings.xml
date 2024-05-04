@@ -35,7 +35,11 @@
     <string name="photo_preview">Превью фото</string>
     <string name="compressing">Сжатие...</string>
     <string name="add_friend">Добавить друга</string>
-    <string name="speed_format">%d км/ч</string>
-    <string name="distance_format">%s км</string>
-    <string name="empty_login_password">Введите логин и пароль</string>
+    <string name="block">Заблокировать</string>
+    <string name="In_friends">В друзьях</string>
+    <string name="check_on_map">Показать на карте</string>
+    <string name="delete_from_friends">Удалить из друзей</string>
+    <string name="In_friend_from">"Вы подружились "</string>
+    <string name="blocked">Заблокирован</string>
+    <string name="unblock">"Разблокировать "</string>
 </resources>
