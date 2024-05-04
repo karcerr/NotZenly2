@@ -46,4 +46,9 @@
     <string name="distance_format">%s км</string>
     <string name="empty_login_password">Введите логин и пароль</string>
     <string name="conversation">Диалог</string>
+    <string name="notifications">Уведомления</string>
+    <string name="memory">Память</string>
+    <string name="language">Язык</string>
+    <string name="exit">Выйти</string>
+    <string name="settings">Настройки</string>
 </resources>
