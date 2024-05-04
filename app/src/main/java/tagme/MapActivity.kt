@@ -207,7 +207,6 @@ class MapActivity: AppCompatActivity() {
             toggleFragmentVisibility(conversationFragment)
         }
         createGeoStoryButton.setOnClickListener {
-            Log.d("Tagme_", "?????????")
             toggleFragmentVisibility(geoStoryCreation)
         }
 

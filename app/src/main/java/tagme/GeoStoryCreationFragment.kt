@@ -15,10 +15,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.palette.graphics.Palette
 import com.example.tagme.R
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.io.ByteArrayOutputStream
 
 class GeoStoryCreationFragment : Fragment() {
@@ -83,10 +80,12 @@ class GeoStoryCreationFragment : Fragment() {
                         )
                         val message = result?.getString("message")
                         if (message == "success") {
+                            requireActivity().onBackPressedDispatcher.onBackPressed()
+                            delay(500)
                             geoStoryPreview.setImageResource(R.drawable.photo_bg)
                             geoStoryPreviewIcon.visibility = View.VISIBLE
                             compressingStatus.visibility = View.GONE
-                            requireActivity().onBackPressedDispatcher.onBackPressed()
+                            Toast.makeText(requireActivity(), "Geo story was created", Toast.LENGTH_LONG).show()
                         } else {
                             Toast.makeText(requireActivity(), "Something went wrong", Toast.LENGTH_LONG).show()
                         }
