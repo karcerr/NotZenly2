@@ -36,6 +36,7 @@ class LogInActivity : AppCompatActivity() {
     private lateinit var loginBtn : Button
     private lateinit var registerBtn : Button
     private lateinit var loginLayout : LinearLayout
+    private lateinit var loadingLayout : LinearLayout
     private lateinit var enableGpsLayout : LinearLayout
     companion object{
         private const val REQUEST_PERMISSIONS_REQUEST_CODE = 1
@@ -44,6 +45,7 @@ class LogInActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.login_activity)
         loginLayout = findViewById(R.id.login_layout)
+        loadingLayout = findViewById(R.id.loading_layout)
         enableGpsLayout = findViewById(R.id.enable_gps_layout)
         usernameInput = findViewById(R.id.username_input)
         passwordInput = findViewById(R.id.password_input)
@@ -65,7 +67,14 @@ class LogInActivity : AppCompatActivity() {
                             hideLoginShowGpsOverlay()
                             isAuthorized = true
                         }
+                        else {
+                            loadingLayout.visibility = View.GONE
+                            loginLayout.visibility = View.VISIBLE
+                        }
                     }
+                } else {
+                    loadingLayout.visibility = View.GONE
+                    loginLayout.visibility = View.VISIBLE
                 }
             } else {
                 Log.d("Tagme_", "Failed to connect to the server")

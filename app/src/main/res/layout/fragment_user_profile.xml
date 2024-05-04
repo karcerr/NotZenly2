@@ -11,6 +11,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
         <ImageButton
+                android:id="@+id/back_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:src="@drawable/arrow_back"
@@ -19,7 +20,8 @@
                 android:layout_marginHorizontal="17dp"
                 android:layout_marginTop="17dp"
                 android:background="@color/transparent"
-                android:id="@+id/imageView2"/>
+
+        />
 
         <ImageButton
                 android:layout_width="wrap_content"
@@ -56,7 +58,9 @@
                 app:strokeColor="@color/white"
                 app:layout_constraintTop_toBottomOf="@+id/textView"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"/>
+                app:layout_constraintStart_toStartOf="parent"
+                android:scaleType="centerCrop"
+        />
         <TextView
                 android:id="@+id/user_name"
                 android:layout_width="wrap_content"
@@ -91,38 +95,41 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:visibility="gone">
-        <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:src="@drawable/separator_big"/>
-
-        <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="66dp"
-                android:orientation="horizontal">
-            <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:textSize="24sp"
-                    android:text="@string/add_friend"
-                    android:textColor="@color/white"
-                    android:layout_weight="1"
-                    android:textStyle="bold"
-                    android:layout_gravity="center"
-                    android:layout_marginStart="14dp"
-            />
             <ImageView
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:layout_gravity="center_vertical"
-                    android:src="@drawable/arrow_right"
-                    android:layout_marginEnd="25dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/separator_big"
+                    android:layout_marginHorizontal="10dp"
             />
-        </LinearLayout>
-        <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:src="@drawable/separator_big"/>
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="66dp"
+                    android:orientation="horizontal">
+                <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:textSize="24sp"
+                        android:text="@string/add_friend"
+                        android:textColor="@color/white"
+                        android:layout_weight="1"
+                        android:textStyle="bold"
+                        android:layout_gravity="center"
+                        android:layout_marginStart="14dp"
+                />
+                <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center_vertical"
+                        android:src="@drawable/arrow_right"
+                        android:layout_marginEnd="25dp"
+                />
+            </LinearLayout>
+            <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/separator_big"
+                    android:layout_marginHorizontal="10dp"
+            />
             <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="66dp"
@@ -149,7 +156,9 @@
             <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:src="@drawable/separator_big"/>
+                android:src="@drawable/separator_big"
+                android:layout_marginHorizontal="10dp"
+            />
         </LinearLayout>
         <LinearLayout
                 android:layout_width="match_parent"
@@ -159,7 +168,9 @@
         <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:src="@drawable/separator_big"/>
+                android:src="@drawable/separator_big"
+                android:layout_marginHorizontal="10dp"
+        />
         <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="66dp"
@@ -169,7 +180,7 @@
                     android:layout_height="wrap_content"
                     android:textSize="24sp"
                     android:layout_marginTop="16dp"
-                    android:text="@string/In_friends"
+                    android:text="@string/friends_since_format"
                     android:textColor="@color/green"
                     android:textStyle="bold"
                     android:layout_gravity="center_horizontal"
@@ -178,7 +189,9 @@
         <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:src="@drawable/separator_big"/>
+                android:src="@drawable/separator_big"
+                android:layout_marginHorizontal="10dp"
+        />
         <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="66dp"
@@ -187,7 +200,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:textSize="24sp"
-                    android:text="@string/send_a_message_button"
+                    android:text="@string/conversation"
                     android:textColor="@color/white"
                     android:layout_weight="1"
                     android:textStyle="bold"
@@ -205,7 +218,9 @@
         <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:src="@drawable/separator_big"/>
+                android:src="@drawable/separator_big"
+                android:layout_marginHorizontal="10dp"
+        />
         <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="66dp"
@@ -232,7 +247,9 @@
         <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:src="@drawable/separator_big"/>
+                android:src="@drawable/separator_big"
+                android:layout_marginHorizontal="10dp"
+        />
         <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="66dp"
@@ -241,7 +258,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:textSize="24sp"
-                    android:text="@string/delete_from_friends"
+                    android:text="@string/unfriend"
                     android:textColor="@color/white"
                     android:layout_weight="1"
                     android:textStyle="bold"
@@ -259,7 +276,9 @@
         <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:src="@drawable/separator_big"/>
+                android:src="@drawable/separator_big"
+                android:layout_marginHorizontal="10dp"
+        />
         <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="66dp"
@@ -286,12 +305,14 @@
         <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:src="@drawable/separator_big"/>
+                android:src="@drawable/separator_big"
+                android:layout_marginHorizontal="10dp"
+        />
             <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="66dp"
                     android:textSize="24sp"
-                    android:text="@string/In_friend_from"
+                    android:text="@string/friends_since_format"
                     android:textColor="@color/white"
                     android:textStyle="bold"
                     android:layout_gravity="center"
@@ -305,7 +326,9 @@
             <ImageView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:src="@drawable/separator_big"/>
+                    android:src="@drawable/separator_big"
+                    android:layout_marginHorizontal="10dp"
+            />
             <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="66dp"
@@ -324,7 +347,9 @@
             <ImageView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:src="@drawable/separator_big"/>
+                    android:src="@drawable/separator_big"
+                    android:layout_marginHorizontal="10dp"
+            />
             <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="66dp"
@@ -351,7 +376,9 @@
             <ImageView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:src="@drawable/separator_big"/>
+                    android:src="@drawable/separator_big"
+                    android:layout_marginHorizontal="10dp"
+            />
         </LinearLayout>
 </LinearLayout>
 

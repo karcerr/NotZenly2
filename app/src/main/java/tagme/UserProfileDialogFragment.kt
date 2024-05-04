@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.DialogFragment
@@ -32,8 +33,15 @@ class UserProfileDialogFragment : DialogFragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        val view = inflater.inflate(R.layout.fragment_user_profile, container, false)
+        val backButton = view.findViewById<ImageButton>(R.id.back_button)
         api = (requireActivity() as MapActivity).api
-        return inflater.inflate(R.layout.fragment_user_profile, container, false)
+
+
+        backButton.setOnClickListener {
+            dismiss()
+        }
+        return view
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

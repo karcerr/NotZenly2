@@ -19,7 +19,9 @@
             app:strokeWidth="2dp"
             android:padding="1dp"
             app:strokeColor="@color/white"
-            android:layout_margin="8dp"/>
+            android:layout_margin="8dp"
+            android:scaleType="centerCrop"
+    />
     <LinearLayout
             android:id="@+id/main_content"
             android:layout_width="0dp"

@@ -8,14 +8,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@drawable/background_for_user">
-
     <LinearLayout
             android:id="@+id/main_content"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
         <LinearLayout
-
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
@@ -64,6 +62,7 @@
                 app:strokeColor="@color/white"
                 android:layout_margin="8dp"
                 android:layout_gravity="center"
+                android:scaleType="centerCrop"
         />
         <TextView
                 android:id="@+id/nickname_text"

@@ -49,7 +49,9 @@
                     app:strokeWidth="2dp"
                     android:padding="1dp"
                     app:strokeColor="@color/white"
-                    android:layout_margin="8dp"/>
+                    android:layout_margin="8dp"
+                    android:scaleType="centerCrop"
+            />
         </LinearLayout>
         <FrameLayout
                 android:layout_width="match_parent"
