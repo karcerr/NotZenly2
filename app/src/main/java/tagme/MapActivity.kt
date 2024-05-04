@@ -49,12 +49,11 @@ import kotlin.coroutines.resume
 class MapActivity: AppCompatActivity() {
     private lateinit var map : MapView
     private lateinit var mapController: IMapController
-    private lateinit var centralizeButton: ImageButton
     private lateinit var centralizeButtonFrame: FrameLayout
-    private lateinit var profileButton: ImageButton
     private lateinit var profileButtonFrame: FrameLayout
-    private lateinit var messagesButton: ImageButton
     private lateinit var messagesButtonFrame: FrameLayout
+    private lateinit var clickedFriendProfileFrame: FrameLayout
+    private lateinit var clickedFriendMessageFrame: FrameLayout
     private lateinit var onCLickedOverlays: LinearLayout
     private lateinit var createGeoStoryButton: ImageButton
     private lateinit var profileFragment: ProfileFragment
@@ -93,23 +92,22 @@ class MapActivity: AppCompatActivity() {
         getInstance().load(this, getDefaultSharedPreferences(this))
         setContentView(R.layout.map_activity)
         map = findViewById(R.id.map)
-        centralizeButton = findViewById(R.id.center_button)
         centralizeButtonFrame = findViewById(R.id.center_button_frame)
-        profileButton = findViewById(R.id.profile_button)
         profileButtonFrame = findViewById(R.id.profile_button_frame)
-        messagesButton = findViewById(R.id.messages_button)
         messagesButtonFrame = findViewById(R.id.messages_button_frame)
         createGeoStoryButton = findViewById(R.id.create_geo_story_button)
         onCLickedOverlays = findViewById(R.id.overlay_on_clicked_menus)
         clickedFriendNicknameTextView = findViewById(R.id.nickname_text)
         clickedFriendDistanceTextView = findViewById(R.id.distance_text)
         clickedFriendSpeedTextView = findViewById(R.id.speed_text)
+        clickedFriendProfileFrame = findViewById(R.id.friend_profile_frame)
+        clickedFriendMessageFrame = findViewById(R.id.personal_message_frame)
         // Initializing and hiding fragments
         fragmentManager = supportFragmentManager
         conversationFragment = fragmentManager.findFragmentById(R.id.conversations_fragment) as ConversationsFragment
         profileFragment = fragmentManager.findFragmentById(R.id.profile_fragment) as ProfileFragment
         geoStoryCreation = fragmentManager.findFragmentById(R.id.geo_story_creation_fragment) as GeoStoryCreationFragment
-        overlappedIconsAdapter = OverlappedIconsAdapter(this, mutableListOf(), api, this)
+        overlappedIconsAdapter = OverlappedIconsAdapter(this, mutableListOf(), api, fragmentManager)
         recyclerView = findViewById(R.id.overlapped_icons_recyclerview)
         recyclerView.adapter = overlappedIconsAdapter
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
@@ -194,10 +192,10 @@ class MapActivity: AppCompatActivity() {
             }
         }
 
-        centralizeButton.setOnClickListener{
+        centralizeButtonFrame.setOnClickListener{
             customOverlaySelf?.let { centralizeMapAnimated(it.getLocation(), api.myUserId, isCenterTargetFriend = true, withZoom = true, mutableListOf()) }
         }
-        profileButton.setOnClickListener {
+        profileButtonFrame.setOnClickListener {
             coroutineScope.launch {
                 api.getFriendRequestsFromWS()
                 api.getFriendsFromWS()
@@ -208,7 +206,7 @@ class MapActivity: AppCompatActivity() {
             }
             toggleFragmentVisibility(profileFragment)
         }
-        messagesButton.setOnClickListener {
+        messagesButtonFrame.setOnClickListener {
             coroutineScope.launch {
                 api.getConversationsFromWS()
                 val updatedConversations = api.getConversationsData()
@@ -342,10 +340,24 @@ class MapActivity: AppCompatActivity() {
                         val distanceInKm = String.format("%.1f", results[0] / 1000)
                         clickedFriendDistanceTextView.text = getString(R.string.distance_format, distanceInKm)
                     }
+                    clickedFriendProfileFrame.setOnClickListener {
+                        val userProfileDialog = UserProfileDialogFragment.newInstance(clickedFriend.userData.userId)
+                        userProfileDialog.show(fragmentManager, "userProfileDialog")
+                    }
+                    clickedFriendMessageFrame.setOnClickListener {
+                        val conversation = api.getConversationsData().find {it.userData.userId == clickedFriend.userData.userId}
+                        if (conversation == null) return@setOnClickListener
+                        val conversationFragment = ConversationFragment.newInstance(conversation.conversationID, conversation.userData.nickname)
+                        fragmentManager.beginTransaction()
+                            .replace(R.id.conversations_fragment, conversationFragment)
+                            .addToBackStack(null)
+                            .commit()
+                    }
                 }
             }
-
-            overlappedIconsAdapter.updateData(intersectedOverlays)
+            if (intersectedOverlays != overlappedIconsAdapter.getItemList()) {
+                overlappedIconsAdapter.updateData(intersectedOverlays)
+            }
         }
     }
 
@@ -381,7 +393,17 @@ class MapActivity: AppCompatActivity() {
         }
         animate.duration = 500
         animate.fillAfter = true
+        if (!hide) {
+            view.visibility = View.VISIBLE
+            view.isClickable = true
+        }
         view.startAnimation(animate)
+        handler.postDelayed({
+            if (hide) {
+                view.visibility = View.INVISIBLE
+                view.isClickable = false
+            }
+        }, animate.duration)
     }
 
 
@@ -552,11 +574,12 @@ class MapActivity: AppCompatActivity() {
         coroutineScope.cancel()
     }
 }
+
 class OverlappedIconsAdapter(
     private val context: Context,
     private var itemList: MutableList<Pair<Int, Int>>,
     private val api: API,
-    private val parentActivity: AppCompatActivity
+    private val fragmentManager: FragmentManager
 ) : RecyclerView.Adapter<OverlappedIconsAdapter.OverlappedIconViewHolder>() {
     inner class OverlappedIconViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val pictureImageView: ImageView = itemView.findViewById(R.id.overlapped_picture)
@@ -590,11 +613,23 @@ class OverlappedIconsAdapter(
             }
         }
         holder.pictureImageView.setOnClickListener {
-            //TODO
+            if (item.first == 0) {
+                //show geo story
+                //TODO
+            } else {
+                //show user profile
+                if (item.first != api.myUserId) {
+                    val userProfileDialog = UserProfileDialogFragment.newInstance(item.first)
+                    userProfileDialog.show(fragmentManager, "userProfileDialog")
+                }
+            }
             Log.d("Tagme_overlapped", "$itemList, $item")
         }
-    }
 
+    }
+    fun getItemList(): MutableList<Pair<Int, Int>>{
+        return itemList
+    }
     override fun getItemCount(): Int {
         return itemList.size
     }
