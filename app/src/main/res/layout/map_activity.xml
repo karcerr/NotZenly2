@@ -17,12 +17,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
     >
-        <androidx.fragment.app.FragmentContainerView
-                android:id="@+id/geo_story_creation_fragment"
-                android:name="tagme.GeoStoryCreationFragment"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-        />
+
     </org.osmdroid.views.MapView>
     <!-- Bottom Buttons overlay -->
     <LinearLayout
@@ -40,9 +35,9 @@
                 android:background="@drawable/map_button_2"
                 android:layout_marginHorizontal="20dp"
                 android:layout_marginVertical="16dp"
-                android:id="@+id/create_geo_story_button_frame"
         >
             <ImageButton
+                    android:id="@+id/create_geo_story_button"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:src="@drawable/geo_story_icon"
@@ -327,6 +322,11 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/topButtonsOverlay" />
     <!-- Geo Story Creation Fragment Overlay -->
-
+    <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/geo_story_creation_fragment"
+            android:name="tagme.GeoStoryCreationFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+    />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

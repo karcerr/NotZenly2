@@ -2,6 +2,7 @@ package tagme
 import android.content.Context
 import android.graphics.*
 import android.graphics.drawable.Drawable
+import android.util.Log
 import android.view.MotionEvent
 import androidx.core.content.res.ResourcesCompat
 import com.example.tagme.R
@@ -24,7 +25,7 @@ class CustomIconOverlay(
     private val fontResId: Int,
     private val clickListener: ((CustomIconOverlay) -> Unit)?
 ) : Overlay(context) {
-    private var intersectCount = 0
+    private var intersectedOverlays: MutableList<Pair<Int, Int>> = mutableListOf()
     private var visible = true
     private var closestVisibleOverlay : CustomIconOverlay? = null
 
@@ -55,6 +56,7 @@ class CustomIconOverlay(
             val iconRadius = (drawable.intrinsicWidth * overlayScale / 2)
 
             if (distance <= iconRadius) {
+                Log.d("Tagme_icons", intersectedOverlays.toString())
                 clickListener?.invoke(this)
                 return true
             }
@@ -94,12 +96,12 @@ class CustomIconOverlay(
 
             visible = !intersected
             if (closestVisibleOverlay != null) {
-                closestVisibleOverlay!!.intersectCount --
+                closestVisibleOverlay!!.intersectedOverlays.remove(userId to storyId)
                 closestVisibleOverlay = null
             }
             if (intersected) {
                 closestVisibleOverlay = closestVisibleOverlayTemp
-                closestVisibleOverlay!!.intersectCount ++
+                closestVisibleOverlay!!.intersectedOverlays.add(userId to storyId)
             }
         }
 
@@ -163,7 +165,7 @@ class CustomIconOverlay(
                 val combinedPath = Path().apply {
                     op(trianglePath, circlePath, Path.Op.UNION)
                 }
-                if (intersectCount > 0)
+                if (intersectedOverlays.isNotEmpty())
                     combinedPath.apply {
                         op(this, circleIntersectPath, Path.Op.UNION)
                     }
@@ -199,14 +201,14 @@ class CustomIconOverlay(
                 val combinedPath = Path().apply {
                     op(roundedRectPath, circlePath, Path.Op.UNION)
                 }
-                if (intersectCount > 0)
+                if (intersectedOverlays.isNotEmpty())
                     canvas.clipPath(combinedPath)
                 else
                     canvas.clipPath(roundedRectPath)
 
                 drawable.draw(canvas)
             }
-            if (intersectCount > 0) {
+            if (intersectedOverlays.isNotEmpty()) {
                 val circleGradientStartColor = Color.parseColor("#9D51FF")
                 val circleGradientEndColor = Color.parseColor("#4EEAC5")
                 val circleGradient = LinearGradient(
@@ -233,7 +235,7 @@ class CustomIconOverlay(
 
             canvas.save()
             canvas.rotate(rotation, it.x.toFloat(), it.y.toFloat())
-            val simplifiedIntersectCount = min(intersectCount, 99)
+            val simplifiedIntersectCount = min(intersectedOverlays.count(), 99)
             val intersectCountText = "+$simplifiedIntersectCount"
             if (storyId == 0) {
                 val nameText = name
@@ -254,8 +256,8 @@ class CustomIconOverlay(
                 }
             }
 
-            if (intersectCount != 0) {
-                val greaterThanTen = (intersectCount >= 10).toInt()
+            if (intersectedOverlays.isNotEmpty()) {
+                val greaterThanTen = (intersectedOverlays.count() >= 10).toInt()
                 val textPaintWhite = Paint().apply {
                     color = Color.WHITE
                     textSize =  32f - (6f * greaterThanTen)

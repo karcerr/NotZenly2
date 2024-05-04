@@ -53,7 +53,7 @@ class MapActivity: AppCompatActivity() {
     private lateinit var messagesButton: ImageButton
     private lateinit var messagesButtonFrame: FrameLayout
     private lateinit var onCLickedOverlays: LinearLayout
-    private lateinit var createGeoStoryButtonFrame: FrameLayout
+    private lateinit var createGeoStoryButton: ImageButton
     private lateinit var profileFragment: ProfileFragment
     private lateinit var conversationFragment: ConversationsFragment
     private lateinit var geoStoryCreation: GeoStoryCreationFragment
@@ -94,7 +94,7 @@ class MapActivity: AppCompatActivity() {
         profileButtonFrame = findViewById(R.id.profile_button_frame)
         messagesButton = findViewById(R.id.messages_button)
         messagesButtonFrame = findViewById(R.id.messages_button_frame)
-        createGeoStoryButtonFrame = findViewById(R.id.create_geo_story_button_frame)
+        createGeoStoryButton = findViewById(R.id.create_geo_story_button)
         onCLickedOverlays = findViewById(R.id.overlay_on_clicked_menus)
         clickedFriendNicknameTextView = findViewById(R.id.nickname_text)
         clickedFriendDistanceTextView = findViewById(R.id.distance_text)
@@ -206,7 +206,8 @@ class MapActivity: AppCompatActivity() {
             }
             toggleFragmentVisibility(conversationFragment)
         }
-        createGeoStoryButtonFrame.setOnClickListener {
+        createGeoStoryButton.setOnClickListener {
+            Log.d("Tagme_", "?????????")
             toggleFragmentVisibility(geoStoryCreation)
         }
 
