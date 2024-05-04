@@ -45,5 +45,10 @@
     <string name="speed_format">%d km/h</string>
     <string name="distance_format">%s km</string>
     <string name="empty_login_password">Enter login and password</string>
+    <string name="settings">settings</string>
+    <string name="notifications">notifications</string>
+    <string name="memory">memory</string>
+    <string name="language">language</string>
+    <string name="exit">exit</string>
 
 </resources>
