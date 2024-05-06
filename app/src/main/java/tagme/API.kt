@@ -357,9 +357,7 @@ class API private constructor(context: Context){
             val pictureDataString = picObject.getString("picture")
             val existingPicture = picsData.find { it.pictureId == pictureId }
             if (existingPicture == null) {
-                Log.d("Tagme_WS_Pic", "Before decoding: $pictureDataString")
                 val pictureData: ByteArray = Base64.getDecoder().decode(pictureDataString)
-                Log.d("Tagme_WS_Pic", "After decoding: $pictureData")
                 val imagePath = saveImageToCache(context, pictureId.toString(), pictureData)
                 val newPictureData = PictureData(pictureId, imagePath)
                 val updatedPicturesData = picsData.toMutableList().apply {

@@ -50,9 +50,11 @@
     <string name="distance_format">%s km</string>
     <string name="empty_login_password">Enter login and password</string>
     <string name="conversation">Conversation</string>
+    <string name="You">You</string>
     <string name="notifications">Notifications</string>
     <string name="memory">Memory</string>
     <string name="language">Language</string>
     <string name="exit">Exit</string>
     <string name="settings">Settings</string>
+    <string name="geo_story_by_format">GeoStory by %s</string>
 </resources>

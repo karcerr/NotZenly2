@@ -51,4 +51,6 @@
     <string name="language">Язык</string>
     <string name="exit">Выйти</string>
     <string name="settings">Настройки</string>
+    <string name="You">Это вы!</string>
+    <string name="geo_story_by_format">Гео История от %s</string>
 </resources>

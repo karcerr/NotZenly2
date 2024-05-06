@@ -54,6 +54,7 @@ class MapActivity: AppCompatActivity() {
     private lateinit var messagesButtonFrame: FrameLayout
     private lateinit var clickedFriendProfileFrame: FrameLayout
     private lateinit var clickedFriendMessageFrame: FrameLayout
+    private lateinit var clickedIconDistanceAndSpeedLayout: LinearLayout
     private lateinit var onCLickedOverlays: LinearLayout
     private lateinit var createGeoStoryButton: ImageButton
     private lateinit var profileFragment: ProfileFragment
@@ -102,6 +103,7 @@ class MapActivity: AppCompatActivity() {
         clickedFriendSpeedTextView = findViewById(R.id.speed_text)
         clickedFriendProfileFrame = findViewById(R.id.friend_profile_frame)
         clickedFriendMessageFrame = findViewById(R.id.personal_message_frame)
+        clickedIconDistanceAndSpeedLayout = findViewById(R.id.distance_and_speed_layout)
         // Initializing and hiding fragments
         fragmentManager = supportFragmentManager
         conversationFragment = fragmentManager.findFragmentById(R.id.conversations_fragment) as ConversationsFragment
@@ -149,7 +151,7 @@ class MapActivity: AppCompatActivity() {
                             customOverlaySelf?.setSpeed(location.speed)
                         }
                         if (centeredTargetId == api.myUserId && isCenteredUser) {
-                            customOverlaySelf?.let { centralizeMapAnimated(it.getLocation(), centeredTargetId, isCenterTargetFriend = true, withZoom = true, mutableListOf()) }
+                            customOverlaySelf?.let { centralizeMapAnimated(it.getLocation(), centeredTargetId, isCenterTargetUser = true, withZoom = true, mutableListOf()) }
                         }
                     }
                 }
@@ -193,7 +195,7 @@ class MapActivity: AppCompatActivity() {
         }
 
         centralizeButtonFrame.setOnClickListener{
-            customOverlaySelf?.let { centralizeMapAnimated(it.getLocation(), api.myUserId, isCenterTargetFriend = true, withZoom = true, mutableListOf()) }
+            customOverlaySelf?.let { centralizeMapAnimated(it.getLocation(), api.myUserId, isCenterTargetUser = true, withZoom = true, mutableListOf()) }
         }
         profileButtonFrame.setOnClickListener {
             coroutineScope.launch {
@@ -285,14 +287,14 @@ class MapActivity: AppCompatActivity() {
     fun centralizeMapAnimated(
         location: GeoPoint,
         targetId: Int,
-        isCenterTargetFriend: Boolean,
+        isCenterTargetUser: Boolean,
         withZoom: Boolean,
         intersectedOverlays: MutableList<Pair<Int, Int>>
     ){
         Log.d("Tagme", "centralizing on $targetId")
         if (!isAnimating) {
             isAnimating = true
-            setCenteredTrue(targetId, isCenterTargetFriend, intersectedOverlays)
+            setCenteredTrue(targetId, isCenterTargetUser, intersectedOverlays)
             val zoomLevel = if(withZoom) scaleFactor else map.zoomLevelDouble
             mapController.animateTo(location, zoomLevel, 500)
             handler.postDelayed({
@@ -313,18 +315,19 @@ class MapActivity: AppCompatActivity() {
     private fun setCenteredTrue(targetId: Int, isCenteredOnUser: Boolean, intersectedOverlays: MutableList<Pair<Int, Int>>) {
         centeredTargetId = targetId
         isCenteredUser = isCenteredOnUser
-        if (targetId != api.myUserId) {
-            if (!isUiHidden) {
-                isUiHidden = true
-                slideView(profileButtonFrame, true)
-                slideView(messagesButtonFrame, true)
-                slideView(centralizeButtonFrame, true)
-                onCLickedOverlays.visibility = View.VISIBLE
-                slideView(onCLickedOverlays, false)
-            }
-            if (isCenteredOnUser) {
+        if (!isUiHidden) {
+            isUiHidden = true
+            slideView(profileButtonFrame, true)
+            slideView(messagesButtonFrame, true)
+            slideView(centralizeButtonFrame, true)
+            onCLickedOverlays.visibility = View.VISIBLE
+            slideView(onCLickedOverlays, false)
+        }
+        if (isCenteredOnUser) {
+            if (targetId != api.myUserId) {
                 val clickedFriend = api.getFriendsData().find{it.userData.userId == targetId}
                 if (clickedFriend != null) {
+                    clickedIconDistanceAndSpeedLayout.visibility = View.VISIBLE
                     clickedFriendNicknameTextView.text = clickedFriend.userData.nickname
                     if (clickedFriend.location != null) {
                         val speed =( clickedFriend.location!!.speed * 3.6).toInt()
@@ -340,10 +343,12 @@ class MapActivity: AppCompatActivity() {
                         val distanceInKm = String.format("%.1f", results[0] / 1000)
                         clickedFriendDistanceTextView.text = getString(R.string.distance_format, distanceInKm)
                     }
+                    clickedFriendProfileFrame.visibility = View.VISIBLE
                     clickedFriendProfileFrame.setOnClickListener {
                         val userProfileDialog = UserProfileDialogFragment.newInstance(clickedFriend.userData.userId)
                         userProfileDialog.show(fragmentManager, "userProfileDialog")
                     }
+                    clickedFriendMessageFrame.visibility = View.VISIBLE
                     clickedFriendMessageFrame.setOnClickListener {
                         val conversation = api.getConversationsData().find {it.userData.userId == clickedFriend.userData.userId}
                         if (conversation == null) return@setOnClickListener
@@ -354,10 +359,20 @@ class MapActivity: AppCompatActivity() {
                             .commit()
                     }
                 }
+            } else {
+                clickedFriendMessageFrame.visibility = View.GONE
+                clickedFriendProfileFrame.visibility = View.GONE
+                clickedIconDistanceAndSpeedLayout.visibility = View.GONE
+                clickedFriendNicknameTextView.text = getString(R.string.You)
             }
-            if (intersectedOverlays != overlappedIconsAdapter.getItemList()) {
-                overlappedIconsAdapter.updateData(intersectedOverlays)
-            }
+        } else {
+            clickedFriendMessageFrame.visibility = View.GONE
+            clickedFriendProfileFrame.visibility = View.GONE
+            clickedIconDistanceAndSpeedLayout.visibility = View.GONE
+            clickedFriendNicknameTextView.text = getString(R.string.geo_story_by_format, "?")
+        }
+        if (intersectedOverlays != overlappedIconsAdapter.getItemList()) {
+            overlappedIconsAdapter.updateData(intersectedOverlays)
         }
     }
 
@@ -490,7 +505,7 @@ class MapActivity: AppCompatActivity() {
                     overlay.setLocation(GeoPoint(friend.location!!.latitude, friend.location!!.longitude))
                     overlay.setSpeed(friend.location!!.speed)
                     if (centeredTargetId == overlay.getUserId() && isCenteredUser) {
-                        centralizeMapAnimated(overlay.getLocation(), friend.userData.userId, isCenterTargetFriend = true, withZoom = false, overlay.getIntersectedIds())
+                        centralizeMapAnimated(overlay.getLocation(), friend.userData.userId, isCenterTargetUser = true, withZoom = false, overlay.getIntersectedIds())
                     }
                 } else {
                     val friendLocation = GeoPoint(friend.location!!.latitude, friend.location!!.longitude)
@@ -504,7 +519,7 @@ class MapActivity: AppCompatActivity() {
                         0,
                         R.font.my_font,
                         clickListener = { customIconOverlay ->
-                            centralizeMapAnimated(customIconOverlay.getLocation(), friend.userData.userId, isCenterTargetFriend = true, withZoom = false, customIconOverlay.getIntersectedIds())
+                            centralizeMapAnimated(customIconOverlay.getLocation(), friend.userData.userId, isCenterTargetUser = true, withZoom = false, customIconOverlay.getIntersectedIds())
                         }
                     ).apply {
                         mapView = map
@@ -548,7 +563,7 @@ class MapActivity: AppCompatActivity() {
                     geoStory.geoStoryId,
                     R.font.my_font,
                     clickListener = { customIconOverlay ->
-                        centralizeMapAnimated(customIconOverlay.getLocation(), geoStory.geoStoryId, isCenterTargetFriend = false, withZoom = false, customIconOverlay.getIntersectedIds())
+                        centralizeMapAnimated(customIconOverlay.getLocation(), geoStory.geoStoryId, isCenterTargetUser = false, withZoom = false, customIconOverlay.getIntersectedIds())
                     }
                 ).apply {
                     mapView = map
