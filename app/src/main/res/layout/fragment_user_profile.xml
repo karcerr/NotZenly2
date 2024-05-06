@@ -180,7 +180,7 @@
                     android:layout_height="wrap_content"
                     android:textSize="24sp"
                     android:layout_marginTop="16dp"
-                    android:text="@string/friends_since_format"
+                    android:text="@string/friends"
                     android:textColor="@color/green"
                     android:textStyle="bold"
                     android:layout_gravity="center_horizontal"
