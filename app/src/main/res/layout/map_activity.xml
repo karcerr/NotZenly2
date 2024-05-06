@@ -108,7 +108,9 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 android:layout_marginVertical="10dp"
-                android:baselineAligned="false">
+                android:baselineAligned="false"
+                android:paddingVertical="16dp"
+        >
             <LinearLayout
                     android:layout_width="0dp"
                     android:layout_weight="1"
@@ -134,6 +136,7 @@
                         android:layout_marginStart="10dp"
                 />
                 <LinearLayout
+                        android:id="@+id/distance_and_speed_layout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
@@ -188,7 +191,6 @@
                     android:layout_height="60dp"
                     android:background="@drawable/map_button_2"
                     android:layout_marginHorizontal="20dp"
-                    android:layout_marginVertical="16dp"
                     android:clickable="true"
             >
                 <ImageView
@@ -207,7 +209,6 @@
                     android:layout_height="60dp"
                     android:background="@drawable/map_button_2"
                     android:layout_marginEnd="20dp"
-                    android:layout_marginVertical="16dp"
                     android:clickable="true"
             >
                 <ImageView
