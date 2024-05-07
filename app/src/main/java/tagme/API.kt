@@ -7,6 +7,7 @@ import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import org.json.JSONObject
@@ -18,6 +19,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Semaphore
+import java.util.concurrent.atomic.AtomicInteger
 
 class API private constructor(context: Context){
     private val sharedPreferences: SharedPreferences = context.getSharedPreferences("API_PREFS", Context.MODE_PRIVATE)
@@ -30,7 +32,8 @@ class API private constructor(context: Context){
     var lastInsertedPicId = 0
     private val MAX_CONCURRENT_REQUESTS = 6
     private val semaphore = Semaphore(MAX_CONCURRENT_REQUESTS)
-
+    private val requestIdCounter = AtomicInteger(0)
+    private val requestMap = mutableMapOf<Int, CompletableFuture<JSONObject?>>()
     var myToken: String?
         get() = sharedPreferences.getString("TOKEN", null)
         set(value) {
@@ -92,6 +95,7 @@ class API private constructor(context: Context){
                 override fun onMessage(webSocket: WebSocket, text: String) {
                     Log.d("Tagme_WS", "onMessage trigger: $text")
                     val jsonObject = JSONObject(text)
+                    val requestId = jsonObject.getInt("request_id")
                     answer = jsonObject
                     when (answer.getString("action")) {
                         "login", "register" -> when (answer.getString("status")) {
@@ -127,10 +131,8 @@ class API private constructor(context: Context){
                             "success" -> parseGeoStoriesNearby(answer.getString("message"))
                         }
                     }
-                    answerReceived = true
-                    synchronized(this@API) {
-                        (this@API as Object).notify()
-                    }
+                    val futureAnswer = requestMap[requestId]
+                    futureAnswer?.complete(answer)
                 }
             }
 
@@ -318,22 +320,6 @@ class API private constructor(context: Context){
         return sendRequestToWS(requestData)
     }
 
-    private suspend fun waitForServerAnswer(): JSONObject? {
-        return synchronized(this) {
-            val timeoutDuration = 15000
-            val startTime = System.currentTimeMillis()
-
-            while (!answerReceived) {
-                val elapsedTime = System.currentTimeMillis() - startTime
-                if (elapsedTime >= timeoutDuration) {
-                    return@waitForServerAnswer null
-                }
-                (this as Object).wait(100)
-            }
-            answerReceived = false
-            answer
-        }
-    }
     private fun parseFriendsData(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
 
@@ -716,15 +702,16 @@ class API private constructor(context: Context){
         return file.absolutePath
     }
     private suspend fun sendRequestToWS(request: JSONObject): JSONObject? {
-        return withContext(Dispatchers.IO) {
-            try {
-                semaphore.acquire()
-                webSocket?.send(request.toString())
-                waitForServerAnswer()
-            } finally {
-                semaphore.release()
-            }
-        }
+        val requestId = generateRequestId()
+        val future = CompletableFuture<JSONObject?>()
+
+        requestMap[requestId] = future
+
+        request.put("request_id", requestId)
+
+        webSocket?.send(request.toString())
+
+        return future.await()
     }
     private fun parseAndConvertTimestamp(timestampString: String): Timestamp {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault())
@@ -740,5 +727,8 @@ class API private constructor(context: Context){
         }else {
             throw IllegalArgumentException("Failed to parse timestamp: $timestampString")
         }
+    }
+    private fun generateRequestId(): Int {
+        return requestIdCounter.getAndIncrement()
     }
 }
