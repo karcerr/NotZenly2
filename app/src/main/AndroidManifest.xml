@@ -24,7 +24,9 @@
             tools:replace="android:allowBackup">
         <activity
                 android:name="tagme.LogInActivity"
-                android:exported="true">
+                android:exported="true"
+                android:screenOrientation="nosensor"
+        >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -34,7 +36,9 @@
         <!-- Add your MapActivity here -->
         <activity
                 android:name="tagme.MapActivity"
-                android:exported="true">
+                android:exported="true"
+                android:screenOrientation="nosensor"
+        >
             <intent-filter>
                 <action android:name="tagme.MapActivity"/>
                 <category android:name="android.intent.category.DEFAULT"/>
