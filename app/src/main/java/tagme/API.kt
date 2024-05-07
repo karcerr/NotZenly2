@@ -18,7 +18,6 @@ import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicInteger
 
 class API private constructor(context: Context){
@@ -30,8 +29,6 @@ class API private constructor(context: Context){
     private var answer = JSONObject()
     private var lastInsertedPictureDataString = ""
     var lastInsertedPicId = 0
-    private val MAX_CONCURRENT_REQUESTS = 6
-    private val semaphore = Semaphore(MAX_CONCURRENT_REQUESTS)
     private val requestIdCounter = AtomicInteger(0)
     private val requestMap = mutableMapOf<Int, CompletableFuture<JSONObject?>>()
     var myToken: String?

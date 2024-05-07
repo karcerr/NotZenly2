@@ -49,6 +49,8 @@ class MapActivity: AppCompatActivity() {
     private lateinit var centralizeButtonFrame: FrameLayout
     private lateinit var profileButtonFrame: FrameLayout
     private lateinit var messagesButtonFrame: FrameLayout
+    lateinit var unreadMessageIcon: ImageView
+    lateinit var newRequestIcon: ImageView
     private lateinit var clickedFriendProfileFrame: FrameLayout
     private lateinit var clickedFriendMessageFrame: FrameLayout
     private lateinit var clickedIconDistanceAndSpeedLayout: LinearLayout
@@ -93,6 +95,8 @@ class MapActivity: AppCompatActivity() {
         centralizeButtonFrame = findViewById(R.id.center_button_frame)
         profileButtonFrame = findViewById(R.id.profile_button_frame)
         messagesButtonFrame = findViewById(R.id.messages_button_frame)
+        unreadMessageIcon = findViewById(R.id.unread_message_icon)
+        newRequestIcon = findViewById(R.id.new_request_icon)
         createGeoStoryButton = findViewById(R.id.create_geo_story_button)
         onCLickedOverlays = findViewById(R.id.overlay_on_clicked_menus)
         clickedFriendNicknameTextView = findViewById(R.id.nickname_text)

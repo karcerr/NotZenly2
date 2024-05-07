@@ -12,7 +12,6 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DiffUtil
@@ -39,14 +38,15 @@ class ConversationsFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_conversations, container, false)
         val backButton: ImageButton = view.findViewById(R.id.back_arrow_button)
-        api = (requireActivity() as MapActivity).api
+        val mapActivity = (requireActivity() as MapActivity)
+        api = mapActivity.api
         recyclerView = view.findViewById(R.id.conversations_recycler_view)
         val conversationListSorted = api.getConversationsData().map { it.copy()
         }.sortedByDescending { it.lastMessage?.timestamp }.toMutableList()
         conversationsAdapter = ConversationsAdapter(
             requireContext(),
             conversationListSorted, api,
-            requireActivity() as AppCompatActivity
+            mapActivity
         )
 
         recyclerView.adapter = conversationsAdapter
@@ -93,7 +93,7 @@ class ConversationsAdapter(
     private val context: Context,
     private var conversationList: MutableList<API.ConversationData>,
     private val api: API,
-    private val parentActivity: AppCompatActivity
+    private val parentActivity: MapActivity
 ) : RecyclerView.Adapter<ConversationsAdapter.ConversationViewHolder>() {
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
     inner class ConversationViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -131,7 +131,11 @@ class ConversationsAdapter(
         conversationList = newConversationListSorted.map {it.copy()
         }.toMutableList()
         conversationList.sortByDescending { it.lastMessage?.timestamp }
-
+        val hasUnreadMessages = conversationList.any { conversation ->
+            val lastMessage = conversation.lastMessage
+            lastMessage != null && !lastMessage.read && lastMessage.authorId != api.myUserId
+        }
+        parentActivity.unreadMessageIcon.visibility = if (hasUnreadMessages) View.VISIBLE else { View.INVISIBLE }
     }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ConversationViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.conversation_item, parent, false)
