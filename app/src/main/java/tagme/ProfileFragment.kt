@@ -7,6 +7,8 @@ import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -18,7 +20,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tagme.R
@@ -38,7 +39,11 @@ class ProfileFragment : Fragment() {
     private lateinit var imagePickerLauncher: ActivityResultLauncher<Intent>
     private lateinit var api: API
     private lateinit var parentActivity: MapActivity
+    private var friendRequestUpdateRunnable: Runnable? = null
+    private var friendRequestUpdateHandler: Handler? = null
+    private val friendRequestInterval = 2000L
     lateinit var nestedScrollView: NestedScrollView
+    private lateinit var friendRequestsRecyclerView: RecyclerView
     companion object{
         val MAX_SIZE_BEFORE_ENCODING = 100 * 1024
     }
@@ -84,19 +89,18 @@ class ProfileFragment : Fragment() {
             requireContext(),
             api.getFriendsData(),
             api,
-            parentActivity.supportFragmentManager,
             parentActivity
         )
         friendRecyclerView.adapter = friendAdapter
         friendRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
 
-        val friendRequestsRecyclerView: RecyclerView = view.findViewById(R.id.friend_requests_recycler_view)
+        friendRequestsRecyclerView = view.findViewById(R.id.friend_requests_recycler_view)
         friendRequestAdapter = FriendRequestAdapter(
             requireContext(),
             api.getFriendRequestData(),
             api,
             friendAdapter,
-            parentActivity.supportFragmentManager)
+            parentActivity)
         friendRequestsRecyclerView.adapter = friendRequestAdapter
         friendRequestsRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
         addFriendButton.setOnClickListener {
@@ -158,6 +162,24 @@ class ProfileFragment : Fragment() {
             parentActivity.onBackPressedDispatcher.onBackPressed()
         }
         return view
+    }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        friendRequestUpdateRunnable = Runnable {
+            CoroutineScope(Dispatchers.Main).launch {
+                api.getFriendRequestsFromWS()
+                val updatedFriendRequests = api.getFriendRequestData()
+                (friendRequestsRecyclerView.adapter as? FriendRequestAdapter)?.updateData(updatedFriendRequests)
+                friendRequestUpdateHandler?.postDelayed(friendRequestUpdateRunnable!!, friendRequestInterval)
+            }
+        }
+        startFriendRequestsUpdates()
+    }
+    private fun startFriendRequestsUpdates() {
+        friendRequestUpdateHandler = Handler(Looper.getMainLooper())
+        friendRequestUpdateRunnable?.let { friendRequestUpdateHandler?.postDelayed(it,
+            friendRequestInterval
+        ) }
     }
     private fun pickImageGallery() {
         val intent = Intent(Intent.ACTION_PICK)
@@ -247,7 +269,6 @@ class FriendAdapter(
     private val context: Context,
     private var friendList: MutableList<API.FriendData>,
     private val api: API,
-    private val childFragmentManager: FragmentManager,
     private val mapActivity: MapActivity,
 ) : RecyclerView.Adapter<FriendAdapter.FriendViewHolder>() {
     inner class FriendViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -285,7 +306,7 @@ class FriendAdapter(
 
         holder.friendLayout.setOnClickListener {
             val userProfileDialog = UserProfileDialogFragment.newInstance(friend.userData.userId)
-            userProfileDialog.show(childFragmentManager, "userProfileDialog")
+            userProfileDialog.show(mapActivity.supportFragmentManager, "userProfileDialog")
         }
         holder.locateButton.setOnClickListener {
             val friendLocation = GeoPoint(friend.location!!.latitude, friend.location!!.longitude)
@@ -314,7 +335,7 @@ class FriendRequestAdapter(
     private var requestList: MutableList<API.FriendRequestData>,
     private val api: API,
     private val friendAdapter: FriendAdapter,
-    private val childFragmentManager: FragmentManager
+    private val mapActivity: MapActivity
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {    inner class IncomingFriendRequestViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTextView: TextView = itemView.findViewById(R.id.friend_name)
         val pictureImageView: ImageView = itemView.findViewById(R.id.friend_picture)
@@ -347,6 +368,8 @@ class FriendRequestAdapter(
     }
     fun updateData(newRequestList: MutableList<API.FriendRequestData>) {
         requestList = newRequestList
+        val hasUIncomingRequests = requestList.any { it.relation == "incoming"}
+        mapActivity.newRequestIcon.visibility = if (hasUIncomingRequests) View.VISIBLE else { View.INVISIBLE }
         notifyDataSetChanged()
     }
     private fun removeItem(position: Int) {
@@ -366,7 +389,7 @@ class FriendRequestAdapter(
                 incomingHolder.denyButton.tag = requestee.userData.userId
                 incomingHolder.requestUserButton.setOnClickListener {
                     val userProfileDialog = UserProfileDialogFragment.newInstance(requestee.userData.userId)
-                    userProfileDialog.show(childFragmentManager, "userProfileDialog")
+                    userProfileDialog.show(mapActivity.supportFragmentManager, "userProfileDialog")
                 }
                 holder.pictureImageView.setImageDrawable(drawablePlaceholder)
                 if (requestee.userData.profilePictureId != 0) {
@@ -411,7 +434,7 @@ class FriendRequestAdapter(
                 outgoingHolder.cancelButton.tag = requestee.userData.userId
                 outgoingHolder.requestUserButton.setOnClickListener {
                     val userProfileDialog = UserProfileDialogFragment.newInstance(requestee.userData.userId)
-                    userProfileDialog.show(childFragmentManager, "userProfileDialog")
+                    userProfileDialog.show(mapActivity.supportFragmentManager, "userProfileDialog")
                 }
                 holder.pictureImageView.setImageDrawable(drawablePlaceholder)
                 if (requestee.userData.profilePictureId != 0) {

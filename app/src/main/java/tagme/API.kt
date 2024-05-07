@@ -25,7 +25,6 @@ class API private constructor(context: Context){
 
     private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
-    private var answerReceived = false
     private var answer = JSONObject()
     private var lastInsertedPictureDataString = ""
     var lastInsertedPicId = 0
@@ -707,8 +706,9 @@ class API private constructor(context: Context){
         request.put("request_id", requestId)
 
         webSocket?.send(request.toString())
-
-        return future.await()
+        val result = future.await()
+        requestMap.remove(requestId)
+        return result
     }
     private fun parseAndConvertTimestamp(timestampString: String): Timestamp {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault())
