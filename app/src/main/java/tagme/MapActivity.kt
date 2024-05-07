@@ -10,10 +10,7 @@ import android.os.Handler
 import android.os.Looper
 import android.transition.Slide
 import android.util.Log
-import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.view.animation.Animation
 import android.view.animation.TranslateAnimation
 import android.widget.*
@@ -206,7 +203,9 @@ class MapActivity: AppCompatActivity() {
                 profileFragment.friendRequestAdapter.updateData(updatedRequests)
                 profileFragment.friendAdapter.updateData(updatedFriends)
             }
+
             toggleFragmentVisibility(profileFragment)
+            profileFragment.nestedScrollView.scrollTo(0, 0)
         }
         messagesButtonFrame.setOnClickListener {
             coroutineScope.launch {
@@ -250,6 +249,14 @@ class MapActivity: AppCompatActivity() {
         }
 
         transaction.commit()
+        if (fragment is ProfileFragment) {
+            fragment.nestedScrollView.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+                override fun onGlobalLayout() {
+                    fragment.nestedScrollView.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                    fragment.nestedScrollView.scrollTo(0, 0)
+                }
+            })
+        }
     }
 
 

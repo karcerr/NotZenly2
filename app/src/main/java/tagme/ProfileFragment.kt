@@ -16,6 +16,7 @@ import android.widget.*
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -37,6 +38,7 @@ class ProfileFragment : Fragment() {
     private lateinit var imagePickerLauncher: ActivityResultLauncher<Intent>
     private lateinit var api: API
     private lateinit var parentActivity: MapActivity
+    lateinit var nestedScrollView: NestedScrollView
     companion object{
         val MAX_SIZE_BEFORE_ENCODING = 100 * 1024
     }
@@ -59,6 +61,7 @@ class ProfileFragment : Fragment() {
         api = parentActivity.api
         val sendRequestButton = view.findViewById<Button>(R.id.send_request_button)
         val statusText = view.findViewById<TextView>(R.id.status_text)
+        nestedScrollView = view.findViewById(R.id.profile_nested_scroll_view)
         nicknameText.text = api.myNickname
         if (api.myPfpId != 0) {
             coroutineScope.launch {

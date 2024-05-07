@@ -1,292 +1,296 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-         xmlns:app="http://schemas.android.com/apk/res-auto"
-             xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
-         android:layout_height="match_parent">
-
-<androidx.core.widget.NestedScrollView
+<FrameLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/background_for_user">
-    <LinearLayout
-            android:id="@+id/main_content"
+>
+
+    <androidx.core.widget.NestedScrollView
+            android:id="@+id/profile_nested_scroll_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:background="@drawable/background_for_user">
         <LinearLayout
+                android:id="@+id/main_content"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginTop="10dp"
-                android:layout_marginHorizontal="10dp">
-            <ImageButton
-                    android:id="@+id/back_arrow_button"
-                    android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+            <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/arrow_back"
-                    android:background="@null"
-                    android:contentDescription="@string/go_back_button"/>
-            <TextView
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:text="@string/Tag_counter"
-                    android:textColor="@color/white"
-                    android:textStyle="bold"
-                    android:textAppearance="?android:textAppearanceMedium"
-                    android:fontFamily="@font/my_font"
-                    android:textSize="30sp"
-                    android:gravity="center"
-            />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginHorizontal="10dp">
+                <ImageButton
+                        android:id="@+id/back_arrow_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/arrow_back"
+                        android:background="@null"
+                        android:contentDescription="@string/go_back_button"/>
+                <TextView
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:text="@string/Tag_counter"
+                        android:textColor="@color/white"
+                        android:textStyle="bold"
+                        android:textAppearance="?android:textAppearanceMedium"
+                        android:fontFamily="@font/my_font"
+                        android:textSize="30sp"
+                        android:gravity="center"
+                />
 
-            <ImageButton
-                    android:id="@+id/settings_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="48dp"
-                    android:src="@drawable/settings"
-                    android:background="@null"
-                    android:layout_gravity="end"
-                    android:contentDescription="@string/settings_button"/>
+                <ImageButton
+                        android:id="@+id/settings_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:src="@drawable/settings"
+                        android:background="@null"
+                        android:layout_gravity="end"
+                        android:contentDescription="@string/settings_button"/>
 
-        </LinearLayout>
+            </LinearLayout>
 
-        <com.google.android.material.imageview.ShapeableImageView
-                android:id="@+id/profile_picture"
-                android:layout_width="256dp"
-                android:layout_height="256dp"
-                android:src="@drawable/person_placeholder"
-                app:shapeAppearanceOverlay="@style/roundImageView"
-                app:strokeWidth="4dp"
-                android:padding="4dp"
-                app:strokeColor="@color/white"
-                android:layout_margin="8dp"
-                android:layout_gravity="center"
-                android:scaleType="centerCrop"
-        />
-        <TextView
-                android:id="@+id/nickname_text"
-                android:layout_width="wrap_content"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:text="@string/nickname"
-                android:textColor="@color/white"
-                android:textStyle="bold"
-                android:textAppearance="?android:textAppearanceMedium"
-                android:fontFamily="@font/my_font"
-                android:textSize="35sp"
-                android:layout_gravity="center"
-        />
-        <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:src="@drawable/separator_big"
-                android:layout_marginVertical="15dp"
-                android:layout_gravity="center"
-                android:importantForAccessibility="no"
-        />
-        <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginHorizontal="15dp"
-        >
-            <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/Rating"
-                    android:textAppearance="?android:textAppearanceMedium"
-                    android:fontFamily="@font/my_font"
-                    android:layout_marginVertical="12dp"
-                    android:textSize="30sp"
-                    android:layout_weight="1"
-                    android:textColor="@color/white"
-                    android:textStyle="bold"
+            <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/profile_picture"
+                    android:layout_width="256dp"
+                    android:layout_height="256dp"
+                    android:src="@drawable/person_placeholder"
+                    app:shapeAppearanceOverlay="@style/roundImageView"
+                    app:strokeWidth="4dp"
+                    android:padding="4dp"
+                    app:strokeColor="@color/white"
+                    android:layout_margin="8dp"
                     android:layout_gravity="center"
-                    android:layout_marginBottom="20dp"
+                    android:scaleType="centerCrop"
             />
-
-            <ImageButton
-                    android:id="@+id/show_rating_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/arrow_right"
-                    android:textSize="20sp"
-                    android:background="@color/transparent"
-                    android:layout_marginEnd="5dp"
-                    android:layout_gravity="center_vertical"
-                    android:contentDescription="@string/go_to_rating_button"/>
-        </LinearLayout>
-        <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:src="@drawable/separator_big"
-                android:layout_marginVertical="15dp"
-                android:layout_gravity="center"
-                android:importantForAccessibility="no"/>
-        <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginHorizontal="15dp"
-                android:layout_marginBottom="5dp"
-        >
             <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/friends"
-                    android:textAppearance="?android:textAppearanceMedium"
-                    android:fontFamily="@font/my_font"
-                    android:textSize="30sp"
+                    android:id="@+id/nickname_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
                     android:layout_weight="1"
+                    android:text="@string/nickname"
                     android:textColor="@color/white"
                     android:textStyle="bold"
-                    android:layout_gravity="center_vertical"
-            />
-
-            <ImageButton
-                    android:id="@+id/add_friend_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/person_add_button"
-                    android:textSize="20sp"
-                    android:background="@color/transparent"
-                    android:layout_marginEnd="5dp"
-                    android:layout_gravity="center_vertical"
-                    android:contentDescription="@string/add_a_friend_button"/>
-        </LinearLayout>
-        <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/friends_recycler_view"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textSize="20sp"
-                android:fontFamily="@font/my_font"
-        />
-        <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:src="@drawable/separator_big"
-                android:layout_marginVertical="15dp"
-                android:layout_gravity="center"
-                android:importantForAccessibility="no"/>
-        <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginHorizontal="15dp"
-                android:layout_marginBottom="5dp">
-            <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="@string/friend_requests"
                     android:textAppearance="?android:textAppearanceMedium"
                     android:fontFamily="@font/my_font"
-                    android:textSize="30sp"
-                    android:textColor="@color/white"
-                    android:textStyle="bold"
-                    android:layout_weight="1"
+                    android:textSize="35sp"
+                    android:layout_gravity="center"
             />
+            <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/separator_big"
+                    android:layout_marginVertical="15dp"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+            />
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginHorizontal="15dp"
+            >
+                <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="@string/Rating"
+                        android:textAppearance="?android:textAppearanceMedium"
+                        android:fontFamily="@font/my_font"
+                        android:layout_marginVertical="12dp"
+                        android:textSize="30sp"
+                        android:layout_weight="1"
+                        android:textColor="@color/white"
+                        android:textStyle="bold"
+                        android:layout_gravity="center"
+                        android:layout_marginBottom="20dp"
+                />
+
+                <ImageButton
+                        android:id="@+id/show_rating_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/arrow_right"
+                        android:textSize="20sp"
+                        android:background="@color/transparent"
+                        android:layout_marginEnd="5dp"
+                        android:layout_gravity="center_vertical"
+                        android:contentDescription="@string/go_to_rating_button"/>
+            </LinearLayout>
+            <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/separator_big"
+                    android:layout_marginVertical="15dp"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"/>
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginHorizontal="15dp"
+                    android:layout_marginBottom="5dp"
+            >
+                <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="@string/friends"
+                        android:textAppearance="?android:textAppearanceMedium"
+                        android:fontFamily="@font/my_font"
+                        android:textSize="30sp"
+                        android:layout_weight="1"
+                        android:textColor="@color/white"
+                        android:textStyle="bold"
+                        android:layout_gravity="center_vertical"
+                />
+
+                <ImageButton
+                        android:id="@+id/add_friend_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/person_add_button"
+                        android:textSize="20sp"
+                        android:background="@color/transparent"
+                        android:layout_marginEnd="5dp"
+                        android:layout_gravity="center_vertical"
+                        android:contentDescription="@string/add_a_friend_button"/>
+            </LinearLayout>
+            <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/friends_recycler_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:fontFamily="@font/my_font"
+            />
+            <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/separator_big"
+                    android:layout_marginVertical="15dp"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"/>
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginHorizontal="15dp"
+                    android:layout_marginBottom="5dp">
+                <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="@string/friend_requests"
+                        android:textAppearance="?android:textAppearanceMedium"
+                        android:fontFamily="@font/my_font"
+                        android:textSize="30sp"
+                        android:textColor="@color/white"
+                        android:textStyle="bold"
+                        android:layout_weight="1"
+                />
+            </LinearLayout>
+            <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/friend_requests_recycler_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:fontFamily="@font/my_font"
+            />
+
         </LinearLayout>
-        <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/friend_requests_recycler_view"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textSize="20sp"
-                android:fontFamily="@font/my_font"
-        />
-
-    </LinearLayout>
-</androidx.core.widget.NestedScrollView>
-<View
-        android:id="@+id/dark_overlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#B3000000"
-        android:visibility="gone"/>
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/add_friend_window"
-        android:layout_width="400dp"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:layout_marginStart="3dp"
-        android:layout_marginEnd="3dp"
-        android:background="@drawable/add_friend_background"
-        android:layout_gravity="center"
-        android:padding="15dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
-    >
-
-        <EditText
-            android:id="@+id/nickname_edit_text"
+    </androidx.core.widget.NestedScrollView>
+    <View
+            android:id="@+id/dark_overlay"
             android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#B3000000"
+            android:visibility="gone"/>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/add_friend_window"
+            android:layout_width="400dp"
             android:layout_height="wrap_content"
-            android:hint="@string/enter_nickname"
-            android:textColorHint="@color/grey"
-            android:textSize="20sp"
-            android:autofillHints=""
-            android:background="@drawable/enter_nick_rectangle"
-            android:fontFamily="@font/my_font"
-            android:padding="16dp"
-            android:layout_marginTop="50dp"
-            android:textColor="@color/white"
-            app:layout_constraintTop_toTopOf="parent"
-            android:inputType="text"
+            android:visibility="gone"
+            android:layout_marginStart="3dp"
+            android:layout_marginEnd="3dp"
+            android:background="@drawable/add_friend_background"
+            android:layout_gravity="center"
+            android:padding="15dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+        >
 
-
-    />
-        <ImageView
-                android:layout_width="wrap_content"
+            <EditText
+                android:id="@+id/nickname_edit_text"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                tools:ignore="MissingConstraints"
-                android:src="@drawable/icon_profile_login"
-                app:layout_constraintBottom_toBottomOf="@+id/nickname_edit_text"
-                app:layout_constraintTop_toTopOf="@+id/nickname_edit_text"
-                app:layout_constraintEnd_toEndOf="@+id/nickname_edit_text"
-                android:layout_marginEnd="15dp"
-        />
-
-        <TextView
-                android:id="@+id/title_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/add_friend"
-                android:textSize="30sp"
-                android:textColor="#425890"
+                android:hint="@string/enter_nickname"
+                android:textColorHint="@color/grey"
+                android:textSize="20sp"
+                android:autofillHints=""
+                android:background="@drawable/enter_nick_rectangle"
+                android:fontFamily="@font/my_font"
+                android:padding="16dp"
+                android:layout_marginTop="50dp"
+                android:textColor="@color/white"
                 app:layout_constraintTop_toTopOf="parent"
+                android:inputType="text"
+
+
+        />
+            <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    tools:ignore="MissingConstraints"
+                    android:src="@drawable/icon_profile_login"
+                    app:layout_constraintBottom_toBottomOf="@+id/nickname_edit_text"
+                    app:layout_constraintTop_toTopOf="@+id/nickname_edit_text"
+                    app:layout_constraintEnd_toEndOf="@+id/nickname_edit_text"
+                    android:layout_marginEnd="15dp"
+            />
+
+            <TextView
+                    android:id="@+id/title_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/add_friend"
+                    android:textSize="30sp"
+                    android:textColor="#425890"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:layout_marginTop="-7dp" />
+        <TextView
+                android:id="@+id/status_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="visible"
+                android:textColor="@color/white"
+                android:textSize="23sp"
+                android:layout_marginBottom="6dp"
+                android:fontFamily="@font/my_font"
+                app:layout_constraintTop_toBottomOf="@id/nickname_edit_text"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="-7dp" />
-    <TextView
-            android:id="@+id/status_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="visible"
-            android:textColor="@color/white"
-            android:textSize="23sp"
-            android:layout_marginBottom="6dp"
-            android:fontFamily="@font/my_font"
-            app:layout_constraintTop_toBottomOf="@id/nickname_edit_text"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-    />
-    <Button
-            android:id="@+id/send_request_button"
-            android:layout_width="380dp"
-            android:layout_height="wrap_content"
-            android:text="@string/send_request"
-            android:textSize="20sp"
-            android:background="@drawable/send_request_background"
-            android:fontFamily="@font/my_font"
-            android:padding="16dp"
-            android:textColor="@color/white"
-            app:layout_constraintTop_toBottomOf="@id/status_text"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
+        />
+        <Button
+                android:id="@+id/send_request_button"
+                android:layout_width="380dp"
+                android:layout_height="wrap_content"
+                android:text="@string/send_request"
+                android:textSize="20sp"
+                android:background="@drawable/send_request_background"
+                android:fontFamily="@font/my_font"
+                android:padding="16dp"
+                android:textColor="@color/white"
+                app:layout_constraintTop_toBottomOf="@id/status_text"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
 
-    />
-</androidx.constraintlayout.widget.ConstraintLayout>
+        />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </FrameLayout>
