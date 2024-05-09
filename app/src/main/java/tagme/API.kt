@@ -702,32 +702,50 @@ class API private constructor(context: Context){
         return file.absolutePath
     }
     private suspend fun sendRequestToWS(request: JSONObject): JSONObject? {
+        val action = request.getString("action")
         val requestId = generateRequestId()
         val future = CompletableFuture<JSONObject?>()
-        val action = request.getString("action")
         request.put("request_id", requestId)
 
-        val shouldSendRequest = when {
-            action != "get picture" -> {
-                requestMap.filterValues { it.second == action }.isEmpty()
+        val isGetPictureAction = action == "get picture"
+
+        if (!isGetPictureAction) {
+            val matchingRequestIds = requestMap.filterValues { it.second == action }.keys
+            if (matchingRequestIds.isNotEmpty()) {
+                return JSONObject()
             }
-            else -> {
-                pictureMutex.withLock {
-                    true
+        }
+
+        val result = if (isGetPictureAction) {
+            pictureMutex.withLock {
+                val pictureId = request.getInt("picture_id")
+                val picture = picsData.find { it.pictureId == pictureId }
+                if (picture?.imagePath == null) {
+                    sendRequest(request, requestId, future, action)
+                } else {
+                    JSONObject() // Picture already loaded, return empty JSON object
                 }
             }
+        } else {
+            sendRequest(request, requestId, future, action)
         }
 
-        if (!shouldSendRequest) {
-            return JSONObject()
-        }
+        return result
+    }
 
+    private suspend fun sendRequest(
+        request: JSONObject,
+        requestId: Int,
+        future: CompletableFuture<JSONObject?>,
+        action: String
+    ): JSONObject? {
         requestMap[requestId] = future to action
         webSocket?.send(request.toString())
         val result = future.await()
         requestMap.remove(requestId)
         return result
     }
+
     private fun parseAndConvertTimestamp(timestampString: String): Timestamp {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault())
         dateFormat.timeZone = TimeZone.getTimeZone("GMT+3")
