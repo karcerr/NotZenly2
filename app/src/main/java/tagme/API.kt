@@ -8,6 +8,8 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import org.json.JSONObject
@@ -29,7 +31,9 @@ class API private constructor(context: Context){
     private var lastInsertedPictureDataString = ""
     var lastInsertedPicId = 0
     private val requestIdCounter = AtomicInteger(0)
-    private val requestMap = mutableMapOf<Int, CompletableFuture<JSONObject?>>()
+    private val requestMap = mutableMapOf<Int, Pair<CompletableFuture<JSONObject?>, String>>()
+    private val pictureMutex = Mutex()
+
     var myToken: String?
         get() = sharedPreferences.getString("TOKEN", null)
         set(value) {
@@ -127,7 +131,7 @@ class API private constructor(context: Context){
                             "success" -> parseGeoStoriesNearby(answer.getString("message"))
                         }
                     }
-                    val futureAnswer = requestMap[requestId]
+                    val futureAnswer = requestMap[requestId]?.first
                     futureAnswer?.complete(answer)
                 }
             }
@@ -346,7 +350,7 @@ class API private constructor(context: Context){
                     add(newPictureData)
                 }
                 Log.d("Tagme_WS_Pic", "Image $pictureId encoded: $pictureDataString")
-                Log.d("Tagme_WS_Pic", "Image $pictureId decoded: ${pictureData}")
+                Log.d("Tagme_WS_Pic", "Image $pictureId decoded: $pictureData")
                 picsData = updatedPicturesData
             }
         }
@@ -597,7 +601,7 @@ class API private constructor(context: Context){
 
     suspend fun getPictureData(pictureId: Int): Bitmap? {
         var picture = picsData.find { it.pictureId == pictureId }
-        if (picture == null || picture.imagePath == null) {
+        if (picture?.imagePath == null) {
             getPictureFromWS(pictureId)
             picture = picsData.find { it.pictureId == pictureId }
         }
@@ -700,11 +704,25 @@ class API private constructor(context: Context){
     private suspend fun sendRequestToWS(request: JSONObject): JSONObject? {
         val requestId = generateRequestId()
         val future = CompletableFuture<JSONObject?>()
-
-        requestMap[requestId] = future
-
+        val action = request.getString("action")
         request.put("request_id", requestId)
 
+        val shouldSendRequest = when {
+            action != "get picture" -> {
+                requestMap.filterValues { it.second == action }.isEmpty()
+            }
+            else -> {
+                pictureMutex.withLock {
+                    true
+                }
+            }
+        }
+
+        if (!shouldSendRequest) {
+            return JSONObject()
+        }
+
+        requestMap[requestId] = future to action
         webSocket?.send(request.toString())
         val result = future.await()
         requestMap.remove(requestId)
