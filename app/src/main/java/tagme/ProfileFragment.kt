@@ -20,6 +20,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tagme.R
@@ -279,9 +280,29 @@ class FriendAdapter(
         val messageButton: ImageButton = itemView.findViewById(R.id.text_friend_button)
         val coroutineScope = CoroutineScope(Dispatchers.Main)
     }
-    fun updateData(newFriendList: MutableList<API.FriendData>) {
-        friendList = newFriendList
-        notifyDataSetChanged()
+    fun updateData(newFriendList: List<API.FriendData>) {
+        val diffResult = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+            override fun getOldListSize(): Int {
+                return friendList.size
+            }
+
+            override fun getNewListSize(): Int {
+                return newFriendList.size
+            }
+
+            override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return friendList[oldItemPosition].userData.userId == newFriendList[newItemPosition].userData.userId
+            }
+
+            override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                val oldItem = friendList[oldItemPosition]
+                val newItem = newFriendList[newItemPosition]
+                val didChange = (oldItem.userData == newItem.userData)
+                return didChange
+            }
+        })
+        diffResult.dispatchUpdatesTo(this)
+        friendList = newFriendList.map {it.copy()}.toMutableList()
     }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FriendViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.friend_item, parent, false)
@@ -366,11 +387,32 @@ class FriendRequestAdapter(
             else -> throw IllegalArgumentException("Invalid view type")
         }
     }
-    fun updateData(newRequestList: MutableList<API.FriendRequestData>) {
-        requestList = newRequestList
+    fun updateData(newRequestList: List<API.FriendRequestData>) {
+        val diffResult = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+            override fun getOldListSize(): Int {
+                return requestList.size
+            }
+
+            override fun getNewListSize(): Int {
+                return newRequestList.size
+            }
+
+            override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return requestList[oldItemPosition].userData.userId == newRequestList[newItemPosition].userData.userId
+            }
+
+            override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                val oldItem = requestList[oldItemPosition]
+                val newItem = newRequestList[newItemPosition]
+                val didChange = (oldItem.userData == newItem.userData)
+                return didChange
+            }
+        })
+        diffResult.dispatchUpdatesTo(this)
+        requestList = newRequestList.map {it.copy()}.toMutableList()
+
         val hasUIncomingRequests = requestList.any { it.relation == "incoming"}
         mapActivity.newRequestIcon.visibility = if (hasUIncomingRequests) View.VISIBLE else { View.INVISIBLE }
-        notifyDataSetChanged()
     }
     private fun removeItem(position: Int) {
         requestList.removeAt(position)
