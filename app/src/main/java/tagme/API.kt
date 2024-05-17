@@ -481,23 +481,32 @@ class API private constructor(context: Context){
             val geoStoryObject = result.getJSONObject(i)
             val geoStoryId = geoStoryObject.getInt("geo_story_id")
             encounteredGeoStoryIds.add(geoStoryId)
+            val timestampString = geoStoryObject.getString("timestamp")
+            val timestamp = parseAndConvertTimestamp(timestampString)
 
             val pictureId = geoStoryObject.optInt("picture_id", 0)
+            val views = geoStoryObject.optInt("views", 0)
             val latitude = geoStoryObject.getDouble("latitude")
             val longitude = geoStoryObject.getDouble("longitude")
+            val creatorId = geoStoryObject.getInt("creator_id")
+            val creatorNickname = geoStoryObject.getString("nickname")
+            val creatorPicId = geoStoryObject.optInt("profile_picture_id", 0)
+
+            val privacy = geoStoryObject.getString("privacy")
+
 
             val existingGeoStory = geoStoriesData.find { it.geoStoryId == geoStoryId }
             if (existingGeoStory == null) {
                 geoStoriesData.add(
                     GeoStoryData(
                         geoStoryId,
-                        null,
+                        UserData(creatorId, creatorNickname, creatorPicId),
                         pictureId,
-                        null,
-                        null,
+                        privacy,
+                        views,
                         latitude,
                         longitude,
-                        null,
+                        timestamp,
                     )
                 )
             }
