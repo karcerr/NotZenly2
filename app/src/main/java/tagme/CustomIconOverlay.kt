@@ -126,12 +126,14 @@ class CustomIconOverlay(
             var intersectCircleY = y1
             if (storyId != 0) {
                 y0 += scaledHeight / 4
-                intersectCircleY = y0 + 80
+                val circleRadius = 80f
+                intersectCircleY = y0  +  circleRadius
+                val circleY = y0 + (scaledHeight - 2 * circleRadius)
                 // flipped triangle
                 val trianglePath = Path().apply {
-                    moveTo(it.x.toFloat() - 80, y0)
+                    moveTo(it.x.toFloat() - 80, circleY)
                     lineTo(it.x.toFloat(), y1)
-                    lineTo(it.x.toFloat() + 80, y0)
+                    lineTo(it.x.toFloat() + 80, circleY)
                     close()
                 }
                 val trianglePaint = Paint().apply {
@@ -139,9 +141,7 @@ class CustomIconOverlay(
                     color = gradientEndColor
                 }
                 canvas.drawPath(trianglePath, trianglePaint)
-                val circleRadius = 80f
                 val circleX = it.x.toFloat()
-                val circleY = y0 + (scaledHeight - 2 * circleRadius)
                 val circlePaint = Paint().apply {
                     shader = RadialGradient(
                         circleX, circleY, circleRadius,
