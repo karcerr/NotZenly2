@@ -229,7 +229,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:textSize="24sp"
-                    android:text="@string/check_on_map"
+                    android:text="@string/find_on_map"
                     android:textColor="@color/white"
                     android:layout_weight="1"
                     android:textStyle="bold"
@@ -240,7 +240,7 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center_vertical"
-                    android:src="@drawable/explore_nearby_fill0_wght400_grad0_opsz24"
+                    android:src="@drawable/geo_icon"
                     android:layout_marginEnd="25dp"
             />
         </LinearLayout>

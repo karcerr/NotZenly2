@@ -21,11 +21,14 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tagme.R
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.material.imageview.ShapeableImageView
+import com.google.android.material.shape.ShapeAppearanceModel
 import kotlinx.coroutines.*
 import org.osmdroid.api.IMapController
 import org.osmdroid.config.Configuration.getInstance
@@ -608,12 +611,30 @@ class OverlappedIconsAdapter(
     private val fragmentManager: FragmentManager
 ) : RecyclerView.Adapter<OverlappedIconsAdapter.OverlappedIconViewHolder>() {
     inner class OverlappedIconViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val pictureImageView: ImageView = itemView.findViewById(R.id.overlapped_picture)
+        val pictureImageView: ShapeableImageView = itemView.findViewById(R.id.overlapped_picture)
+        val pictureBgImageView: ImageView = itemView.findViewById(R.id.overlapped_picture_background)
         val coroutineScope = CoroutineScope(Dispatchers.Main)
     }
-    fun updateData(newItemList: MutableList<Pair<Int, Int>>) {
-        itemList = newItemList
-        notifyDataSetChanged()
+    fun updateData(newItemList: List<Pair<Int, Int>>) {
+        val diffResult = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+            override fun getOldListSize(): Int {
+                return itemList.size
+            }
+
+            override fun getNewListSize(): Int {
+                return newItemList.size
+            }
+
+            override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return itemList[oldItemPosition] == newItemList[newItemPosition]
+            }
+
+            override fun areContentsTheSame(p0: Int, p1: Int): Boolean {
+                return true
+            }
+        })
+        diffResult.dispatchUpdatesTo(this)
+        itemList = newItemList.map {it.copy()}.toMutableList()
     }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OverlappedIconViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.overlapped_icon_item, parent, false)
@@ -627,6 +648,15 @@ class OverlappedIconsAdapter(
 
         val picId = if(userId == 0) api.getGeoStoriesData().find {it.geoStoryId == geoStoryId}?.pictureId else
             api.getFriendsData().find { it.userData.userId == userId }?.userData?.profilePictureId
+        val shapeAppearanceModelStyle = if(userId == 0) R.style.roundImageViewGeoStoryOverlap else R.style.roundImageViewFriendOverlap
+        val pictureBgStyle = if(userId == 0) R.drawable.overlapped_geostory_new_bg else R.drawable.overlapped_friend_bg
+        holder.pictureBgImageView.setImageDrawable(ContextCompat.getDrawable(context, pictureBgStyle))
+        holder.pictureImageView.shapeAppearanceModel = ShapeAppearanceModel.builder(
+            context,
+            0,
+            shapeAppearanceModelStyle
+        ).build()
+
 
         val drawablePlaceholder = ContextCompat.getDrawable(context, R.drawable.person_placeholder)
         holder.pictureImageView.setImageDrawable(drawablePlaceholder)

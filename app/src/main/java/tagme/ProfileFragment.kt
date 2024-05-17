@@ -46,7 +46,7 @@ class ProfileFragment : Fragment() {
     lateinit var nestedScrollView: NestedScrollView
     private lateinit var friendRequestsRecyclerView: RecyclerView
     companion object{
-        val MAX_SIZE_BEFORE_ENCODING = 100 * 1024
+        const val MAX_SIZE_BEFORE_ENCODING = 100 * 1024
     }
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -195,7 +195,6 @@ class ProfileFragment : Fragment() {
                 val compressedBitmap = (compressBitmap(originalBitmap))
                 originalBitmap.recycle()
                 parentActivity.runOnUiThread {
-                    //compressingStatus.visibility = View.GONE
                     val roundedImageBitmap = applyRoundedCorners(compressedBitmap, 20f)
                     imageCompressed = true
                     myProfilePic.setImageBitmap(roundedImageBitmap)

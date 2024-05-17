@@ -37,7 +37,7 @@
     <string name="add_friend">Добавить друга</string>
     <string name="block">Заблокировать</string>
     <string name="In_friends">В друзьях</string>
-    <string name="check_on_map">Показать на карте</string>
+    <string name="find_on_map">Показать на карте</string>
     <string name="friends_since_format">Вы подружились %s</string>
     <string name="unfriend">Удалить из друзей</string>
     <string name="blocked">Заблокирован</string>

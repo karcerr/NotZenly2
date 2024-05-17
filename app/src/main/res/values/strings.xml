@@ -41,7 +41,7 @@
     <string name="tagme" translatable="false">TagMe!</string>
     <string name="block">block</string>
     <string name="In_friends">in friends</string>
-    <string name="check_on_map">check on map</string>
+    <string name="find_on_map">Find on map</string>
     <string name="unfriend">Unfriend</string>
     <string name="friends_since_format">Friends since %s</string>
     <string name="blocked">Blocked</string>
