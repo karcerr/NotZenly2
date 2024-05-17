@@ -6,11 +6,9 @@ import android.graphics.BitmapFactory
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import okhttp3.*
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
@@ -27,11 +25,10 @@ class API private constructor(context: Context){
 
     private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
-    private var answer = JSONObject()
     private var lastInsertedPictureDataString = ""
     var lastInsertedPicId = 0
     private val requestIdCounter = AtomicInteger(0)
-    private val requestMap = mutableMapOf<Int, Pair<CompletableFuture<JSONObject?>, String>>()
+    private val requestMap = Collections.synchronizedMap(mutableMapOf<Int, Pair<CompletableFuture<JSONObject?>, String>>())
     private val pictureMutex = Mutex()
 
     var myToken: String?
@@ -54,10 +51,10 @@ class API private constructor(context: Context){
         set(value) {
             sharedPreferences.edit().putString("NICKNAME", value).apply()
         }
-    private val friendsData = mutableListOf<FriendData>()
-    private val friendsRequestsData = mutableListOf<FriendRequestData>()
-    private val conversationsData = mutableListOf<ConversationData>()
-    private val geoStoriesData = mutableListOf<GeoStoryData>()
+    private val friendsData =  Collections.synchronizedList(mutableListOf<FriendData>())
+    private val friendsRequestsData =  Collections.synchronizedList(mutableListOf<FriendRequestData>())
+    private val conversationsData = Collections.synchronizedList(mutableListOf<ConversationData>())
+    private val geoStoriesData = Collections.synchronizedList(mutableListOf<GeoStoryData>())
     private var picsData: List<PictureData>
         get() {
             val jsonString = sharedPreferences.getString("PICTURES_DATA", null)
@@ -73,71 +70,68 @@ class API private constructor(context: Context){
         }
     suspend fun connectToServer(context: Context): CompletableFuture<Boolean> {
         val future = CompletableFuture<Boolean>()
-        withContext(Dispatchers.IO) {
-            val url = "ws://141.8.193.201:8765"
+        val url = "ws://141.8.193.201:8765"
 
-            val request = Request.Builder()
-                .url(url)
-                .build()
+        val request = Request.Builder()
+            .url(url)
+            .build()
 
-            val listener = object : WebSocketListener() {
-                override fun onOpen(webSocket: WebSocket, response: Response) {
-                    this@API.webSocket = webSocket
-                    Log.d("Tagme_WS", "onOpen trigger: $response")
-                    future.complete(true)
-                }
-
-                override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                    Log.d("Tagme_WS", "onFailure trigger: $response")
-                    future.complete(true)
-                }
-
-                override fun onMessage(webSocket: WebSocket, text: String) {
-                    Log.d("Tagme_WS", "onMessage trigger: $text")
-                    val jsonObject = JSONObject(text)
-                    val requestId = jsonObject.getInt("request_id")
-                    answer = jsonObject
-                    when (answer.getString("action")) {
-                        "login", "register" -> when (answer.getString("status")) {
-                            "success" -> {
-                                myToken = answer.getString("message")
-                            }
-                        }
-                        "get locations" -> when (answer.getString("status")) {
-                            "success" -> parseFriendLocationsData(answer.getString("message"))
-                        }
-                        "get friend requests" -> when (answer.getString("status")) {
-                            "success" -> parseFriendRequestData(answer.getString("message"))
-                        }
-                        "get friends" -> when (answer.getString("status")) {
-                            "success" -> parseFriendsData(answer.getString("message"))
-                        }
-                        "get conversations" -> when (answer.getString("status")) {
-                            "success" -> parseConversationsData(answer.getString("message"))
-                        }
-                        "get picture" -> when (answer.getString("status")) {
-                            "success" -> parsePictureData(context, answer.getString("message"))
-                        }
-                        "get messages", "get new messages" -> when (answer.getString("status")) {
-                            "success" -> parseMessagesData(answer.getString("message"))
-                        }
-                        "get my data" -> when (answer.getString("status")) {
-                            "success" -> parseMyData(answer.getString("message"))
-                        }
-                        "insert picture" -> when (answer.getString("status")) {
-                            "success" -> parseInsertedPictureId(context, answer.getString("message"))
-                        }
-                        "get geo stories" -> when (answer.getString("status")) {
-                            "success" -> parseGeoStoriesNearby(answer.getString("message"))
-                        }
-                    }
-                    val futureAnswer = requestMap[requestId]?.first
-                    futureAnswer?.complete(answer)
-                }
+        val listener = object : WebSocketListener() {
+            override fun onOpen(webSocket: WebSocket, response: Response) {
+                this@API.webSocket = webSocket
+                Log.d("Tagme_WS", "onOpen trigger: $response")
+                future.complete(true)
             }
 
-            client.newWebSocket(request, listener)
+            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                Log.d("Tagme_WS", "onFailure trigger: $response")
+                future.complete(false)
+            }
+
+            override fun onMessage(webSocket: WebSocket, text: String) {
+                Log.d("Tagme_WS", "onMessage trigger: $text")
+                val jsonObject = JSONObject(text)
+                val requestId = jsonObject.getInt("request_id")
+                val answer = jsonObject
+                when (answer.getString("action")) {
+                    "login", "register" -> when (answer.getString("status")) {
+                        "success" -> {
+                            myToken = answer.getString("message")
+                        }
+                    }
+                    "get locations" -> when (answer.getString("status")) {
+                        "success" -> parseFriendLocationsData(answer.getString("message"))
+                    }
+                    "get friend requests" -> when (answer.getString("status")) {
+                        "success" -> parseFriendRequestData(answer.getString("message"))
+                    }
+                    "get friends" -> when (answer.getString("status")) {
+                        "success" -> parseFriendsData(answer.getString("message"))
+                    }
+                    "get conversations" -> when (answer.getString("status")) {
+                        "success" -> parseConversationsData(answer.getString("message"))
+                    }
+                    "get picture" -> when (answer.getString("status")) {
+                        "success" -> parsePictureData(context, answer.getString("message"))
+                    }
+                    "get messages", "get new messages" -> when (answer.getString("status")) {
+                        "success" -> parseMessagesData(answer.getString("message"))
+                    }
+                    "get my data" -> when (answer.getString("status")) {
+                        "success" -> parseMyData(answer.getString("message"))
+                    }
+                    "insert picture" -> when (answer.getString("status")) {
+                        "success" -> parseInsertedPictureId(context, answer.getString("message"))
+                    }
+                    "get geo stories" -> when (answer.getString("status")) {
+                        "success" -> parseGeoStoriesNearby(answer.getString("message"))
+                    }
+                }
+                val futureAnswer = requestMap[requestId]?.first
+                futureAnswer?.complete(answer)
+            }
         }
+        client.newWebSocket(request, listener)
         return future
     }
 
@@ -763,5 +757,9 @@ class API private constructor(context: Context){
     }
     private fun generateRequestId(): Int {
         return requestIdCounter.getAndIncrement()
+    }
+    fun closeWebSocket() {
+        webSocket?.close(1000, "Closing")
+        webSocket = null
     }
 }
