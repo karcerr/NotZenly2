@@ -1,16 +1,22 @@
 package tagme
+
 import android.content.Context
 import android.graphics.*
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.hardware.HardwareBuffer
+import android.media.ImageReader
 import android.util.Log
 import android.view.MotionEvent
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.drawable.toBitmap
 import com.example.tagme.R
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Overlay
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
 import kotlin.math.min
-
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -40,7 +46,15 @@ class CustomIconOverlay(
         style = Paint.Style.FILL_AND_STROKE
     }
 
-
+    private val executor: Executor = Executors.newSingleThreadExecutor()
+    init {
+        if (storyId != 0) {
+            blurDrawable(drawable, 25f, executor) { blurredDrawable ->
+                drawable = blurredDrawable
+                mapView?.invalidate()
+            }
+        }
+    }
 
     override fun onSingleTapConfirmed(e: MotionEvent?, mapView: MapView?): Boolean {
         if (!visible) return super.onSingleTapConfirmed(e, mapView)
@@ -330,8 +344,83 @@ class CustomIconOverlay(
     }
 
     fun updateDrawable(newDrawable: Drawable) {
-        drawable = newDrawable
-        mapView?.invalidate()
+        if (storyId != 0) {
+            blurDrawable(newDrawable, 25f, executor) { blurredDrawable ->
+                drawable = blurredDrawable
+                mapView?.invalidate()
+            }
+        } else {
+            drawable = newDrawable
+            mapView?.invalidate()
+        }
+    }
+
+
+    private fun blurDrawable(drawable: Drawable, blurRadius: Float, executor: Executor, callback: (Drawable) -> Unit) {
+        // Convert Drawable to Bitmap
+        val bitmap = drawable.toBitmap()
+
+        // Create ImageReader
+        val imageReader = ImageReader.newInstance(
+            bitmap.width, bitmap.height,
+            PixelFormat.RGBA_8888, 1,
+            HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE or HardwareBuffer.USAGE_GPU_COLOR_OUTPUT
+        )
+
+        // Create RenderNode
+        val renderNode = RenderNode("BlurEffect")
+
+        // Create HardwareRenderer
+        val hardwareRenderer = HardwareRenderer()
+
+        // Set surface and content root for HardwareRenderer
+        hardwareRenderer.setSurface(imageReader.surface)
+        hardwareRenderer.setContentRoot(renderNode)
+
+        // Set position for RenderNode
+        renderNode.setPosition(0, 0, bitmap.width, bitmap.height)
+
+        // Create RenderEffect for blur
+        val blurRenderEffect = RenderEffect.createBlurEffect(
+            blurRadius, blurRadius,
+            Shader.TileMode.MIRROR
+        )
+
+        // Set RenderEffect for RenderNode
+        renderNode.setRenderEffect(blurRenderEffect)
+
+        // Copy bitmap to RenderCanvas
+        executor.execute {
+            val renderCanvas = renderNode.beginRecording()
+            renderCanvas.drawBitmap(bitmap, 0f, 0f, null)
+            renderNode.endRecording()
+
+            // Create RenderRequest and wait for present
+            hardwareRenderer.createRenderRequest()
+                .setWaitForPresent(true)
+                .syncAndDraw()
+
+            // Acquire Image from ImageReader
+            val image = imageReader.acquireNextImage() ?: throw RuntimeException("No Image")
+            val hardwareBuffer = image.hardwareBuffer ?: throw RuntimeException("No HardwareBuffer")
+
+            // Wrap HardwareBuffer into Bitmap
+            val blurredBitmap = Bitmap.wrapHardwareBuffer(hardwareBuffer, null)
+                ?: throw RuntimeException("Create Bitmap Failed")
+
+            // Convert the blurred Bitmap back to a Drawable
+            val blurredDrawable = BitmapDrawable(context.resources, blurredBitmap)
+
+            // Close resources
+            hardwareBuffer.close()
+            image.close()
+            imageReader.close()
+            renderNode.discardDisplayList()
+            hardwareRenderer.destroy()
+
+            // Return the blurred Drawable via callback
+            callback(blurredDrawable)
+        }
     }
 }
 fun Boolean.toInt() = if (this) 1 else 0
