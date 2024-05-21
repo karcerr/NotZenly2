@@ -45,6 +45,9 @@ import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.IMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+import java.time.Duration
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.coroutines.resume
 
 
@@ -93,13 +96,12 @@ class MapActivity: AppCompatActivity() {
     private val geoStoryOverlays: MutableMap<Int, CustomIconOverlay> = mutableMapOf()
     private lateinit var fragmentManager : FragmentManager
     private val handler = Handler(Looper.getMainLooper())
-
+    private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         api = API.getInstance(applicationContext)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
         getInstance().load(this, getDefaultSharedPreferences(this))
         setContentView(R.layout.map_activity)
         map = findViewById(R.id.map)
@@ -424,7 +426,16 @@ class MapActivity: AppCompatActivity() {
                 clickedViewsAndTimeLayout.visibility = View.VISIBLE
                 clickedFriendNicknameTextView.text = getString(R.string.geo_story_by_format, geoStory.creatorData.nickname)
                 clickedGeoStoryViewsTextView.text = geoStory.views.toString()
-                clickedGeoStoryTimeTextView.text = ""
+                val timestampDateTime = LocalDateTime.parse(geoStory.timestamp.toString(), dateFormatter)
+                val now = LocalDateTime.now()
+                val duration = Duration.between(timestampDateTime, now)
+                val timestampText = when {
+                    duration.seconds < 60 -> "${duration.seconds} seconds ago"
+                    duration.toMinutes() < 60 -> "${duration.toMinutes()} minutes ago"
+                    else -> "${duration.toHours()} hours ago"
+                }
+
+                clickedGeoStoryTimeTextView.text = timestampText
             }
         }
         if (intersectedOverlays != overlappedIconsAdapter.getItemList()) {
