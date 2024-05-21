@@ -58,15 +58,20 @@ class MapActivity: AppCompatActivity() {
     lateinit var newRequestIcon: ImageView
     private lateinit var clickedFriendProfileFrame: FrameLayout
     private lateinit var clickedFriendMessageFrame: FrameLayout
+    private lateinit var clickedGeoStoryViewFrame: FrameLayout
     private lateinit var clickedIconDistanceAndSpeedLayout: LinearLayout
+    private lateinit var clickedViewsAndTimeLayout: LinearLayout
     private lateinit var onCLickedOverlays: LinearLayout
     private lateinit var createGeoStoryButton: ImageButton
     private lateinit var profileFragment: ProfileFragment
     private lateinit var conversationFragment: ConversationsFragment
     private lateinit var geoStoryCreation: GeoStoryCreationFragment
+    private lateinit var geoStoryView: GeoStoryViewFragment
     private lateinit var clickedFriendNicknameTextView: TextView
     private lateinit var clickedFriendDistanceTextView: TextView
     private lateinit var clickedFriendSpeedTextView: TextView
+    private lateinit var clickedGeoStoryViewsTextView: TextView
+    private lateinit var clickedGeoStoryTimeTextView: TextView
     private lateinit var copyrightOSV: TextView
     private lateinit var overlappedIconsAdapter: OverlappedIconsAdapter
     private lateinit var recyclerView: RecyclerView
@@ -108,16 +113,21 @@ class MapActivity: AppCompatActivity() {
         clickedFriendNicknameTextView = findViewById(R.id.nickname_text)
         clickedFriendDistanceTextView = findViewById(R.id.distance_text)
         clickedFriendSpeedTextView = findViewById(R.id.speed_text)
+        clickedGeoStoryViewsTextView = findViewById(R.id.views_text)
+        clickedGeoStoryTimeTextView = findViewById(R.id.time_text)
         copyrightOSV = findViewById(R.id.copyright_OSV)
         clickedFriendProfileFrame = findViewById(R.id.friend_profile_frame)
         clickedFriendMessageFrame = findViewById(R.id.personal_message_frame)
+        clickedGeoStoryViewFrame = findViewById(R.id.geo_story_view_frame)
         clickedIconDistanceAndSpeedLayout = findViewById(R.id.distance_and_speed_layout)
+        clickedViewsAndTimeLayout = findViewById(R.id.views_and_time_layout)
         // Initializing and hiding fragments
         fragmentManager = supportFragmentManager
         conversationFragment = fragmentManager.findFragmentById(R.id.conversations_fragment) as ConversationsFragment
         profileFragment = fragmentManager.findFragmentById(R.id.profile_fragment) as ProfileFragment
         geoStoryCreation = fragmentManager.findFragmentById(R.id.geo_story_creation_fragment) as GeoStoryCreationFragment
-        overlappedIconsAdapter = OverlappedIconsAdapter(this, mutableListOf(), api, fragmentManager)
+        geoStoryView = fragmentManager.findFragmentById(R.id.geo_story_view_fragment) as GeoStoryViewFragment
+        overlappedIconsAdapter = OverlappedIconsAdapter(this, mutableListOf(), api, fragmentManager, geoStoryView)
         recyclerView = findViewById(R.id.overlapped_icons_recyclerview)
         recyclerView.adapter = overlappedIconsAdapter
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
@@ -126,6 +136,7 @@ class MapActivity: AppCompatActivity() {
         val transaction = fragmentManager.beginTransaction()
         transaction.hide(profileFragment)
         transaction.hide(conversationFragment)
+        transaction.hide(geoStoryView)
         transaction.hide(geoStoryCreation)
         transaction.commit()
 
@@ -249,7 +260,7 @@ class MapActivity: AppCompatActivity() {
 
 
     }
-    private fun toggleFragmentVisibility(fragment: Fragment) {
+    fun toggleFragmentVisibility(fragment: Fragment) {
         val transaction = fragmentManager.beginTransaction()
         transaction.setCustomAnimations(R.anim.slide_up, 0, 0, R.anim.slide_down)
         if (fragment.isVisible) {
@@ -343,6 +354,8 @@ class MapActivity: AppCompatActivity() {
             slideView(onCLickedOverlays, false)
         }
         if (isCenteredOnUser) {
+            clickedViewsAndTimeLayout.visibility = View.GONE
+            clickedGeoStoryViewFrame.visibility = View.GONE
             if (targetId != api.myUserId) {
                 val clickedFriend = api.getFriendsData().find{it.userData.userId == targetId}
                 if (clickedFriend != null) {
@@ -384,11 +397,35 @@ class MapActivity: AppCompatActivity() {
                 clickedIconDistanceAndSpeedLayout.visibility = View.GONE
                 clickedFriendNicknameTextView.text = getString(R.string.You)
             }
-        } else {
-            clickedFriendMessageFrame.visibility = View.GONE
-            clickedFriendProfileFrame.visibility = View.GONE
-            clickedIconDistanceAndSpeedLayout.visibility = View.GONE
-            clickedFriendNicknameTextView.text = getString(R.string.geo_story_by_format, "?")
+        } else { //focused on Geo Story
+            val geoStory = api.getGeoStoriesData().find {it.geoStoryId == targetId}
+            if (geoStory != null) {
+                clickedFriendMessageFrame.visibility = View.GONE
+                clickedFriendProfileFrame.visibility = View.GONE
+                clickedGeoStoryViewFrame.visibility = View.VISIBLE
+                clickedGeoStoryViewFrame.setOnClickListener {
+                    geoStoryView.nicknameText.text = geoStory.creatorData.nickname
+                    geoStoryView.userId = geoStory.creatorData.userId
+                    geoStoryView.viewCounter.text = geoStory.views.toString()
+                    geoStoryView.geoStoryId = targetId
+                    coroutineScope.launch {
+                        val bitmapPfp = api.getPictureData(geoStory.creatorData.profilePictureId)
+                        if (bitmapPfp != null) {
+                            geoStoryView.userPicture.setImageBitmap(bitmapPfp)
+                        }
+                        val bitmapGeo = api.getPictureData(geoStory.pictureId)
+                        if (bitmapGeo != null) {
+                            geoStoryView.geoStoryPicture.setImageBitmap(bitmapGeo)
+                        }
+                        toggleFragmentVisibility(geoStoryView)
+                    }
+                }
+                clickedIconDistanceAndSpeedLayout.visibility = View.GONE
+                clickedViewsAndTimeLayout.visibility = View.VISIBLE
+                clickedFriendNicknameTextView.text = getString(R.string.geo_story_by_format, geoStory.creatorData.nickname)
+                clickedGeoStoryViewsTextView.text = geoStory.views.toString()
+                clickedGeoStoryTimeTextView.text = ""
+            }
         }
         if (intersectedOverlays != overlappedIconsAdapter.getItemList()) {
             overlappedIconsAdapter.updateData(intersectedOverlays)
@@ -613,7 +650,8 @@ class OverlappedIconsAdapter(
     private val context: Context,
     private var itemList: MutableList<Pair<Int, Int>>,
     private val api: API,
-    private val fragmentManager: FragmentManager
+    private val fragmentManager: FragmentManager,
+    private val geoStoryViewFragment: GeoStoryViewFragment,
 ) : RecyclerView.Adapter<OverlappedIconsAdapter.OverlappedIconViewHolder>() {
     inner class OverlappedIconViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val pictureImageView: ShapeableImageView = itemView.findViewById(R.id.overlapped_picture)
@@ -676,7 +714,25 @@ class OverlappedIconsAdapter(
         holder.pictureImageView.setOnClickListener {
             if (item.first == 0) {
                 //show geo story
-                //TODO
+                val geoStory = api.getGeoStoriesData().find {it.geoStoryId == item.second}
+                if (geoStory != null) {
+                    geoStoryViewFragment.nicknameText.text = geoStory.creatorData.nickname
+                    geoStoryViewFragment.userId = geoStory.creatorData.userId
+                    geoStoryViewFragment.viewCounter.text = geoStory.views.toString()
+                    geoStoryViewFragment.geoStoryId = item.second
+                    holder.coroutineScope.launch {
+                        val bitmapPfp = api.getPictureData(geoStory.creatorData.profilePictureId)
+                        if (bitmapPfp != null) {
+                            geoStoryViewFragment.userPicture.setImageBitmap(bitmapPfp)
+                        }
+                        val bitmapGeo = api.getPictureData(geoStory.pictureId)
+                        if (bitmapGeo != null) {
+                            geoStoryViewFragment.geoStoryPicture.setImageBitmap(bitmapGeo)
+                        }
+                        (context as MapActivity).toggleFragmentVisibility(geoStoryViewFragment)
+                    }
+                }
+
             } else {
                 //show user profile
                 if (item.first != api.myUserId) {

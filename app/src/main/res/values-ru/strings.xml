@@ -53,4 +53,10 @@
     <string name="settings">Настройки</string>
     <string name="You">Это вы!</string>
     <string name="geo_story_by_format">Гео История от %s</string>
+    <string name="cant_message">Вы не можете написать этому человеку!</string>
+    <string name="geo_story_created">Гео История опубликована</string>
+    <string name="something_went_wrong">Что-то пошло не так :(</string>
+    <string name="friend_request_sent">Запрос был отправлен!</string>
+    <string name="user_not_found">Пользователь не найден</string>
+    <string name="pfp_updated">Фотография была обновлена!</string>
 </resources>

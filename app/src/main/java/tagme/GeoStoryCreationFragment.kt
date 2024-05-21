@@ -85,9 +85,9 @@ class GeoStoryCreationFragment : Fragment() {
                             geoStoryPreview.setImageResource(R.drawable.photo_bg)
                             geoStoryPreviewIcon.visibility = View.VISIBLE
                             compressingStatus.visibility = View.GONE
-                            Toast.makeText(requireActivity(), "Geo story was created", Toast.LENGTH_LONG).show()
+                            Toast.makeText(requireActivity(), getString(R.string.geo_story_created), Toast.LENGTH_LONG).show()
                         } else {
-                            Toast.makeText(requireActivity(), "Something went wrong", Toast.LENGTH_LONG).show()
+                            Toast.makeText(requireActivity(), getString(R.string.something_went_wrong), Toast.LENGTH_LONG).show()
                         }
                     }
                 }

@@ -125,14 +125,14 @@ class ProfileFragment : Fragment() {
                         inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
                         darkOverlay.visibility = View.GONE
                         addFriendWindow.visibility = View.GONE
-                        Toast.makeText(requireContext(), "Friend request was sent!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), getString(R.string.friend_request_sent), Toast.LENGTH_SHORT).show()
                         api.getFriendRequestsFromWS()
                         val updatedRequests = api.getFriendRequestData()
                         friendRequestAdapter.updateData(updatedRequests)
                     } else {
                         statusText.setTextColor(Color.RED)
                         if (message == "no user") {
-                            statusText.text = "User not found"
+                            statusText.text = getString(R.string.user_not_found)
                         } else {
                             statusText.text = message
                         }
@@ -152,7 +152,7 @@ class ProfileFragment : Fragment() {
                 if (api.lastInsertedPicId != 0) {
                     val message = api.setProfilePictureWS(api.lastInsertedPicId)?.getString("message")
                     if (message == "success") {
-                        Toast.makeText(parentActivity, "Profile picture was updated!", Toast.LENGTH_LONG).show()
+                        Toast.makeText(parentActivity, getString(R.string.pfp_updated), Toast.LENGTH_LONG).show()
                         api.myPfpId = api.lastInsertedPicId
                         parentActivity.customOverlaySelf!!.updateDrawable(BitmapDrawable(resources, api.getPictureData(api.myPfpId)))
                     }

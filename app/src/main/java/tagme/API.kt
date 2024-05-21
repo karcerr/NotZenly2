@@ -622,7 +622,7 @@ class API private constructor(context: Context){
     )
     data class GeoStoryData(
         val geoStoryId: Int,
-        var creatorData: UserData?,
+        var creatorData: UserData,
         val pictureId: Int,
         var privacy: String?,
         var views: Int?,
