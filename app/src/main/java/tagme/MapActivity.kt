@@ -8,6 +8,7 @@ import android.location.Location
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.text.method.LinkMovementMethod
 import android.transition.Slide
 import android.util.Log
 import android.view.*
@@ -18,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.text.HtmlCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
@@ -65,6 +67,7 @@ class MapActivity: AppCompatActivity() {
     private lateinit var clickedFriendNicknameTextView: TextView
     private lateinit var clickedFriendDistanceTextView: TextView
     private lateinit var clickedFriendSpeedTextView: TextView
+    private lateinit var copyrightOSV: TextView
     private lateinit var overlappedIconsAdapter: OverlappedIconsAdapter
     private lateinit var recyclerView: RecyclerView
     lateinit var myLatitude: String
@@ -105,6 +108,7 @@ class MapActivity: AppCompatActivity() {
         clickedFriendNicknameTextView = findViewById(R.id.nickname_text)
         clickedFriendDistanceTextView = findViewById(R.id.distance_text)
         clickedFriendSpeedTextView = findViewById(R.id.speed_text)
+        copyrightOSV = findViewById(R.id.copyright_OSV)
         clickedFriendProfileFrame = findViewById(R.id.friend_profile_frame)
         clickedFriendMessageFrame = findViewById(R.id.personal_message_frame)
         clickedIconDistanceAndSpeedLayout = findViewById(R.id.distance_and_speed_layout)
@@ -117,7 +121,8 @@ class MapActivity: AppCompatActivity() {
         recyclerView = findViewById(R.id.overlapped_icons_recyclerview)
         recyclerView.adapter = overlappedIconsAdapter
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-
+        copyrightOSV.text = HtmlCompat.fromHtml(getText(R.string.openstreetview).toString(), HtmlCompat.FROM_HTML_MODE_LEGACY)
+        copyrightOSV.movementMethod = (LinkMovementMethod.getInstance())
         val transaction = fragmentManager.beginTransaction()
         transaction.hide(profileFragment)
         transaction.hide(conversationFragment)
