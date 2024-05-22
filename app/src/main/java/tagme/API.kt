@@ -507,6 +507,7 @@ class API private constructor(context: Context){
                         latitude,
                         longitude,
                         timestamp,
+                        false
                     )
                 )
             }
@@ -628,7 +629,8 @@ class API private constructor(context: Context){
         var views: Int?,
         val latitude: Double,
         val longitude: Double,
-        var timestamp: Timestamp?
+        var timestamp: Timestamp?,
+        var viewed: Boolean
     )
     data class UserData(
         val userId: Int,
