@@ -389,11 +389,13 @@ class API private constructor(context: Context){
                 if (existingFriend.location == null) {
                     existingFriend.location = LocationData(latitude, longitude, accuracy, speed.toFloat(), timestamp)
                 } else {
-                    existingFriend.location?.latitude = latitude
-                    existingFriend.location?.longitude = longitude
-                    existingFriend.location?.accuracy = accuracy
-                    existingFriend.location?.speed = speed.toFloat()
-                    existingFriend.location?.timestamp = timestamp
+                    if (timestamp != existingFriend.location?.timestamp) {
+                        existingFriend.location?.latitude = latitude
+                        existingFriend.location?.longitude = longitude
+                        existingFriend.location?.accuracy = accuracy
+                        existingFriend.location?.speed = speed.toFloat()
+                        existingFriend.location?.timestamp = timestamp
+                    }
                 }
             }
         }
@@ -449,8 +451,7 @@ class API private constructor(context: Context){
                         LastMessageData(lastMessageAuthorId, lastMessageText, lastMessagePictureId, parseAndConvertTimestamp(timestampString), read)))
                 } else {
                     conversationsData.add(ConversationData(conversationId,
-                        UserData(userId, nickname, profilePictureId), mutableListOf(),
-                        null))
+                        UserData(userId, nickname, profilePictureId), mutableListOf(),null))
                 }
             } else {
                 existingConversation.userData = UserData(userId, nickname, profilePictureId)
@@ -471,7 +472,7 @@ class API private constructor(context: Context){
             val messageId = messageObject.getInt("message_id")
             val text = messageObject.getString("text")
             val timestampString = messageObject.getString("timestamp")
-            val timestamp = parseAndConvertTimestamp(timestampString)
+
             val ifRead = messageObject.getBoolean("read")
             val pictureId = messageObject.optInt("picture_id", 0)
             val existingConversation = conversationsData.find { it.conversationID == conversationId }
@@ -484,7 +485,7 @@ class API private constructor(context: Context){
                             authorId,
                             text,
                             pictureId,
-                            timestamp,
+                            parseAndConvertTimestamp(timestampString),
                             ifRead
                         )
                     )
@@ -506,7 +507,6 @@ class API private constructor(context: Context){
             val geoStoryId = geoStoryObject.getInt("geo_story_id")
             encounteredGeoStoryIds.add(geoStoryId)
             val timestampString = geoStoryObject.getString("timestamp")
-            val timestamp = parseAndConvertTimestamp(timestampString)
 
             val pictureId = geoStoryObject.optInt("picture_id", 0)
             val views = geoStoryObject.optInt("views", 0)
@@ -528,7 +528,7 @@ class API private constructor(context: Context){
                         views,
                         latitude,
                         longitude,
-                        timestamp,
+                        parseAndConvertTimestamp(timestampString),
                         false
                     )
                 )
