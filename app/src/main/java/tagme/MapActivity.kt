@@ -400,7 +400,7 @@ class MapActivity: AppCompatActivity() {
                 clickedFriendNicknameTextView.text = getString(R.string.You)
             }
         } else { //focusing on Geo Story
-            val geoStory = api.getGeoStoriesData().find {it.geoStoryId == targetId}
+            val geoStory = api.getGeoStoriesDataList().find {it.geoStoryId == targetId}
             if (geoStory != null) {
 
                 clickedFriendMessageFrame.visibility = View.GONE
@@ -509,7 +509,7 @@ class MapActivity: AppCompatActivity() {
                 delay(3000)
                 val friendsData = api.getFriendsData()
                 updateFriendOverlays(friendsData)
-                val updatedGeoStories = api.getGeoStoriesData()
+                val updatedGeoStories = api.getGeoStoriesDataList()
                 updateGeoStoryOverlays(updatedGeoStories)
             }
         }
@@ -679,7 +679,7 @@ class OverlappedIconsAdapter(
                     return newFriendData == friendData
                 } else {
                     val newGeoStoryId = newItemList[p1].second
-                    val newGeoStoryData = api.getGeoStoriesData().find {it.geoStoryId == newGeoStoryId}
+                    val newGeoStoryData = api.getGeoStoriesDataList().find {it.geoStoryId == newGeoStoryId}
                     return newGeoStoryData == geoStoryData
                 }
             }
@@ -699,7 +699,7 @@ class OverlappedIconsAdapter(
         if (userId != 0)
             friendData = api.getFriendsData().find { it.userData.userId == userId }
         else
-            geoStoryData = api.getGeoStoriesData().find {it.geoStoryId == geoStoryId}
+            geoStoryData = api.getGeoStoriesDataList().find {it.geoStoryId == geoStoryId}
         val picId = if(userId == 0) geoStoryData?.pictureId else
             friendData?.userData?.profilePictureId
         val shapeAppearanceModelStyle = if(userId == 0) R.style.roundImageViewGeoStoryOverlap else R.style.roundImageViewFriendOverlap
@@ -742,7 +742,7 @@ class OverlappedIconsAdapter(
         holder.pictureImageView.setOnClickListener {
             if (item.first == 0) {
                 //show geo story
-                val geoStory = api.getGeoStoriesData().find {it.geoStoryId == item.second}
+                val geoStory = api.getGeoStoriesDataList().find {it.geoStoryId == item.second}
                 if (geoStory != null) {
                     openGeoStory(geoStory, geoStoryViewFragment, (context as MapActivity))
                     holder.pictureBgImageView.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.overlapped_geostory_viewed_bg))
@@ -766,7 +766,7 @@ class OverlappedIconsAdapter(
     }
 }
 fun openGeoStory(geoStoryData: API.GeoStoryData, geoStoryViewFragment: GeoStoryViewFragment, context: MapActivity){
-    geoStoryData.viewed = true
+    context.api.markGeoStoryViewed(geoStoryData.geoStoryId)
     geoStoryViewFragment.nicknameText.text = geoStoryData.creatorData.nickname
     geoStoryViewFragment.userId = geoStoryData.creatorData.userId
     geoStoryViewFragment.viewCounter.text = geoStoryData.views.toString()

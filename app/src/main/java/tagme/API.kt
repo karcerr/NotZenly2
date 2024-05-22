@@ -54,7 +54,20 @@ class API private constructor(context: Context){
     private val friendsData =  Collections.synchronizedList(mutableListOf<FriendData>())
     private val friendsRequestsData =  Collections.synchronizedList(mutableListOf<FriendRequestData>())
     private val conversationsData = Collections.synchronizedList(mutableListOf<ConversationData>())
-    private val geoStoriesData = Collections.synchronizedList(mutableListOf<GeoStoryData>())
+    private var geoStoriesData: List<GeoStoryData>
+        get() {
+            val jsonString = sharedPreferences.getString("GEOSTORIES_DATA", null)
+            return if (jsonString != null) {
+                deserializeGeoStoriesData(jsonString)
+            } else {
+                mutableListOf()
+            }
+        }
+        set(value) {
+            val jsonString = serializeGeoStoriesData(value)
+            sharedPreferences.edit().putString("GEOSTORIES_DATA", jsonString).apply()
+        }
+
     private var picsData: List<PictureData>
         get() {
             val jsonString = sharedPreferences.getString("PICTURES_DATA", null)
@@ -483,9 +496,10 @@ class API private constructor(context: Context){
             }
         }
     }
-    private fun parseGeoStoriesNearby(jsonString: String){
+    private fun parseGeoStoriesNearby(jsonString: String) {
         val result = JSONObject(jsonString).getJSONArray("result")
         val encounteredGeoStoryIds = mutableListOf<Int>()
+        val updatedGeoStoriesData = geoStoriesData.toMutableList()
 
         for (i in 0 until result.length()) {
             val geoStoryObject = result.getJSONObject(i)
@@ -501,12 +515,11 @@ class API private constructor(context: Context){
             val creatorId = geoStoryObject.getInt("creator_id")
             val creatorNickname = geoStoryObject.getString("nickname")
             val creatorPicId = geoStoryObject.optInt("profile_picture_id", 0)
-
             val privacy = geoStoryObject.getString("privacy")
 
-            val existingGeoStory = geoStoriesData.find { it.geoStoryId == geoStoryId }
+            val existingGeoStory = updatedGeoStoriesData.find { it.geoStoryId == geoStoryId }
             if (existingGeoStory == null) {
-                geoStoriesData.add(
+                updatedGeoStoriesData.add(
                     GeoStoryData(
                         geoStoryId,
                         UserData(creatorId, creatorNickname, creatorPicId),
@@ -523,8 +536,10 @@ class API private constructor(context: Context){
                 existingGeoStory.views = views
             }
         }
-        geoStoriesData.removeIf { geoStory -> !encounteredGeoStoryIds.contains(geoStory.geoStoryId) }
+        updatedGeoStoriesData.removeIf { geoStory -> !encounteredGeoStoryIds.contains(geoStory.geoStoryId) }
+        geoStoriesData = updatedGeoStoriesData
     }
+
     private fun addSeparatorIfNeeded(messages: MutableList<MessageData>) {
         if (messages.isEmpty()) return
         val currentMessage = messages.map{it.copy()}.last()
@@ -594,7 +609,7 @@ class API private constructor(context: Context){
     fun getFriendsData(): MutableList<FriendData> {
         return friendsData
     }
-    fun getGeoStoriesData(): MutableList<GeoStoryData> {
+    fun getGeoStoriesDataList(): List<GeoStoryData> {
         return geoStoriesData
     }
     fun getFriendRequestData(): MutableList<FriendRequestData> {
@@ -678,7 +693,6 @@ class API private constructor(context: Context){
         val read: Boolean
     )
 
-
     companion object {
         @Volatile
         private var instance: API? = null
@@ -689,6 +703,26 @@ class API private constructor(context: Context){
             }
         }
     }
+    private fun serializeGeoStoriesData(geoStoriesData: List<GeoStoryData>): String {
+        val gson = Gson()
+        return gson.toJson(geoStoriesData)
+    }
+
+    private fun deserializeGeoStoriesData(jsonString: String): List<GeoStoryData> {
+        val gson = Gson()
+        val type = object : TypeToken<List<GeoStoryData>>() {}.type
+        return gson.fromJson(jsonString, type)
+    }
+    fun markGeoStoryViewed(geoStoryId: Int) {
+        val updatedGeoStoriesData = geoStoriesData.toMutableList()
+        val geoStoryIndex = updatedGeoStoriesData.indexOfFirst { it.geoStoryId == geoStoryId }
+        if (geoStoryIndex != -1) {
+            val updatedGeoStory = updatedGeoStoriesData[geoStoryIndex].copy(viewed = true)
+            updatedGeoStoriesData[geoStoryIndex] = updatedGeoStory
+            geoStoriesData = updatedGeoStoriesData
+        }
+    }
+
     private fun serializePicturesData(picturesData: List<PictureData>): String {
         val gson = Gson()
         return gson.toJson(picturesData)
