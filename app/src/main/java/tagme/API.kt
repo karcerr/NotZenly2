@@ -793,17 +793,17 @@ class API private constructor(context: Context){
         val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault())
         dateFormat.timeZone = TimeZone.getTimeZone("GMT+3")
         val parsedTimestamp = dateFormat.parse(timestampString)
+
         if (parsedTimestamp != null) {
             val calendar = Calendar.getInstance()
             calendar.time = parsedTimestamp
-            val phoneTimeZone = calendar.timeZone
-            val offset = phoneTimeZone.getOffset(calendar.timeInMillis)
-            val adjustedTimestamp = Timestamp(parsedTimestamp.time + offset)
+            val adjustedTimestamp = Timestamp(calendar.timeInMillis)
             return adjustedTimestamp
-        }else {
+        } else {
             throw IllegalArgumentException("Failed to parse timestamp: $timestampString")
         }
     }
+
     private fun generateRequestId(): Int {
         return requestIdCounter.getAndIncrement()
     }

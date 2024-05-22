@@ -413,9 +413,9 @@ class MapActivity: AppCompatActivity() {
                 clickedViewsAndTimeLayout.visibility = View.VISIBLE
                 clickedFriendNicknameTextView.text = getString(R.string.geo_story_by_format, geoStory.creatorData.nickname)
                 clickedGeoStoryViewsTextView.text = geoStory.views.toString()
-                val timestampDateTime = LocalDateTime.parse(geoStory.timestamp.toString(), dateFormatter)
+                val timestampLocalDateTime = LocalDateTime.parse(geoStory.timestamp.toString(), dateFormatter)
                 val now = LocalDateTime.now()
-                val duration = Duration.between(timestampDateTime, now)
+                val duration = Duration.between(timestampLocalDateTime, now)
                 val timestampText = when {
                     duration.seconds < 60 -> getString(R.string.seconds_ago_format, duration.seconds)
                     duration.toMinutes() < 60 -> getString(R.string.minutes_ago_format, duration.toMinutes())
