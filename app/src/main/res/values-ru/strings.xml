@@ -59,7 +59,7 @@
     <string name="friend_request_sent">Запрос был отправлен!</string>
     <string name="user_not_found">Пользователь не найден</string>
     <string name="pfp_updated">Фотография была обновлена!</string>
-    <string name="seconds_ago_format">%d секунд назад</string>
-    <string name="minutes_ago_format">%d минут назад</string>
-    <string name="hours_ago_format">%d часов назад</string>
+    <string name="seconds_ago_format">%d сек. назад</string>
+    <string name="minutes_ago_format">%d мин. назад</string>
+    <string name="hours_ago_format">%d ч. назад</string>
 </resources>
