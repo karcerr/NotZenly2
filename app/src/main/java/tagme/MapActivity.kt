@@ -772,6 +772,7 @@ fun openGeoStory(geoStoryData: API.GeoStoryData, geoStoryViewFragment: GeoStoryV
         if (bitmapGeo != null) {
             geoStoryViewFragment.geoStoryPicture.setImageBitmap(bitmapGeo)
         }
+        context.api.addViewGeoStory(geoStoryData.geoStoryId)
         context.toggleFragmentVisibility(geoStoryViewFragment)
     }
 }

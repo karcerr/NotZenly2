@@ -313,6 +313,14 @@ class API private constructor(context: Context){
         }
         return sendRequestToWS(requestData)
     }
+    suspend fun addViewGeoStory(geoStoryId: Int): JSONObject? {
+        val requestData = JSONObject().apply {
+            put("action", "add view to geo story")
+            put("token", myToken)
+            put("geostory_id", geoStoryId)
+        }
+        return sendRequestToWS(requestData)
+    }
 
     private fun parseFriendsData(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
