@@ -673,7 +673,15 @@ class OverlappedIconsAdapter(
             }
 
             override fun areContentsTheSame(p0: Int, p1: Int): Boolean {
-                return true
+                val newUserId = newItemList[p1].first
+                if (newUserId != 0) {
+                    val newFriendData = api.getFriendsData().find { it.userData.userId == newUserId }
+                    return newFriendData == friendData
+                } else {
+                    val newGeoStoryId = newItemList[p1].second
+                    val newGeoStoryData = api.getGeoStoriesData().find {it.geoStoryId == newGeoStoryId}
+                    return newGeoStoryData == geoStoryData
+                }
             }
         })
         diffResult.dispatchUpdatesTo(this)

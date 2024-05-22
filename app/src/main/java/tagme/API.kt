@@ -324,10 +324,11 @@ class API private constructor(context: Context){
 
     private fun parseFriendsData(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
-
+        val encounteredUserIds = mutableListOf<Int>()
         for (i in 0 until result.length()) {
             val friendObject = result.getJSONObject(i)
             val id = friendObject.getInt("user_id")
+            encounteredUserIds.add(id)
             val nickname = friendObject.getString("nickname")
             val pictureId = friendObject.optInt("picture_id", 0)
             val existingFriend = friendsData.find { it.userData.userId == id }
@@ -335,6 +336,7 @@ class API private constructor(context: Context){
                 friendsData.add(FriendData(UserData(id, nickname, pictureId), null))
             }
         }
+        friendsData.removeIf { friend -> !encounteredUserIds.contains(friend.userData.userId) }
     }
     private fun parsePictureData(context: Context, jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
@@ -359,7 +361,6 @@ class API private constructor(context: Context){
     }
     private fun parseFriendLocationsData(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
-
         for (i in 0 until result.length()) {
             val locationObject = result.getJSONObject(i)
             val id = locationObject.getInt("user_id")
@@ -370,6 +371,7 @@ class API private constructor(context: Context){
             val timestampString = locationObject.getString("timestamp")
             val timestamp = parseAndConvertTimestamp(timestampString)
             val existingFriend = friendsData.find { it.userData.userId == id }
+
             if (existingFriend != null) {
                 if (existingFriend.location == null) {
                     existingFriend.location = LocationData(latitude, longitude, accuracy, speed.toFloat(), timestamp)
@@ -476,7 +478,7 @@ class API private constructor(context: Context){
                     existingConversation.messages.sortBy { it.timestamp }
                     addSeparatorIfNeeded(existingConversation.messages)
                 } else {
-                    //TBA: editing of existing images
+                    //TODO: editing of existing images
                 }
             }
         }
@@ -502,7 +504,6 @@ class API private constructor(context: Context){
 
             val privacy = geoStoryObject.getString("privacy")
 
-
             val existingGeoStory = geoStoriesData.find { it.geoStoryId == geoStoryId }
             if (existingGeoStory == null) {
                 geoStoriesData.add(
@@ -518,6 +519,8 @@ class API private constructor(context: Context){
                         false
                     )
                 )
+            } else {
+                existingGeoStory.views = views
             }
         }
         geoStoriesData.removeIf { geoStory -> !encounteredGeoStoryIds.contains(geoStory.geoStoryId) }
@@ -565,7 +568,7 @@ class API private constructor(context: Context){
     }
     private fun parseFriendRequestData(jsonString: String) {
         val result = JSONObject(jsonString).getJSONArray("result")
-        val userIdsInResult = HashSet<Int>()
+        val encounteredUserIds = mutableListOf<Int>()
 
         for (i in 0 until result.length()) {
             val requestObject = result.getJSONObject(i)
@@ -574,7 +577,7 @@ class API private constructor(context: Context){
             val relation = requestObject.getString("relation")
             val pictureId = requestObject.optInt("picture_id", 0)
 
-            userIdsInResult.add(id)
+            encounteredUserIds.add(id)
             val existingFriendRequest = friendsRequestsData.find { it.userData.userId == id }
             if (existingFriendRequest != null) {
                 existingFriendRequest.userData.nickname = nickname
@@ -584,14 +587,7 @@ class API private constructor(context: Context){
                 friendsRequestsData.add(FriendRequestData(UserData(id, nickname, pictureId), relation))
             }
         }
-
-        val iterator = friendsRequestsData.iterator()
-        while (iterator.hasNext()) {
-            val friendRequest = iterator.next()
-            if (friendRequest.userData.userId !in userIdsInResult) {
-                iterator.remove()
-            }
-        }
+        friendsRequestsData.removeIf { friendRequest -> !encounteredUserIds.contains(friendRequest.userData.userId)}
     }
 
 
