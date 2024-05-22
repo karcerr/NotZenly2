@@ -62,5 +62,6 @@
     <string name="seconds_ago_format">%d s. ago</string>
     <string name="minutes_ago_format">%d m. ago</string>
     <string name="hours_ago_format">%d h. ago</string>
+    <string name="connect_error">Connection to the server was lost</string>
 
 </resources>

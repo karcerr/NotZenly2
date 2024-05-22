@@ -64,6 +64,7 @@
     <string name="geo_story_created">Geo story was created</string>
     <string name="something_went_wrong">Something went wrong!</string>
     <string name="friend_request_sent">Friend request was sent!</string>
+    <string name="connect_error">Connection to the server was lost</string>
     <string name="user_not_found">User not found</string>
     <string name="pfp_updated">Profile picture was updated!</string>
     <string name="openstreetview" translatable="false">
