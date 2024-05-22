@@ -737,6 +737,7 @@ class OverlappedIconsAdapter(
                 val geoStory = api.getGeoStoriesData().find {it.geoStoryId == item.second}
                 if (geoStory != null) {
                     openGeoStory(geoStory, geoStoryViewFragment, (context as MapActivity))
+                    holder.pictureBgImageView.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.overlapped_geostory_viewed_bg))
                 }
             } else {
                 //show user profile
