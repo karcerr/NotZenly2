@@ -38,6 +38,7 @@ class API private constructor(context: Context){
         set(value) {
             sharedPreferences.edit().putString("TOKEN", value).apply()
         }
+
     var myUserId: Int
         get() = sharedPreferences.getInt("UserID", 0)
         set(value) {
