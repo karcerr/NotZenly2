@@ -325,8 +325,11 @@ class FriendAdapter(
         }
 
         holder.friendLayout.setOnClickListener {
-            val userProfileDialog = UserProfileDialogFragment.newInstance(friend.userData.userId)
-            userProfileDialog.show(mapActivity.supportFragmentManager, "userProfileDialog")
+            val userProfileFragment = UserProfileFragment.newInstance(friend.userData.userId)
+            mapActivity.fragmentManager.beginTransaction()
+                .replace(R.id.profile_fragment, userProfileFragment)
+                .addToBackStack(null)
+                .commit()
         }
         holder.locateButton.setOnClickListener {
             val friendLocation = GeoPoint(friend.location!!.latitude, friend.location!!.longitude)
@@ -429,8 +432,11 @@ class FriendRequestAdapter(
                 incomingHolder.acceptButton.tag = requestee.userData.userId
                 incomingHolder.denyButton.tag = requestee.userData.userId
                 incomingHolder.requestUserButton.setOnClickListener {
-                    val userProfileDialog = UserProfileDialogFragment.newInstance(requestee.userData.userId)
-                    userProfileDialog.show(mapActivity.supportFragmentManager, "userProfileDialog")
+                    val userProfileFragment = UserProfileFragment.newInstance(requestee.userData.userId)
+                    mapActivity.fragmentManager.beginTransaction()
+                        .replace(R.id.profile_fragment, userProfileFragment)
+                        .addToBackStack(null)
+                        .commit()
                 }
                 holder.pictureImageView.setImageDrawable(drawablePlaceholder)
                 if (requestee.userData.profilePictureId != 0) {
@@ -474,8 +480,11 @@ class FriendRequestAdapter(
                 outgoingHolder.nameTextView.text = requestee.userData.nickname
                 outgoingHolder.cancelButton.tag = requestee.userData.userId
                 outgoingHolder.requestUserButton.setOnClickListener {
-                    val userProfileDialog = UserProfileDialogFragment.newInstance(requestee.userData.userId)
-                    userProfileDialog.show(mapActivity.supportFragmentManager, "userProfileDialog")
+                    val userProfileFragment = UserProfileFragment.newInstance(requestee.userData.userId)
+                    mapActivity.fragmentManager.beginTransaction()
+                        .replace(R.id.profile_fragment, userProfileFragment)
+                        .addToBackStack(null)
+                        .commit()
                 }
                 holder.pictureImageView.setImageDrawable(drawablePlaceholder)
                 if (requestee.userData.profilePictureId != 0) {

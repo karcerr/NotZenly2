@@ -33,7 +33,6 @@ class API private constructor(context: Context){
     private val requestIdCounter = AtomicInteger(0)
     private val requestMap = Collections.synchronizedMap(mutableMapOf<Int, Pair<CompletableFuture<JSONObject?>, String>>())
     private val pictureMutex = Mutex()
-
     var myToken: String?
         get() = sharedPreferences.getString("TOKEN", null)
         set(value) {
@@ -222,6 +221,14 @@ class API private constructor(context: Context){
         val requestData = JSONObject().apply {
             put("action", "get friend requests")
             put("token", myToken)
+        }
+        return sendRequestToWS(requestData)
+    }
+    suspend fun loadProfileFromWS(userId: Int): JSONObject? {
+        val requestData = JSONObject().apply {
+            put("action", "load profile")
+            put("token", myToken)
+            put("user_id", userId)
         }
         return sendRequestToWS(requestData)
     }
@@ -793,7 +800,7 @@ class API private constructor(context: Context){
         return result
     }
 
-    private fun parseAndConvertTimestamp(timestampString: String): Timestamp {
+    fun parseAndConvertTimestamp(timestampString: String): Timestamp {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault())
         dateFormat.timeZone = TimeZone.getTimeZone("GMT+3")
         val parsedTimestamp = dateFormat.parse(timestampString)

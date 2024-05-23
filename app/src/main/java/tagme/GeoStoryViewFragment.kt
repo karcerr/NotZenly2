@@ -12,7 +12,7 @@ import androidx.fragment.app.Fragment
 import com.example.tagme.R
 
 class GeoStoryViewFragment : Fragment() {
-    private lateinit var parentActivity: MapActivity
+    private lateinit var mapActivity: MapActivity
     private lateinit var api: API
     var geoStoryId: Int = 0
     var userId: Int = 0
@@ -32,11 +32,11 @@ class GeoStoryViewFragment : Fragment() {
         geoStoryPicture = view.findViewById(R.id.geo_story_picture)
         userPicture = view.findViewById(R.id.user_picture)
         msgButton = view.findViewById(R.id.msg_button)
-        parentActivity = requireActivity() as MapActivity
-        api = parentActivity.api
+        mapActivity = requireActivity() as MapActivity
+        api = mapActivity.api
         val backButton = view.findViewById<ImageButton>(R.id.back_button)
         backButton.setOnClickListener{
-            parentActivity.onBackPressedDispatcher.onBackPressed()
+            mapActivity.onBackPressedDispatcher.onBackPressed()
         }
 
         msgButton.setOnClickListener {
@@ -45,7 +45,7 @@ class GeoStoryViewFragment : Fragment() {
                 if (conversation != null) {
                     val conversationFragment =
                         ConversationFragment.newInstance(conversation.conversationID, conversation.userData.nickname)
-                    parentActivity.supportFragmentManager.beginTransaction()
+                    mapActivity.supportFragmentManager.beginTransaction()
                         .replace(R.id.profile_fragment, conversationFragment)
                         .addToBackStack(null)
                         .commit()
@@ -56,8 +56,11 @@ class GeoStoryViewFragment : Fragment() {
         }
         userPicture.setOnClickListener {
             if (userId != 0 && userId != api.myUserId) {
-                val userProfileDialog = UserProfileDialogFragment.newInstance(userId)
-                userProfileDialog.show(parentActivity.supportFragmentManager, "userProfileDialog")
+                val userProfileFragment = UserProfileFragment.newInstance(userId)
+                mapActivity.fragmentManager.beginTransaction()
+                    .replace(R.id.profile_fragment, userProfileFragment)
+                    .addToBackStack(null)
+                    .commit()
             }
         }
         return view

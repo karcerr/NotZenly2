@@ -1,7 +1,6 @@
 package tagme
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.RenderEffect
 import android.graphics.Shader
@@ -96,7 +95,7 @@ class MapActivity: AppCompatActivity() {
     //these are for storing friends and drawing overlays:
     private val friendOverlays: MutableMap<Int, CustomIconOverlay> = mutableMapOf()
     private val geoStoryOverlays: MutableMap<Int, CustomIconOverlay> = mutableMapOf()
-    private lateinit var fragmentManager : FragmentManager
+    lateinit var fragmentManager : FragmentManager
     private val handler = Handler(Looper.getMainLooper())
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -131,7 +130,7 @@ class MapActivity: AppCompatActivity() {
         profileFragment = fragmentManager.findFragmentById(R.id.profile_fragment) as ProfileFragment
         geoStoryCreation = fragmentManager.findFragmentById(R.id.geo_story_creation_fragment) as GeoStoryCreationFragment
         geoStoryView = fragmentManager.findFragmentById(R.id.geo_story_view_fragment) as GeoStoryViewFragment
-        overlappedIconsAdapter = OverlappedIconsAdapter(this, mutableListOf(), api, fragmentManager, geoStoryView)
+        overlappedIconsAdapter = OverlappedIconsAdapter(this, mutableListOf(), api, geoStoryView)
         recyclerView = findViewById(R.id.overlapped_icons_recyclerview)
         recyclerView.adapter = overlappedIconsAdapter
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
@@ -379,8 +378,11 @@ class MapActivity: AppCompatActivity() {
                     }
                     clickedFriendProfileFrame.visibility = View.VISIBLE
                     clickedFriendProfileFrame.setOnClickListener {
-                        val userProfileDialog = UserProfileDialogFragment.newInstance(clickedFriend.userData.userId)
-                        userProfileDialog.show(fragmentManager, "userProfileDialog")
+                        val userProfileFragment = UserProfileFragment.newInstance(clickedFriend.userData.userId)
+                        fragmentManager.beginTransaction()
+                            .replace(R.id.profile_fragment, userProfileFragment)
+                            .addToBackStack(null)
+                            .commit()
                     }
                     clickedFriendMessageFrame.visibility = View.VISIBLE
                     clickedFriendMessageFrame.setOnClickListener {
@@ -645,10 +647,9 @@ class MapActivity: AppCompatActivity() {
 }
 
 class OverlappedIconsAdapter(
-    private val context: Context,
+    private val mapActivity: MapActivity,
     private var itemList: MutableList<Pair<Int, Int>>,
     private val api: API,
-    private val fragmentManager: FragmentManager,
     private val geoStoryViewFragment: GeoStoryViewFragment,
 ) : RecyclerView.Adapter<OverlappedIconsAdapter.OverlappedIconViewHolder>() {
     private var friendData: API.FriendData? = null
@@ -715,15 +716,15 @@ class OverlappedIconsAdapter(
                 }
             else
                 R.drawable.overlapped_friend_bg
-        holder.pictureBgImageView.setImageDrawable(ContextCompat.getDrawable(context, pictureBgStyle))
+        holder.pictureBgImageView.setImageDrawable(ContextCompat.getDrawable(mapActivity, pictureBgStyle))
         holder.pictureImageView.shapeAppearanceModel = ShapeAppearanceModel.builder(
-            context,
+            mapActivity,
             0,
             shapeAppearanceModelStyle
         ).build()
 
 
-        val drawablePlaceholder = ContextCompat.getDrawable(context, R.drawable.person_placeholder)
+        val drawablePlaceholder = ContextCompat.getDrawable(mapActivity, R.drawable.person_placeholder)
         holder.pictureImageView.setImageDrawable(drawablePlaceholder)
         if (picId != null) {
             if (userId == 0) {
@@ -744,14 +745,16 @@ class OverlappedIconsAdapter(
                 //show geo story
                 val geoStory = api.getGeoStoriesDataList().find {it.geoStoryId == item.second}
                 if (geoStory != null) {
-                    openGeoStory(geoStory, geoStoryViewFragment, (context as MapActivity))
-                    holder.pictureBgImageView.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.overlapped_geostory_viewed_bg))
+                    openGeoStory(geoStory, geoStoryViewFragment, mapActivity)
+                    holder.pictureBgImageView.setImageDrawable(ContextCompat.getDrawable(mapActivity, R.drawable.overlapped_geostory_viewed_bg))
                 }
             } else {
-                //show user profile
                 if (item.first != api.myUserId) {
-                    val userProfileDialog = UserProfileDialogFragment.newInstance(item.first)
-                    userProfileDialog.show(fragmentManager, "userProfileDialog")
+                    val userProfileFragment = UserProfileFragment.newInstance(item.first)
+                    mapActivity.fragmentManager.beginTransaction()
+                        .replace(R.id.profile_fragment, userProfileFragment)
+                        .addToBackStack(null)
+                        .commit()
                 }
             }
             Log.d("Tagme_overlapped", "$itemList, $item")
