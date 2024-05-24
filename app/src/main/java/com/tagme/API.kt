@@ -6,7 +6,6 @@ import android.graphics.BitmapFactory
 import android.util.Log
 import android.widget.Toast
 import androidx.core.content.ContextCompat.getString
-import com.tagme.R
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.future.await
@@ -32,11 +31,12 @@ class API private constructor(context: Context){
     private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
     private var lastInsertedPictureDataString = ""
-    var lastInsertedPicId = 0
     private val requestIdCounter = AtomicInteger(0)
     private val requestMap = Collections.synchronizedMap(mutableMapOf<Int, Pair<CompletableFuture<JSONObject?>, String>>())
     private val pictureMutex = Mutex()
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
+    var lastInsertedPicId = 0
+
     var myToken: String?
         get() = sharedPreferences.getString("TOKEN", null)
         set(value) {
