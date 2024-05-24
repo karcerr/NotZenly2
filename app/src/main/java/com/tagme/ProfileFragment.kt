@@ -98,7 +98,7 @@ class ProfileFragment : Fragment() {
         friendRequestsRecyclerView = view.findViewById(R.id.friend_requests_recycler_view)
         friendRequestAdapter = FriendRequestAdapter(
             requireContext(),
-            api.getFriendRequestData(),
+            api.getFriendRequestDataList().toMutableList(),
             api,
             friendAdapter,
             mapActivity)
@@ -127,7 +127,7 @@ class ProfileFragment : Fragment() {
                         addFriendWindow.visibility = View.GONE
                         Toast.makeText(requireContext(), getString(R.string.friend_request_sent), Toast.LENGTH_SHORT).show()
                         api.getFriendRequestsFromWS()
-                        val updatedRequests = api.getFriendRequestData()
+                        val updatedRequests = api.getFriendRequestDataList()
                         friendRequestAdapter.updateData(updatedRequests)
                     } else {
                         statusText.setTextColor(Color.RED)
@@ -176,7 +176,7 @@ class ProfileFragment : Fragment() {
         friendRequestUpdateRunnable = Runnable {
             CoroutineScope(Dispatchers.Main).launch {
                 api.getFriendRequestsFromWS()
-                val updatedFriendRequests = api.getFriendRequestData()
+                val updatedFriendRequests = api.getFriendRequestDataList()
                 (friendRequestsRecyclerView.adapter as? FriendRequestAdapter)?.updateData(updatedFriendRequests)
                 friendRequestUpdateHandler?.postDelayed(friendRequestUpdateRunnable!!, friendRequestInterval)
             }
@@ -344,7 +344,7 @@ class FriendAdapter(
             mapActivity.onBackPressedDispatcher.onBackPressed()
         }
         holder.messageButton.setOnClickListener {
-            val conversation = api.getConversationsData().find { it.userData.userId == friend.userData.userId }
+            val conversation = api.getConversationsDataList().find { it.userData.userId == friend.userData.userId }
             if (conversation != null) {
                 val conversationFragment =
                     ConversationFragment.newInstance(conversation.conversationID, conversation.userData.nickname)

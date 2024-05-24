@@ -8,7 +8,6 @@ import android.widget.*
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import com.tagme.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -98,7 +97,7 @@ class UserProfileFragment : Fragment() {
                     "outgoing" -> {
                         relationText.setTextColor(ContextCompat.getColor(mapActivity, R.color.white))
                         relationText.text = getString(R.string.outgoing_request)
-                        val requestee = api.getFriendRequestData().find {it.userData.userId == userId}
+                        val requestee = api.getFriendRequestDataList().find {it.userData.userId == userId}
                         if (requestee != null) {
                             nickname.text = requestee.userData.nickname
                             pfpId = requestee.userData.profilePictureId
@@ -109,7 +108,7 @@ class UserProfileFragment : Fragment() {
                     "incoming" -> {
                         relationText.setTextColor(ContextCompat.getColor(mapActivity, R.color.white))
                         relationText.text = getString(R.string.incoming_request)
-                        val requestee = api.getFriendRequestData().find {it.userData.userId == userId}
+                        val requestee = api.getFriendRequestDataList().find {it.userData.userId == userId}
                         if (requestee != null) {
                             nickname.text = requestee.userData.nickname
                             pfpId = requestee.userData.profilePictureId

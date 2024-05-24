@@ -65,7 +65,7 @@ class MapActivity: AppCompatActivity() {
     private lateinit var clickedViewsAndTimeLayout: LinearLayout
     private lateinit var onCLickedOverlays: LinearLayout
     private lateinit var profileFragment: ProfileFragment
-    private lateinit var conversationFragment: ConversationsFragment
+    private lateinit var conversationsFragment: ConversationsFragment
     private lateinit var geoStoryCreation: GeoStoryCreationFragment
     private lateinit var geoStoryView: GeoStoryViewFragment
     private lateinit var clickedFriendNicknameTextView: TextView
@@ -123,7 +123,7 @@ class MapActivity: AppCompatActivity() {
         clickedViewsAndTimeLayout = findViewById(R.id.views_and_time_layout)
         // Initializing and hiding fragments
         fragmentManager = supportFragmentManager
-        conversationFragment = fragmentManager.findFragmentById(R.id.conversations_fragment) as ConversationsFragment
+        conversationsFragment = fragmentManager.findFragmentById(R.id.conversations_fragment) as ConversationsFragment
         profileFragment = fragmentManager.findFragmentById(R.id.profile_fragment) as ProfileFragment
         geoStoryCreation = fragmentManager.findFragmentById(R.id.geo_story_creation_fragment) as GeoStoryCreationFragment
         geoStoryView = fragmentManager.findFragmentById(R.id.geo_story_view_fragment) as GeoStoryViewFragment
@@ -135,7 +135,7 @@ class MapActivity: AppCompatActivity() {
         copyrightOSV.movementMethod = (LinkMovementMethod.getInstance())
         val transaction = fragmentManager.beginTransaction()
         transaction.hide(profileFragment)
-        transaction.hide(conversationFragment)
+        transaction.hide(conversationsFragment)
         transaction.hide(geoStoryView)
         transaction.hide(geoStoryCreation)
         transaction.commit()
@@ -221,7 +221,7 @@ class MapActivity: AppCompatActivity() {
             coroutineScope.launch {
                 api.getFriendRequestsFromWS()
                 api.getFriendsFromWS()
-                val updatedRequests = api.getFriendRequestData()
+                val updatedRequests = api.getFriendRequestDataList()
                 val updatedFriends = api.getFriendsData()
                 profileFragment.friendRequestAdapter.updateData(updatedRequests)
                 profileFragment.friendAdapter.updateData(updatedFriends)
@@ -233,10 +233,10 @@ class MapActivity: AppCompatActivity() {
         messagesButtonFrame.setOnClickListener {
             coroutineScope.launch {
                 api.getConversationsFromWS()
-                val updatedConversations = api.getConversationsData()
-                conversationFragment.conversationsAdapter.updateData(updatedConversations)
+                val updatedConversations = api.getConversationsDataList()
+                conversationsFragment.conversationsAdapter.updateData(updatedConversations)
             }
-            toggleFragmentVisibility(conversationFragment)
+            toggleFragmentVisibility(conversationsFragment)
         }
         createGeoStoryFrame.setOnClickListener {
             toggleFragmentVisibility(geoStoryCreation)
@@ -386,7 +386,7 @@ class MapActivity: AppCompatActivity() {
                     }
                     clickedFriendMessageFrame.visibility = View.VISIBLE
                     clickedFriendMessageFrame.setOnClickListener {
-                        val conversation = api.getConversationsData().find {it.userData.userId == clickedFriend.userData.userId}
+                        val conversation = api.getConversationsDataList().find {it.userData.userId == clickedFriend.userData.userId}
                         if (conversation == null) return@setOnClickListener
                         val conversationFragment = ConversationFragment.newInstance(conversation.conversationID, conversation.userData.nickname)
                         fragmentManager.beginTransaction()
@@ -643,6 +643,9 @@ class MapActivity: AppCompatActivity() {
         friendOverlays.clear()
         profileFragment.friendRequestUpdateHandler?.removeCallbacksAndMessages(null)
         profileFragment.friendRequestUpdateHandler = null
+        conversationsFragment.conversationUpdateHandler?.removeCallbacksAndMessages(null)
+        profileFragment.friendRequestUpdateHandler = null
+
         coroutineScope.cancel()
     }
 }

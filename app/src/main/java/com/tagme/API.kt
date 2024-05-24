@@ -59,8 +59,32 @@ class API private constructor(context: Context){
             sharedPreferences.edit().putString("NICKNAME", value).apply()
         }
     private val friendsData =  Collections.synchronizedList(mutableListOf<FriendData>())
-    private val friendsRequestsData =  Collections.synchronizedList(mutableListOf<FriendRequestData>())
-    private val conversationsData = Collections.synchronizedList(mutableListOf<ConversationData>())
+    private var friendRequestsData: List<FriendRequestData>
+        get() {
+            val jsonString = sharedPreferences.getString("FRIEND_REQUESTS_DATA", null)
+            return if (jsonString != null) {
+                deserializeFriendRequestsData(jsonString)
+            } else {
+                mutableListOf()
+            }
+        }
+        set(value) {
+            val jsonString = serializeFriendRequestsData(value)
+            sharedPreferences.edit().putString("FRIEND_REQUESTS_DATA", jsonString).apply()
+        }
+    private var conversationsData: List<ConversationData>
+        get() {
+            val jsonString = sharedPreferences.getString("CONVERSATIONS_DATA", null)
+            return if (jsonString != null) {
+                deserializeConversationsData(jsonString)
+            } else {
+                mutableListOf()
+            }
+        }
+        set(value) {
+            val jsonString = serializeConversationsData(value)
+            sharedPreferences.edit().putString("CONVERSATIONS_DATA", jsonString).apply()
+        }
     private var geoStoriesData: List<GeoStoryData>
         get() {
             val jsonString = sharedPreferences.getString("GEOSTORIES_DATA", null)
@@ -445,7 +469,7 @@ class API private constructor(context: Context){
     private fun parseConversationsData(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
         val encounteredConversationIds = mutableListOf<Int>()
-
+        val updatedConversationsData = conversationsData.toMutableList()
         for (i in 0 until result.length()) {
             val conversationObject = result.getJSONObject(i)
             val userId = conversationObject.getInt("user_id")
@@ -459,17 +483,17 @@ class API private constructor(context: Context){
             val lastMessageAuthorId = conversationObject.optInt("author_id", 0)
             val read = conversationObject.optBoolean("read", false)
             val timestampString = conversationObject.optString("timestamp", "")
-            val existingConversation = conversationsData.find { it.conversationID == conversationId }
+            val existingConversation = updatedConversationsData.find { it.conversationID == conversationId }
             if (existingConversation == null) {
                 if (lastMessageAuthorId != 0) {
-                    conversationsData.add(
+                    updatedConversationsData.add(
                         ConversationData(conversationId,
                         UserData(userId, nickname, profilePictureId), mutableListOf(),
                         LastMessageData(lastMessageAuthorId, lastMessageText, lastMessagePictureId, parseAndConvertTimestamp(timestampString), read)
                         )
                     )
                 } else {
-                    conversationsData.add(
+                    updatedConversationsData.add(
                         ConversationData(conversationId,
                         UserData(userId, nickname, profilePictureId), mutableListOf(),null)
                     )
@@ -482,7 +506,8 @@ class API private constructor(context: Context){
                 }
             }
         }
-        conversationsData.removeIf { conversation -> !encounteredConversationIds.contains(conversation.conversationID) }
+        updatedConversationsData.removeIf { conversation -> !encounteredConversationIds.contains(conversation.conversationID) }
+        conversationsData = updatedConversationsData
     }
     private fun parseMessagesData(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
@@ -603,6 +628,7 @@ class API private constructor(context: Context){
     private fun parseFriendRequestData(jsonString: String) {
         val result = JSONObject(jsonString).getJSONArray("result")
         val encounteredUserIds = mutableListOf<Int>()
+        val updatedFriendRequestsData = friendRequestsData.toMutableList()
 
         for (i in 0 until result.length()) {
             val requestObject = result.getJSONObject(i)
@@ -612,16 +638,17 @@ class API private constructor(context: Context){
             val pictureId = requestObject.optInt("picture_id", 0)
 
             encounteredUserIds.add(id)
-            val existingFriendRequest = friendsRequestsData.find { it.userData.userId == id }
+            val existingFriendRequest = updatedFriendRequestsData.find { it.userData.userId == id }
             if (existingFriendRequest != null) {
                 existingFriendRequest.userData.nickname = nickname
                 existingFriendRequest.userData.profilePictureId = pictureId
                 existingFriendRequest.relation = relation
             } else {
-                friendsRequestsData.add(FriendRequestData(UserData(id, nickname, pictureId), relation))
+                updatedFriendRequestsData.add(FriendRequestData(UserData(id, nickname, pictureId), relation))
             }
         }
-        friendsRequestsData.removeIf { friendRequest -> !encounteredUserIds.contains(friendRequest.userData.userId)}
+        updatedFriendRequestsData.removeIf { friendRequest -> !encounteredUserIds.contains(friendRequest.userData.userId)}
+        friendRequestsData = updatedFriendRequestsData
     }
 
 
@@ -631,10 +658,10 @@ class API private constructor(context: Context){
     fun getGeoStoriesDataList(): List<GeoStoryData> {
         return geoStoriesData
     }
-    fun getFriendRequestData(): MutableList<FriendRequestData> {
-        return friendsRequestsData
+    fun getFriendRequestDataList(): List<FriendRequestData> {
+        return friendRequestsData
     }
-    fun getConversationsData(): MutableList<ConversationData> {
+    fun getConversationsDataList(): List<ConversationData> {
         return conversationsData
     }
     fun getConversationData(id: Int): ConversationData? {
@@ -732,6 +759,29 @@ class API private constructor(context: Context){
         val type = object : TypeToken<List<GeoStoryData>>() {}.type
         return gson.fromJson(jsonString, type)
     }
+    private fun serializeConversationsData(conversationsData: List<ConversationData>): String {
+        val gson = Gson()
+        return gson.toJson(conversationsData)
+    }
+
+    private fun deserializeConversationsData(jsonString: String): List<ConversationData> {
+        val gson = Gson()
+        val type = object : TypeToken<List<ConversationData>>() {}.type
+        return gson.fromJson(jsonString, type)
+    }
+    private fun serializeFriendRequestsData(friendRequestsData: List<FriendRequestData>): String {
+        val gson = Gson()
+        return gson.toJson(friendRequestsData)
+    }
+
+    private fun deserializeFriendRequestsData(jsonString: String): List<FriendRequestData> {
+        val gson = Gson()
+        val type = object : TypeToken<List<FriendRequestData>>() {}.type
+        return gson.fromJson(jsonString, type)
+    }
+
+
+
     fun markGeoStoryViewed(geoStoryId: Int) {
         val updatedGeoStoriesData = geoStoriesData.toMutableList()
         val geoStoryIndex = updatedGeoStoriesData.indexOfFirst { it.geoStoryId == geoStoryId }

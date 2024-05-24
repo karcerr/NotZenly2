@@ -40,7 +40,7 @@ class GeoStoryViewFragment : Fragment() {
 
         msgButton.setOnClickListener {
             if (userId != 0) {
-                val conversation = api.getConversationsData().find { it.userData.userId == userId }
+                val conversation = api.getConversationsDataList().find { it.userData.userId == userId }
                 if (conversation != null) {
                     val conversationFragment =
                         ConversationFragment.newInstance(conversation.conversationID, conversation.userData.nickname)

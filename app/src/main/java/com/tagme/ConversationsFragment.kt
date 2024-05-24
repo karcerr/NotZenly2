@@ -27,7 +27,7 @@ class ConversationsFragment : Fragment() {
     lateinit var conversationsAdapter: ConversationsAdapter
     private lateinit var api: API
     private val conversationUpdateInterval = 1500L
-    private var conversationUpdateHandler: Handler? = null
+    var conversationUpdateHandler: Handler? = null
     private var conversationUpdateRunnable: Runnable? = null
     private lateinit var recyclerView: RecyclerView
     override fun onCreateView(
@@ -40,7 +40,7 @@ class ConversationsFragment : Fragment() {
         val mapActivity = (requireActivity() as MapActivity)
         api = mapActivity.api
         recyclerView = view.findViewById(R.id.conversations_recycler_view)
-        val conversationListSorted = api.getConversationsData().map { it.copy()
+        val conversationListSorted = api.getConversationsDataList().map { it.copy()
         }.sortedByDescending { it.lastMessage?.timestamp }.toMutableList()
         conversationsAdapter = ConversationsAdapter(
             requireContext(),
@@ -62,7 +62,7 @@ class ConversationsFragment : Fragment() {
         conversationUpdateRunnable = Runnable {
             CoroutineScope(Dispatchers.Main).launch {
                 api.getConversationsFromWS()
-                val updatedConversations = api.getConversationsData()
+                val updatedConversations = api.getConversationsDataList()
                 (recyclerView.adapter as? ConversationsAdapter)?.updateData(updatedConversations)
                 conversationUpdateHandler?.postDelayed(conversationUpdateRunnable!!, conversationUpdateInterval)
             }
