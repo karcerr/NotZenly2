@@ -16,7 +16,6 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import com.tagme.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -173,7 +172,7 @@ class ConversationsAdapter(
         holder.conversationLayout.setOnClickListener {
             val conversationFragment = ConversationFragment.newInstance(conversationId, conversation.userData.nickname)
             parentActivity.supportFragmentManager.beginTransaction()
-                .replace(R.id.conversations_fragment, conversationFragment)
+                .replace(R.id.profile_fragment, conversationFragment)
                 .addToBackStack(null)
                 .commit()
         }

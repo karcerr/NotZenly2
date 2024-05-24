@@ -69,4 +69,5 @@
     <string name="blocked_outgoing">Заблокирован</string>
     <string name="blocked_mutual">Взаимная блокировка</string>
     <string name="no_relation">Нет связи</string>
+    <string name="not_yet_implemented">Еще не реализовано</string>
 </resources>

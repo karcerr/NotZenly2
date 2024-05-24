@@ -55,6 +55,8 @@ class MapActivity: AppCompatActivity() {
     private lateinit var centralizeButtonFrame: FrameLayout
     private lateinit var profileButtonFrame: FrameLayout
     private lateinit var messagesButtonFrame: FrameLayout
+    private lateinit var createGeoStoryFrame: FrameLayout
+    private lateinit var searchFrame: FrameLayout
     lateinit var unreadMessageIcon: ImageView
     lateinit var newRequestIcon: ImageView
     private lateinit var clickedFriendProfileFrame: FrameLayout
@@ -63,7 +65,6 @@ class MapActivity: AppCompatActivity() {
     private lateinit var clickedIconDistanceAndSpeedLayout: LinearLayout
     private lateinit var clickedViewsAndTimeLayout: LinearLayout
     private lateinit var onCLickedOverlays: LinearLayout
-    private lateinit var createGeoStoryButton: ImageButton
     private lateinit var profileFragment: ProfileFragment
     private lateinit var conversationFragment: ConversationsFragment
     private lateinit var geoStoryCreation: GeoStoryCreationFragment
@@ -107,7 +108,8 @@ class MapActivity: AppCompatActivity() {
         messagesButtonFrame = findViewById(R.id.messages_button_frame)
         unreadMessageIcon = findViewById(R.id.unread_message_icon)
         newRequestIcon = findViewById(R.id.new_request_icon)
-        createGeoStoryButton = findViewById(R.id.create_geo_story_button)
+        createGeoStoryFrame = findViewById(R.id.create_geo_story_frame)
+        searchFrame = findViewById(R.id.search_frame)
         onCLickedOverlays = findViewById(R.id.overlay_on_clicked_menus)
         clickedFriendNicknameTextView = findViewById(R.id.nickname_text)
         clickedFriendDistanceTextView = findViewById(R.id.distance_text)
@@ -237,8 +239,11 @@ class MapActivity: AppCompatActivity() {
             }
             toggleFragmentVisibility(conversationFragment)
         }
-        createGeoStoryButton.setOnClickListener {
+        createGeoStoryFrame.setOnClickListener {
             toggleFragmentVisibility(geoStoryCreation)
+        }
+        searchFrame.setOnClickListener {
+            Toast.makeText(this, getString(R.string.not_yet_implemented), Toast.LENGTH_LONG).show()
         }
 
         map.addMapListener(object : MapListener {

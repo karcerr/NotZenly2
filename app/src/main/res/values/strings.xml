@@ -81,4 +81,5 @@
     <string name="blocked_outgoing">User blocked</string>
     <string name="blocked_mutual">Mutually blocked</string>
     <string name="no_relation">No relation</string>
+    <string name="not_yet_implemented">Not yet implemented</string>
 </resources>

@@ -3,6 +3,7 @@ package com.tagme
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,7 +13,6 @@ import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.tagme.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -60,6 +60,7 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
         val conversationId = requireArguments().getInt(ARG_CONVERSATION_ID)
         val editText: EditText = view.findViewById(R.id.message_edit_text)
         val sendMessageButton: ImageButton = view.findViewById(R.id.send_msg_button)
+        val attachButton: ImageButton = view.findViewById(R.id.attach_button)
         newMessageImage = view.findViewById(R.id.new_msg_dot)
         val scrollDownFrame: FrameLayout = view.findViewById(R.id.scroll_down_frame)
         val scrollDownButton: ImageButton = view.findViewById(R.id.scroll_down_button)
@@ -118,6 +119,7 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
                     pfp.setImageBitmap(bitmap)
                 }
                 pfp.setOnClickListener {
+                    Log.d("Tagme_conversation", "$conversation")
                     val userProfileFragment = UserProfileFragment.newInstance(conversation.userData.userId)
                     mapActivity.fragmentManager.beginTransaction()
                         .replace(R.id.profile_fragment, userProfileFragment)
@@ -152,6 +154,9 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
                     api.getConversationsFromWS()
                 }
             }
+        }
+        attachButton.setOnClickListener {
+            Toast.makeText(mapActivity, getString(R.string.not_yet_implemented), Toast.LENGTH_LONG).show()
         }
         return view
     }
