@@ -35,6 +35,10 @@ class API private constructor(context: Context){
     private val requestMap = Collections.synchronizedMap(mutableMapOf<Int, Pair<CompletableFuture<JSONObject?>, String>>())
     private val pictureMutex = Mutex()
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
+    private val notificationManager = NotificationManager(context)
+    init {
+        notificationManager.createNotificationChannels()
+    }
     var lastInsertedPicId = 0
 
     var myToken: String?
@@ -481,28 +485,35 @@ class API private constructor(context: Context){
             val lastMessagePictureId = conversationObject.optInt("msg_picture_id", 0)
             val lastMessageText = conversationObject.optString("text", "")
             val lastMessageAuthorId = conversationObject.optInt("author_id", 0)
+            val lastMessageId = conversationObject.optInt("last_message_id", 0)
             val read = conversationObject.optBoolean("read", false)
             val timestampString = conversationObject.optString("timestamp", "")
             val existingConversation = updatedConversationsData.find { it.conversationID == conversationId }
-            if (existingConversation == null) {
+            if (existingConversation == null) { //Creating a new conversation with a message
                 if (lastMessageAuthorId != 0) {
                     updatedConversationsData.add(
                         ConversationData(conversationId,
                         UserData(userId, nickname, profilePictureId), mutableListOf(),
-                        LastMessageData(lastMessageAuthorId, lastMessageText, lastMessagePictureId, parseAndConvertTimestamp(timestampString), read)
+                        LastMessageData(lastMessageAuthorId, lastMessageAuthorId, lastMessageText, lastMessagePictureId, parseAndConvertTimestamp(timestampString), read)
                         )
                     )
-                } else {
+                } else { //Creating a new conversation without a message
                     updatedConversationsData.add(
                         ConversationData(conversationId,
                         UserData(userId, nickname, profilePictureId), mutableListOf(),null)
                     )
                 }
-            } else {
+            } else { //Updating existing conversation
                 existingConversation.userData = UserData(userId, nickname, profilePictureId)
-                if (lastMessageAuthorId != 0) {
-                    existingConversation.lastMessage = LastMessageData(lastMessageAuthorId, lastMessageText, lastMessagePictureId,
+                if (lastMessageId != 0) {
+                    val lastMessageData = LastMessageData(lastMessageId, lastMessageAuthorId, lastMessageText, lastMessagePictureId,
                         parseAndConvertTimestamp(timestampString), read)
+                    if (existingConversation.lastMessage == null || existingConversation.lastMessage!!.id != lastMessageId) {
+                        existingConversation.lastMessage = lastMessageData
+                        if  (!read && lastMessageAuthorId != myUserId ) {
+                            notificationManager.showNewMessageNotification(nickname, lastMessageText, conversationId)
+                        }
+                    }
                 }
             }
         }
@@ -629,10 +640,10 @@ class API private constructor(context: Context){
         val result = JSONObject(jsonString).getJSONArray("result")
         val encounteredUserIds = mutableListOf<Int>()
         val updatedFriendRequestsData = friendRequestsData.toMutableList()
-
         for (i in 0 until result.length()) {
             val requestObject = result.getJSONObject(i)
             val id = requestObject.getInt("user_id")
+            val userLinkId = requestObject.getInt("user_link_id")
             val nickname = requestObject.getString("nickname")
             val relation = requestObject.getString("relation")
             val pictureId = requestObject.optInt("picture_id", 0)
@@ -645,6 +656,9 @@ class API private constructor(context: Context){
                 existingFriendRequest.relation = relation
             } else {
                 updatedFriendRequestsData.add(FriendRequestData(UserData(id, nickname, pictureId), relation))
+                if (relation == "request_incoming") {
+                    notificationManager.showNewFriendRequestNotification(nickname, id)
+                }
             }
         }
         updatedFriendRequestsData.removeIf { friendRequest -> !encounteredUserIds.contains(friendRequest.userData.userId)}
@@ -732,6 +746,7 @@ class API private constructor(context: Context){
         val read: Boolean
     )
     data class LastMessageData(
+        val id: Int,
         val authorId: Int,
         var text: String?,
         val imageId: Int?,

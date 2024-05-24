@@ -73,4 +73,7 @@
     <string name="are_you_sure">Вы уверены?</string>
     <string name="yes">Да</string>
     <string name="no">Нет</string>
+    <string name="new_message_format">Новое сообщение от %s</string>
+    <string name="new_friend_request_format">%s хочет дружить</string>
+    <string name="new_friend_request">Новая заявка в друзья!</string>
 </resources>

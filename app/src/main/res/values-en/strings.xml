@@ -73,5 +73,8 @@
     <string name="are_you_sure">Are you sure?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="new_message_format">New message from %s</string>
+    <string name="new_friend_request_format">You have a new friend request from %s</string>
+    <string name="new_friend_request">New friend request!</string>
 
 </resources>

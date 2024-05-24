@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
@@ -18,7 +19,6 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.tagme.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
@@ -26,7 +26,10 @@ import kotlinx.coroutines.launch
 
 class LogInActivity : AppCompatActivity() {
 
-    private val permissions = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+    private val permissions = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.POST_NOTIFICATIONS)
+    else
+        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
     private var hasPermission = false
     private var isAuthorized = false
 

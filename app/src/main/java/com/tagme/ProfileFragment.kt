@@ -523,7 +523,7 @@ class FriendRequestAdapter(
     }
     override fun getItemViewType(position: Int): Int {
         val friend = requestList[position]
-        return if (friend.relation == "incoming") {
+        return if (friend.relation == "request_incoming") {
             VIEW_TYPE_INCOMING
         } else {
             VIEW_TYPE_OUTGOING
