@@ -27,7 +27,6 @@ import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.tagme.R
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.imageview.ShapeableImageView
@@ -381,7 +380,7 @@ class MapActivity: AppCompatActivity() {
                     clickedFriendProfileFrame.setOnClickListener {
                         val userProfileFragment = UserProfileFragment.newInstance(clickedFriend.userData.userId)
                         fragmentManager.beginTransaction()
-                            .replace(R.id.profile_fragment, userProfileFragment)
+                            .add(R.id.profile_fragment, userProfileFragment)
                             .addToBackStack(null)
                             .commit()
                     }
@@ -391,7 +390,7 @@ class MapActivity: AppCompatActivity() {
                         if (conversation == null) return@setOnClickListener
                         val conversationFragment = ConversationFragment.newInstance(conversation.conversationID, conversation.userData.nickname)
                         fragmentManager.beginTransaction()
-                            .replace(R.id.conversations_fragment, conversationFragment)
+                            .add(R.id.conversations_fragment, conversationFragment)
                             .addToBackStack(null)
                             .commit()
                     }
@@ -753,7 +752,7 @@ class OverlappedIconsAdapter(
                 if (item.first != api.myUserId) {
                     val userProfileFragment = UserProfileFragment.newInstance(item.first)
                     mapActivity.fragmentManager.beginTransaction()
-                        .replace(R.id.profile_fragment, userProfileFragment)
+                        .add(R.id.profile_fragment, userProfileFragment)
                         .addToBackStack(null)
                         .commit()
                 }

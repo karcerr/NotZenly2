@@ -82,4 +82,7 @@
     <string name="blocked_mutual">Mutually blocked</string>
     <string name="no_relation">No relation</string>
     <string name="not_yet_implemented">Not yet implemented</string>
+    <string name="are_you_sure">Are you sure?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
 </resources>

@@ -9,7 +9,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import com.tagme.R
 
 class GeoStoryViewFragment : Fragment() {
     private lateinit var mapActivity: MapActivity
@@ -46,7 +45,7 @@ class GeoStoryViewFragment : Fragment() {
                     val conversationFragment =
                         ConversationFragment.newInstance(conversation.conversationID, conversation.userData.nickname)
                     mapActivity.supportFragmentManager.beginTransaction()
-                        .replace(R.id.profile_fragment, conversationFragment)
+                        .add(R.id.geo_story_view_fragment, conversationFragment)
                         .addToBackStack(null)
                         .commit()
                 } else {
@@ -58,7 +57,7 @@ class GeoStoryViewFragment : Fragment() {
             if (userId != 0 && userId != api.myUserId) {
                 val userProfileFragment = UserProfileFragment.newInstance(userId)
                 mapActivity.fragmentManager.beginTransaction()
-                    .replace(R.id.profile_fragment, userProfileFragment)
+                    .add(R.id.geo_story_view_fragment, userProfileFragment)
                     .addToBackStack(null)
                     .commit()
             }

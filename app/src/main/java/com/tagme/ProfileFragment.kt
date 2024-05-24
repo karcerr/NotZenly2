@@ -23,7 +23,6 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.tagme.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -39,7 +38,7 @@ class ProfileFragment : Fragment() {
     private var imageCompressed: Boolean = false
     private lateinit var imagePickerLauncher: ActivityResultLauncher<Intent>
     private lateinit var api: API
-    private lateinit var parentActivity: MapActivity
+    private lateinit var mapActivity: MapActivity
     private var friendRequestUpdateRunnable: Runnable? = null
     private var friendRequestUpdateHandler: Handler? = null
     private val friendRequestInterval = 2000L
@@ -63,8 +62,9 @@ class ProfileFragment : Fragment() {
         val darkOverlay = view.findViewById<View>(R.id.dark_overlay)
         val requestInput = view.findViewById<EditText>(R.id.nickname_edit_text)
         val backButton = view.findViewById<ImageButton>(R.id.back_arrow_button)
-        parentActivity = requireActivity() as MapActivity
-        api = parentActivity.api
+        val settingsButton = view.findViewById<ImageButton>(R.id.settings_button)
+        mapActivity = requireActivity() as MapActivity
+        api = mapActivity.api
         val sendRequestButton = view.findViewById<Button>(R.id.send_request_button)
         val statusText = view.findViewById<TextView>(R.id.status_text)
         nestedScrollView = view.findViewById(R.id.profile_nested_scroll_view)
@@ -90,7 +90,7 @@ class ProfileFragment : Fragment() {
             requireContext(),
             api.getFriendsData(),
             api,
-            parentActivity
+            mapActivity
         )
         friendRecyclerView.adapter = friendAdapter
         friendRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
@@ -101,7 +101,7 @@ class ProfileFragment : Fragment() {
             api.getFriendRequestData(),
             api,
             friendAdapter,
-            parentActivity)
+            mapActivity)
         friendRequestsRecyclerView.adapter = friendRequestAdapter
         friendRequestsRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
         addFriendButton.setOnClickListener {
@@ -152,15 +152,22 @@ class ProfileFragment : Fragment() {
                 if (api.lastInsertedPicId != 0) {
                     val message = api.setProfilePictureWS(api.lastInsertedPicId)?.getString("message")
                     if (message == "success") {
-                        Toast.makeText(parentActivity, getString(R.string.pfp_updated), Toast.LENGTH_LONG).show()
+                        Toast.makeText(mapActivity, getString(R.string.pfp_updated), Toast.LENGTH_LONG).show()
                         api.myPfpId = api.lastInsertedPicId
-                        parentActivity.customOverlaySelf!!.updateDrawable(BitmapDrawable(resources, api.getPictureData(api.myPfpId)))
+                        mapActivity.customOverlaySelf!!.updateDrawable(BitmapDrawable(resources, api.getPictureData(api.myPfpId)))
                     }
                 }
             }
         }
+        settingsButton.setOnClickListener {
+            val settingsFragment = SettingsFragment.newInstance()
+            mapActivity.fragmentManager.beginTransaction()
+                .add(R.id.profile_fragment, settingsFragment)
+                .addToBackStack(null)
+                .commit()
+        }
         backButton.setOnClickListener{
-            parentActivity.onBackPressedDispatcher.onBackPressed()
+            mapActivity.onBackPressedDispatcher.onBackPressed()
         }
         return view
     }
@@ -194,7 +201,7 @@ class ProfileFragment : Fragment() {
                 val originalBitmap = BitmapFactory.decodeStream(stream)
                 val compressedBitmap = (compressBitmap(originalBitmap))
                 originalBitmap.recycle()
-                parentActivity.runOnUiThread {
+                mapActivity.runOnUiThread {
                     val roundedImageBitmap = applyRoundedCorners(compressedBitmap, 20f)
                     imageCompressed = true
                     myProfilePic.setImageBitmap(roundedImageBitmap)
@@ -238,7 +245,7 @@ class ProfileFragment : Fragment() {
         outputStream = ByteArrayOutputStream()
         scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
         val initialByteArray = outputStream.toByteArray()
-        parentActivity.runOnUiThread {
+        mapActivity.runOnUiThread {
             myProfilePic.setImageResource(R.drawable.photo_bg)
         }
         if (initialByteArray.size <= MAX_SIZE_BEFORE_ENCODING) {
@@ -327,7 +334,7 @@ class FriendAdapter(
         holder.friendLayout.setOnClickListener {
             val userProfileFragment = UserProfileFragment.newInstance(friend.userData.userId)
             mapActivity.fragmentManager.beginTransaction()
-                .replace(R.id.profile_fragment, userProfileFragment)
+                .add(R.id.profile_fragment, userProfileFragment)
                 .addToBackStack(null)
                 .commit()
         }
@@ -342,7 +349,7 @@ class FriendAdapter(
                 val conversationFragment =
                     ConversationFragment.newInstance(conversation.conversationID, conversation.userData.nickname)
                 mapActivity.supportFragmentManager.beginTransaction()
-                    .replace(R.id.profile_fragment, conversationFragment)
+                    .add(R.id.profile_fragment, conversationFragment)
                     .addToBackStack(null)
                     .commit()
             }
@@ -434,7 +441,7 @@ class FriendRequestAdapter(
                 incomingHolder.requestUserButton.setOnClickListener {
                     val userProfileFragment = UserProfileFragment.newInstance(requestee.userData.userId)
                     mapActivity.fragmentManager.beginTransaction()
-                        .replace(R.id.profile_fragment, userProfileFragment)
+                        .add(R.id.profile_fragment, userProfileFragment)
                         .addToBackStack(null)
                         .commit()
                 }
@@ -482,7 +489,7 @@ class FriendRequestAdapter(
                 outgoingHolder.requestUserButton.setOnClickListener {
                     val userProfileFragment = UserProfileFragment.newInstance(requestee.userData.userId)
                     mapActivity.fragmentManager.beginTransaction()
-                        .replace(R.id.profile_fragment, userProfileFragment)
+                        .add(R.id.profile_fragment, userProfileFragment)
                         .addToBackStack(null)
                         .commit()
                 }

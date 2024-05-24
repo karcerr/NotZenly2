@@ -172,7 +172,7 @@ class ConversationsAdapter(
         holder.conversationLayout.setOnClickListener {
             val conversationFragment = ConversationFragment.newInstance(conversationId, conversation.userData.nickname)
             parentActivity.supportFragmentManager.beginTransaction()
-                .replace(R.id.profile_fragment, conversationFragment)
+                .add(R.id.conversations_fragment, conversationFragment)
                 .addToBackStack(null)
                 .commit()
         }
