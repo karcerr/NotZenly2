@@ -1,4 +1,4 @@
-package tagme
+package com.tagme
 import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.Bitmap
@@ -6,7 +6,7 @@ import android.graphics.BitmapFactory
 import android.util.Log
 import android.widget.Toast
 import androidx.core.content.ContextCompat.getString
-import com.example.tagme.R
+import com.tagme.R
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.future.await
@@ -462,12 +462,17 @@ class API private constructor(context: Context){
             val existingConversation = conversationsData.find { it.conversationID == conversationId }
             if (existingConversation == null) {
                 if (lastMessageAuthorId != 0) {
-                    conversationsData.add(ConversationData(conversationId,
+                    conversationsData.add(
+                        ConversationData(conversationId,
                         UserData(userId, nickname, profilePictureId), mutableListOf(),
-                        LastMessageData(lastMessageAuthorId, lastMessageText, lastMessagePictureId, parseAndConvertTimestamp(timestampString), read)))
+                        LastMessageData(lastMessageAuthorId, lastMessageText, lastMessagePictureId, parseAndConvertTimestamp(timestampString), read)
+                        )
+                    )
                 } else {
-                    conversationsData.add(ConversationData(conversationId,
-                        UserData(userId, nickname, profilePictureId), mutableListOf(),null))
+                    conversationsData.add(
+                        ConversationData(conversationId,
+                        UserData(userId, nickname, profilePictureId), mutableListOf(),null)
+                    )
                 }
             } else {
                 existingConversation.userData = UserData(userId, nickname, profilePictureId)

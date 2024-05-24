@@ -1,4 +1,4 @@
-package tagme
+package com.tagme
 
 
 import android.Manifest
@@ -18,7 +18,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.example.tagme.R
+import com.tagme.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
@@ -178,7 +178,8 @@ class LogInActivity : AppCompatActivity() {
             ActivityCompat.requestPermissions(
                 this,
                 permissionsToRequest.toTypedArray(),
-                REQUEST_PERMISSIONS_REQUEST_CODE)
+                REQUEST_PERMISSIONS_REQUEST_CODE
+            )
         } else{
             hasPermission = true
         }

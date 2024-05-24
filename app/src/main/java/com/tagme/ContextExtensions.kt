@@ -1,3 +1,5 @@
+package com.tagme
+
 import android.app.Activity
 import android.content.Context
 import android.view.View

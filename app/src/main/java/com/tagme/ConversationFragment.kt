@@ -1,4 +1,4 @@
-package tagme
+package com.tagme
 
 import android.os.Bundle
 import android.os.Handler
@@ -12,7 +12,7 @@ import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.tagme.R
+import com.tagme.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

@@ -1,4 +1,4 @@
-package tagme
+package com.tagme
 
 import android.content.Context
 import android.graphics.*
@@ -10,7 +10,7 @@ import android.util.Log
 import android.view.MotionEvent
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toBitmap
-import com.example.tagme.R
+import com.tagme.R
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Overlay

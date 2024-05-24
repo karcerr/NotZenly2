@@ -1,4 +1,4 @@
-package tagme
+package com.tagme
 
 import android.app.Activity.RESULT_OK
 import android.content.Intent
@@ -14,7 +14,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.palette.graphics.Palette
-import com.example.tagme.R
+import com.tagme.R
 import kotlinx.coroutines.*
 import java.io.ByteArrayOutputStream
 

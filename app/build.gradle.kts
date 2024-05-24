@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.tagme"
+    namespace = "com.tagme"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.tagme"
+        applicationId = "com.tagme"
         minSdk = 31
         targetSdk = 34
         versionCode = 6

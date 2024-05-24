@@ -1,4 +1,4 @@
-package tagme
+package com.tagme
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -27,7 +27,7 @@ import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.tagme.R
+import com.tagme.R
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.imageview.ShapeableImageView

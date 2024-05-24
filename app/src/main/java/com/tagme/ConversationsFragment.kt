@@ -1,4 +1,4 @@
-package tagme
+package com.tagme
 
 import android.content.Context
 import android.os.Bundle
@@ -16,7 +16,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import com.example.tagme.R
+import com.tagme.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
