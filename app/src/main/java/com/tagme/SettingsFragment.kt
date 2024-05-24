@@ -1,5 +1,6 @@
 package com.tagme
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -46,6 +47,11 @@ class SettingsFragment : Fragment() {
         noButton.setOnClickListener {
             darkOverlay.visibility = View.GONE
             are_you_sure_layout.visibility = View.GONE
+        }
+        yesButton.setOnClickListener {
+            api.myToken = null
+            startActivity(Intent(mapActivity, LogInActivity::class.java))
+            mapActivity.finish()
         }
         return view
     }

@@ -641,6 +641,8 @@ class MapActivity: AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         friendOverlays.clear()
+        profileFragment.friendRequestUpdateHandler?.removeCallbacksAndMessages(null)
+        profileFragment.friendRequestUpdateHandler = null
         coroutineScope.cancel()
     }
 }

@@ -40,7 +40,7 @@ class ProfileFragment : Fragment() {
     private lateinit var api: API
     private lateinit var mapActivity: MapActivity
     private var friendRequestUpdateRunnable: Runnable? = null
-    private var friendRequestUpdateHandler: Handler? = null
+    var friendRequestUpdateHandler: Handler? = null
     private val friendRequestInterval = 2000L
     lateinit var nestedScrollView: NestedScrollView
     private lateinit var friendRequestsRecyclerView: RecyclerView
