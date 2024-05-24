@@ -505,10 +505,12 @@ class API private constructor(context: Context){
                 }
             } else { //Updating existing conversation
                 existingConversation.userData = UserData(userId, nickname, profilePictureId)
+                Log.d("Tagme_conv1", lastMessageId.toString())
+                Log.d("Tagme_conv2", existingConversation.lastMessage.toString())
                 if (lastMessageId != 0) {
                     val lastMessageData = LastMessageData(lastMessageId, lastMessageAuthorId, lastMessageText, lastMessagePictureId,
                         parseAndConvertTimestamp(timestampString), read)
-                    if (existingConversation.lastMessage == null || existingConversation.lastMessage!!.id != lastMessageId) {
+                    if (existingConversation.lastMessage?.id != lastMessageId || existingConversation.lastMessage == null) {
                         existingConversation.lastMessage = lastMessageData
                         if  (!read && lastMessageAuthorId != myUserId ) {
                             notificationManager.showNewMessageNotification(nickname, lastMessageText, conversationId)
@@ -522,18 +524,19 @@ class API private constructor(context: Context){
     }
     private fun parseMessagesData(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
+        val updatedConversations = conversationsData.toMutableList()
         for (i in 0 until result.length()) {
             val messageObject = result.getJSONObject(i)
             val conversationId = messageObject.getInt("conversation_id")
             val messageId = messageObject.getInt("message_id")
-            val existingConversation = conversationsData.find { it.conversationID == conversationId }
+            val existingConversation = updatedConversations.find { it.conversationID == conversationId }
             val existingMessage = existingConversation?.messages?.find{it.messageId == messageId}
             if (existingConversation != null) {
+                val ifRead = messageObject.getBoolean("read")
                 if (existingMessage == null) {
                     val authorId = messageObject.getInt("author_id")
                     val text = messageObject.getString("text")
                     val timestampString = messageObject.getString("timestamp")
-                    val ifRead = messageObject.getBoolean("read")
                     val pictureId = messageObject.optInt("picture_id", 0)
                     existingConversation.messages.add(
                         MessageData(
@@ -548,10 +551,12 @@ class API private constructor(context: Context){
                     existingConversation.messages.sortBy { it.timestamp }
                     addSeparatorIfNeeded(existingConversation.messages)
                 } else {
-                    //TODO: editing of existing images
+                    existingConversation.lastMessage?.read = ifRead
+                    existingMessage.read = ifRead
                 }
             }
         }
+        conversationsData = updatedConversations
     }
     private fun parseGeoStoriesNearby(jsonString: String) {
         val result = JSONObject(jsonString).getJSONArray("result")
@@ -743,7 +748,7 @@ class API private constructor(context: Context){
         var text: String?,
         val imageId: Int?,
         val timestamp: Timestamp,
-        val read: Boolean
+        var read: Boolean
     )
     data class LastMessageData(
         val id: Int,
@@ -751,7 +756,7 @@ class API private constructor(context: Context){
         var text: String?,
         val imageId: Int?,
         val timestamp: Timestamp,
-        val read: Boolean
+        var read: Boolean
     )
 
     companion object {
