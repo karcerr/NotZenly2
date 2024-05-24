@@ -63,4 +63,10 @@
     <string name="minutes_ago_format">%d мин. назад</string>
     <string name="hours_ago_format">%d ч. назад</string>
     <string name="connect_error">Соединение с сервером потеряно</string>
+    <string name="incoming_request">Входящий запрос</string>
+    <string name="outgoing_request">Исходящий запрос</string>
+    <string name="blocked_incoming">Вы были заблокированы</string>
+    <string name="blocked_outgoing">Заблокирован</string>
+    <string name="blocked_mutual">Взаимная блокировка</string>
+    <string name="no_relation">Нет связи</string>
 </resources>

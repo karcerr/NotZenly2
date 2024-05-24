@@ -75,4 +75,10 @@
     ]]>
     </string>
     <string name="counter" translatable="false">0</string>
+    <string name="incoming_request">Incoming request</string>
+    <string name="outgoing_request">Outgoing request</string>
+    <string name="blocked_incoming">Blocked you</string>
+    <string name="blocked_outgoing">User blocked</string>
+    <string name="blocked_mutual">Mutually blocked</string>
+    <string name="no_relation">No relation</string>
 </resources>

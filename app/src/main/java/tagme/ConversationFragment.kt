@@ -13,7 +13,6 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tagme.R
-import com.google.android.material.imageview.ShapeableImageView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -51,10 +50,11 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        api = (requireActivity() as MapActivity).api
+        val mapActivity = (requireActivity() as MapActivity)
+        api = mapActivity.api
         val view = inflater.inflate(R.layout.fragment_conversation, container, false)
         val nickname: TextView = view.findViewById(R.id.conversation_name)
-        val pfp: ShapeableImageView = view.findViewById(R.id.conversation_pfp)
+        val pfp: ImageView = view.findViewById(R.id.conversation_pfp)
         val backButton: ImageButton = view.findViewById(R.id.back_arrow_button)
         val myId = api.myUserId
         val conversationId = requireArguments().getInt(ARG_CONVERSATION_ID)
@@ -117,11 +117,17 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
                 if (bitmap != null) {
                     pfp.setImageBitmap(bitmap)
                 }
-
+                pfp.setOnClickListener {
+                    val userProfileFragment = UserProfileFragment.newInstance(conversation.userData.userId)
+                    mapActivity.fragmentManager.beginTransaction()
+                        .replace(R.id.profile_fragment, userProfileFragment)
+                        .addToBackStack(null)
+                        .commit()
+                }
             }
         }
         backButton.setOnClickListener{
-            requireActivity().onBackPressedDispatcher.onBackPressed()
+            mapActivity.onBackPressedDispatcher.onBackPressed()
         }
         sendMessageButton.setOnClickListener {
             val text = editText.text.toString()

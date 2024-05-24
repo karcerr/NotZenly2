@@ -19,6 +19,9 @@ import java.io.File
 import java.io.FileOutputStream
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
+import java.time.Duration
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicInteger
@@ -33,6 +36,7 @@ class API private constructor(context: Context){
     private val requestIdCounter = AtomicInteger(0)
     private val requestMap = Collections.synchronizedMap(mutableMapOf<Int, Pair<CompletableFuture<JSONObject?>, String>>())
     private val pictureMutex = Mutex()
+    private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
     var myToken: String?
         get() = sharedPreferences.getString("TOKEN", null)
         set(value) {
@@ -107,9 +111,8 @@ class API private constructor(context: Context){
 
             override fun onMessage(webSocket: WebSocket, text: String) {
                 Log.d("Tagme_WS", "onMessage trigger: $text")
-                val jsonObject = JSONObject(text)
-                val requestId = jsonObject.getInt("request_id")
-                val answer = jsonObject
+                val answer = JSONObject(text)
+                val requestId = answer.getInt("request_id")
                 when (answer.getString("action")) {
                     "login", "register" -> when (answer.getString("status")) {
                         "success" -> {
@@ -359,6 +362,11 @@ class API private constructor(context: Context){
             val existingFriend = friendsData.find { it.userData.userId == id }
             if (existingFriend == null) {
                 friendsData.add(FriendData(UserData(id, nickname, pictureId), null))
+            } else {
+                existingFriend.userData.let {
+                    it.nickname = nickname
+                    it.profilePictureId = pictureId
+                }
             }
         }
         friendsData.removeIf { friend -> !encounteredUserIds.contains(friend.userData.userId) }
@@ -369,17 +377,15 @@ class API private constructor(context: Context){
         for (i in 0 until result.length()) {
             val picObject = result.getJSONObject(i)
             val pictureId = picObject.getInt("picture_id")
-            val pictureDataString = picObject.getString("picture")
             val existingPicture = picsData.find { it.pictureId == pictureId }
             if (existingPicture == null) {
+                val pictureDataString = picObject.getString("picture")
                 val pictureData: ByteArray = Base64.getDecoder().decode(pictureDataString)
                 val imagePath = saveImageToCache(context, pictureId.toString(), pictureData)
                 val newPictureData = PictureData(pictureId, imagePath)
                 val updatedPicturesData = picsData.toMutableList().apply {
                     add(newPictureData)
                 }
-                Log.d("Tagme_WS_Pic", "Image $pictureId encoded: $pictureDataString")
-                Log.d("Tagme_WS_Pic", "Image $pictureId decoded: $pictureData")
                 picsData = updatedPicturesData
             }
         }
@@ -389,15 +395,14 @@ class API private constructor(context: Context){
         for (i in 0 until result.length()) {
             val locationObject = result.getJSONObject(i)
             val id = locationObject.getInt("user_id")
-            val latitude = locationObject.getDouble("latitude")
-            val longitude = locationObject.getDouble("longitude")
-            val accuracy = locationObject.getDouble("accuracy")
-            val speed = locationObject.getDouble("speed")
-            val timestampString = locationObject.getString("timestamp")
-            val timestamp = parseAndConvertTimestamp(timestampString)
             val existingFriend = friendsData.find { it.userData.userId == id }
-
             if (existingFriend != null) {
+                val latitude = locationObject.getDouble("latitude")
+                val longitude = locationObject.getDouble("longitude")
+                val accuracy = locationObject.getDouble("accuracy")
+                val speed = locationObject.getDouble("speed")
+                val timestampString = locationObject.getString("timestamp")
+                val timestamp = parseAndConvertTimestamp(timestampString)
                 if (existingFriend.location == null) {
                     existingFriend.location = LocationData(latitude, longitude, accuracy, speed.toFloat(), timestamp)
                 } else {
@@ -429,7 +434,6 @@ class API private constructor(context: Context){
 
     private fun parseMyData(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
-
         for (i in 0 until result.length()) {
             val locationObject = result.getJSONObject(i)
             val userId = locationObject.getInt("user_id")
@@ -480,17 +484,16 @@ class API private constructor(context: Context){
         for (i in 0 until result.length()) {
             val messageObject = result.getJSONObject(i)
             val conversationId = messageObject.getInt("conversation_id")
-            val authorId = messageObject.getInt("author_id")
             val messageId = messageObject.getInt("message_id")
-            val text = messageObject.getString("text")
-            val timestampString = messageObject.getString("timestamp")
-
-            val ifRead = messageObject.getBoolean("read")
-            val pictureId = messageObject.optInt("picture_id", 0)
             val existingConversation = conversationsData.find { it.conversationID == conversationId }
             val existingMessage = existingConversation?.messages?.find{it.messageId == messageId}
             if (existingConversation != null) {
                 if (existingMessage == null) {
+                    val authorId = messageObject.getInt("author_id")
+                    val text = messageObject.getString("text")
+                    val timestampString = messageObject.getString("timestamp")
+                    val ifRead = messageObject.getBoolean("read")
+                    val pictureId = messageObject.optInt("picture_id", 0)
                     existingConversation.messages.add(
                         MessageData(
                             messageId,
@@ -518,19 +521,18 @@ class API private constructor(context: Context){
             val geoStoryObject = result.getJSONObject(i)
             val geoStoryId = geoStoryObject.getInt("geo_story_id")
             encounteredGeoStoryIds.add(geoStoryId)
-            val timestampString = geoStoryObject.getString("timestamp")
-
-            val pictureId = geoStoryObject.optInt("picture_id", 0)
             val views = geoStoryObject.optInt("views", 0)
-            val latitude = geoStoryObject.getDouble("latitude")
-            val longitude = geoStoryObject.getDouble("longitude")
-            val creatorId = geoStoryObject.getInt("creator_id")
-            val creatorNickname = geoStoryObject.getString("nickname")
-            val creatorPicId = geoStoryObject.optInt("profile_picture_id", 0)
-            val privacy = geoStoryObject.getString("privacy")
 
             val existingGeoStory = updatedGeoStoriesData.find { it.geoStoryId == geoStoryId }
             if (existingGeoStory == null) {
+                val timestampString = geoStoryObject.getString("timestamp")
+                val pictureId = geoStoryObject.optInt("picture_id", 0)
+                val latitude = geoStoryObject.getDouble("latitude")
+                val longitude = geoStoryObject.getDouble("longitude")
+                val creatorId = geoStoryObject.getInt("creator_id")
+                val creatorNickname = geoStoryObject.getString("nickname")
+                val creatorPicId = geoStoryObject.optInt("profile_picture_id", 0)
+                val privacy = geoStoryObject.getString("privacy")
                 updatedGeoStoriesData.add(
                     GeoStoryData(
                         geoStoryId,
@@ -660,7 +662,7 @@ class API private constructor(context: Context){
         var views: Int?,
         val latitude: Double,
         val longitude: Double,
-        var timestamp: Timestamp?,
+        var timestamp: Timestamp,
         var viewed: Boolean
     )
     data class UserData(
@@ -814,6 +816,13 @@ class API private constructor(context: Context){
         } else {
             throw IllegalArgumentException("Failed to parse timestamp: $timestampString")
         }
+    }
+
+    fun calculateDurationFromTimestamp(timestamp: Timestamp): Duration {
+        val timestampLocalDateTime = LocalDateTime.parse(timestamp.toString(), dateFormatter)
+        val now = LocalDateTime.now()
+        val duration = Duration.between(timestampLocalDateTime, now)
+        return duration
     }
 
     private fun generateRequestId(): Int {

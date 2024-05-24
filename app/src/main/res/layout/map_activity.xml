@@ -415,18 +415,8 @@
             app:layout_constraintBottom_toTopOf="@id/buttonsOverlay"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/topButtonsOverlay" />
-
-    <!-- Profile Fragment Overlay -->
-    <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/profile_fragment"
-            android:name="tagme.ProfileFragment"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:layout_constraintBottom_toTopOf="@id/buttonsOverlay"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/topButtonsOverlay" />
+            app:layout_constraintTop_toBottomOf="@id/topButtonsOverlay"
+    />
     <!-- Geo Story Creation Fragment Overlay -->
     <androidx.fragment.app.FragmentContainerView
             android:id="@+id/geo_story_creation_fragment"
@@ -441,4 +431,16 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
     />
+    <!-- Profile Fragment Overlay -->
+    <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/profile_fragment"
+            android:name="tagme.ProfileFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_constraintBottom_toTopOf="@id/buttonsOverlay"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/topButtonsOverlay"
+    />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -63,5 +63,11 @@
     <string name="minutes_ago_format">%d m. ago</string>
     <string name="hours_ago_format">%d h. ago</string>
     <string name="connect_error">Connection to the server was lost</string>
+    <string name="incoming_request">Incoming request</string>
+    <string name="outgoing_request">Outgoing request</string>
+    <string name="blocked_incoming">Blocked you</string>
+    <string name="blocked_outgoing">User blocked</string>
+    <string name="blocked_mutual">Mutually blocked</string>
+    <string name="no_relation">No relation</string>
 
 </resources>

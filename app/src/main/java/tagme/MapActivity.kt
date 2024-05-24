@@ -46,9 +46,6 @@ import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.IMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
-import java.time.Duration
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import kotlin.coroutines.resume
 
 
@@ -97,7 +94,6 @@ class MapActivity: AppCompatActivity() {
     private val geoStoryOverlays: MutableMap<Int, CustomIconOverlay> = mutableMapOf()
     lateinit var fragmentManager : FragmentManager
     private val handler = Handler(Looper.getMainLooper())
-    private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -415,9 +411,8 @@ class MapActivity: AppCompatActivity() {
                 clickedViewsAndTimeLayout.visibility = View.VISIBLE
                 clickedFriendNicknameTextView.text = getString(R.string.geo_story_by_format, geoStory.creatorData.nickname)
                 clickedGeoStoryViewsTextView.text = geoStory.views.toString()
-                val timestampLocalDateTime = LocalDateTime.parse(geoStory.timestamp.toString(), dateFormatter)
-                val now = LocalDateTime.now()
-                val duration = Duration.between(timestampLocalDateTime, now)
+
+                val duration = api.calculateDurationFromTimestamp(geoStory.timestamp)
                 val timestampText = when {
                     duration.seconds < 60 -> getString(R.string.seconds_ago_format, duration.seconds)
                     duration.toMinutes() < 60 -> getString(R.string.minutes_ago_format, duration.toMinutes())
@@ -701,8 +696,9 @@ class OverlappedIconsAdapter(
             friendData = api.getFriendsData().find { it.userData.userId == userId }
         else
             geoStoryData = api.getGeoStoriesDataList().find {it.geoStoryId == geoStoryId}
-        val picId = if(userId == 0) geoStoryData?.pictureId else
-            friendData?.userData?.profilePictureId
+        val picId = if(userId == 0) geoStoryData?.pictureId else {
+            if (userId == api.myUserId) api.myPfpId else friendData?.userData?.profilePictureId
+        }
         val shapeAppearanceModelStyle = if(userId == 0) R.style.roundImageViewGeoStoryOverlap else R.style.roundImageViewFriendOverlap
         val pictureBgStyle =
             if(userId == 0)
