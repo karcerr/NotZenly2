@@ -12,8 +12,8 @@ android {
         applicationId = "com.tagme"
         minSdk = 31
         targetSdk = 34
-        versionCode = 6
-        versionName = "1.01"
+        versionCode = 7
+        versionName = "1.02"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
