@@ -504,6 +504,7 @@ class MapActivity: AppCompatActivity() {
                         api.getLocationsFromWS()
                         api.getGeoStories()
                     } catch (e: Exception) {
+                        Log.d("Tagme_exception", e.toString())
                         e.printStackTrace()
                     }
                 }
