@@ -249,6 +249,30 @@ class API private constructor(context: Context){
         }
         return sendRequestToWS(requestData)
     }
+    suspend fun blockUserWS(userId: Int): JSONObject? {
+        val requestData = JSONObject().apply {
+            put("action", "block user")
+            put("token", myToken)
+            put("user2_id", userId)
+        }
+        return sendRequestToWS(requestData)
+    }
+    suspend fun deleteFriendWS(userId: Int): JSONObject? {
+        val requestData = JSONObject().apply {
+            put("action", "delete friend")
+            put("token", myToken)
+            put("user2_id", userId)
+        }
+        return sendRequestToWS(requestData)
+    }
+    suspend fun unblockUserWS(userId: Int): JSONObject? {
+        val requestData = JSONObject().apply {
+            put("action", "unblock user")
+            put("token", myToken)
+            put("user2_id", userId)
+        }
+        return sendRequestToWS(requestData)
+    }
     suspend fun getFriendRequestsFromWS(): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "get friend requests")

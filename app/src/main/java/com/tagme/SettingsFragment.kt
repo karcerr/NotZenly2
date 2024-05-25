@@ -26,9 +26,10 @@ class SettingsFragment : Fragment() {
         val backButton = view.findViewById<ImageButton>(R.id.back_button)
         val exitLayout = view.findViewById<LinearLayout>(R.id.exit_layout)
         val darkOverlay = view.findViewById<View>(R.id.dark_overlay)
-        val are_you_sure_layout = view.findViewById<LinearLayout>(R.id.are_you_sure_layout)
+        val areYouSureLayout = view.findViewById<LinearLayout>(R.id.are_you_sure_layout)
         val yesButton = view.findViewById<Button>(R.id.yes_button)
         val noButton = view.findViewById<Button>(R.id.no_button)
+
         val mapActivity = requireActivity() as MapActivity
         api = mapActivity.api
 
@@ -38,15 +39,15 @@ class SettingsFragment : Fragment() {
 
         exitLayout.setOnClickListener {
             darkOverlay.visibility = View.VISIBLE
-            are_you_sure_layout.visibility = View.VISIBLE
+            areYouSureLayout.visibility = View.VISIBLE
         }
         darkOverlay.setOnClickListener {
             darkOverlay.visibility = View.GONE
-            are_you_sure_layout.visibility = View.GONE
+            areYouSureLayout.visibility = View.GONE
         }
         noButton.setOnClickListener {
             darkOverlay.visibility = View.GONE
-            are_you_sure_layout.visibility = View.GONE
+            areYouSureLayout.visibility = View.GONE
         }
         yesButton.setOnClickListener {
             api.myToken = null

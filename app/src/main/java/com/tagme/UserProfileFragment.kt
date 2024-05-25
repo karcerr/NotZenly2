@@ -1,6 +1,7 @@
 package com.tagme
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -44,6 +45,14 @@ class UserProfileFragment : Fragment() {
         val nickname = view.findViewById<TextView>(R.id.user_name)
         val friendsSince = view.findViewById<TextView>(R.id.friends_since)
         val relationText = view.findViewById<TextView>(R.id.relation_text)
+        val darkOverlay = view.findViewById<View>(R.id.dark_overlay)
+        val areYouSureLayout = view.findViewById<LinearLayout>(R.id.are_you_sure_layout)
+        val yesButton = view.findViewById<Button>(R.id.yes_button)
+        val noButton = view.findViewById<Button>(R.id.no_button)
+        val conversationLayout = view.findViewById<LinearLayout>(R.id.conversation_layout)
+        val findOnMapLayout = view.findViewById<LinearLayout>(R.id.find_on_map_layout)
+        val unfriendLayout = view.findViewById<LinearLayout>(R.id.unfriend_layout)
+        val blockLayout = view.findViewById<LinearLayout>(R.id.block_layout)
         pfp = view.findViewById(R.id.user_picture)
 
         friendLayout.visibility = View.GONE
@@ -58,6 +67,14 @@ class UserProfileFragment : Fragment() {
 
         backButton.setOnClickListener{
             mapActivity.onBackPressedDispatcher.onBackPressed()
+        }
+        darkOverlay.setOnClickListener {
+            darkOverlay.visibility = View.GONE
+            areYouSureLayout.visibility = View.GONE
+        }
+        noButton.setOnClickListener {
+            darkOverlay.visibility = View.GONE
+            areYouSureLayout.visibility = View.GONE
         }
         CoroutineScope(Dispatchers.Main).launch {
             val result = api.loadProfileFromWS(userId)
@@ -78,6 +95,18 @@ class UserProfileFragment : Fragment() {
                         relationText.text = getString(R.string.friends)
                         setPic(pfpId)
                         friendLayout.visibility = View.VISIBLE
+                        blockLayout.setOnClickListener {
+                            darkOverlay.visibility = View.VISIBLE
+                            areYouSureLayout.visibility = View.VISIBLE
+                            yesButton.setOnClickListener {
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    Log.d("Tagme_ws_block", userId.toString())
+                                    api.blockUserWS(userId)
+                                    parentFragmentManager.beginTransaction().detach(this@UserProfileFragment).commitNow()
+                                    parentFragmentManager.beginTransaction().attach(this@UserProfileFragment).commitNow()
+                                }
+                            }
+                        }
                     }
                     "blocked_incoming" -> {
                         relationText.setTextColor(ContextCompat.getColor(mapActivity, R.color.reddish))
