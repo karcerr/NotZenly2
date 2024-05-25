@@ -333,9 +333,12 @@
                         android:layout_marginHorizontal="10dp"
                 />
                 <LinearLayout
+                        android:id="@+id/unblock_layout"
                         android:layout_width="match_parent"
                         android:layout_height="66dp"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        android:clickable="true"
+                >
                     <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -355,12 +358,6 @@
                             android:layout_marginEnd="25dp"
                     />
                 </LinearLayout>
-                <ImageView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:src="@drawable/separator_big"
-                        android:layout_marginHorizontal="10dp"
-                />
             </LinearLayout>
         </LinearLayout>
         <ProgressBar

@@ -1,6 +1,7 @@
 package com.tagme
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -52,6 +53,7 @@ class UserProfileFragment : Fragment() {
         val findOnMapLayout = view.findViewById<LinearLayout>(R.id.find_on_map_layout)
         val unfriendLayout = view.findViewById<LinearLayout>(R.id.unfriend_layout)
         val blockLayout = view.findViewById<LinearLayout>(R.id.block_layout)
+        val unblockLayout = view.findViewById<LinearLayout>(R.id.unblock_layout)
         pfp = view.findViewById(R.id.user_picture)
 
         friendLayout.visibility = View.GONE
@@ -83,6 +85,7 @@ class UserProfileFragment : Fragment() {
                 pfpId = message.optInt("picture_id", 0)
                 nickname.text = message.getString("nickname")
                 setPic(pfpId)
+                Log.d("Tagme_profile", relation)
                 when (relation) {
                     "friend" -> {
                         val dateLinked = api.parseAndConvertTimestamp(message.getString("date_linked"))
@@ -113,6 +116,7 @@ class UserProfileFragment : Fragment() {
                                 }
                             }
                         }
+
                     }
                     "block_incoming" -> {
                         relationText.setTextColor(ContextCompat.getColor(mapActivity, R.color.reddish))
@@ -120,9 +124,17 @@ class UserProfileFragment : Fragment() {
                         setPic(pfpId)
                     }
                     "block_outgoing" -> {
+                        blockedLayout.visibility = View.VISIBLE
                         relationText.setTextColor(ContextCompat.getColor(mapActivity, R.color.reddish))
                         relationText.text = getString(R.string.blocked_outgoing)
                         setPic(pfpId)
+                        unblockLayout.setOnClickListener {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                api.unblockUserWS(userId)
+                                parentFragmentManager.beginTransaction().detach(this@UserProfileFragment).commitNow()
+                                parentFragmentManager.beginTransaction().attach(this@UserProfileFragment).commitNow()
+                            }
+                        }
                     }
                     "block_mutual" -> {
                         relationText.setTextColor(ContextCompat.getColor(mapActivity, R.color.reddish))
