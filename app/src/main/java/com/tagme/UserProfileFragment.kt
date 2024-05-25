@@ -53,6 +53,7 @@ class UserProfileFragment : Fragment() {
         val findOnMapLayout = view.findViewById<LinearLayout>(R.id.find_on_map_layout)
         val unfriendLayout = view.findViewById<LinearLayout>(R.id.unfriend_layout)
         val blockLayout = view.findViewById<LinearLayout>(R.id.block_layout)
+        val blockButton = view.findViewById<ImageButton>(R.id.block_button)
         val unblockLayout = view.findViewById<LinearLayout>(R.id.unblock_layout)
         pfp = view.findViewById(R.id.user_picture)
 
@@ -76,6 +77,13 @@ class UserProfileFragment : Fragment() {
         noButton.setOnClickListener {
             darkOverlay.visibility = View.GONE
             areYouSureLayout.visibility = View.GONE
+        }
+        blockButton.setOnClickListener {
+            CoroutineScope(Dispatchers.Main).launch {
+                api.blockUserWS(userId)
+                parentFragmentManager.beginTransaction().detach(this@UserProfileFragment).commitNow()
+                parentFragmentManager.beginTransaction().attach(this@UserProfileFragment).commitNow()
+            }
         }
         CoroutineScope(Dispatchers.Main).launch {
             val result = api.loadProfileFromWS(userId)
@@ -125,6 +133,7 @@ class UserProfileFragment : Fragment() {
                     }
                     "block_outgoing" -> {
                         blockedLayout.visibility = View.VISIBLE
+                        blockButton.visibility = View.GONE
                         relationText.setTextColor(ContextCompat.getColor(mapActivity, R.color.reddish))
                         relationText.text = getString(R.string.blocked_outgoing)
                         setPic(pfpId)
@@ -137,6 +146,7 @@ class UserProfileFragment : Fragment() {
                         }
                     }
                     "block_mutual" -> {
+                        blockButton.visibility = View.GONE
                         relationText.setTextColor(ContextCompat.getColor(mapActivity, R.color.reddish))
                         relationText.text = getString(R.string.blocked_mutual)
                         setPic(pfpId)
@@ -163,7 +173,7 @@ class UserProfileFragment : Fragment() {
 
                         setPic(pfpId)
                     }
-                    "default", null -> { //не связаны
+                    "default", null, "null" -> { //не связаны
                         relationText.setTextColor(ContextCompat.getColor(mapActivity, R.color.white))
                         relationText.text = getString(R.string.no_relation)
                     }
