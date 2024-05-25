@@ -1,57 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
+<RelativeLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@drawable/bg_cyan_grad"
-        android:focusable="true"
-        android:clickable="true"
 >
 
     <LinearLayout
-            android:id="@+id/main_content"
+            android:id="@+id/header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-        <LinearLayout
-                android:layout_width="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="10dp"
+            android:background="@color/teal"
+            android:layout_alignParentTop="true"
+    >
+        <ImageButton
+                android:id="@+id/back_arrow_button"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="10dp"
-                android:background="@color/teal"
-                android:layout_marginBottom="10dp"
-        >
-            <ImageButton
-                    android:id="@+id/back_arrow_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/arrow_back"
-                    android:background="@null"
-                    android:contentDescription="@string/go_back_button"/>
-            <TextView
-                    android:id="@+id/conversations_title"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/conversations"
-                    android:textAppearance="?android:textAppearanceMedium"
-                    android:fontFamily="@font/my_font"
-                    android:textSize="35sp"
-                    android:textColor="@color/white"
-                    android:textStyle="bold"
-                    android:gravity="center"
-            />
-            <Space android:layout_width="40dp" android:layout_height="match_parent"/>
-
-        </LinearLayout>
-        <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/conversations_recycler_view"
-                android:layout_width="match_parent"
+                android:src="@drawable/arrow_back"
+                android:background="@null"
+                android:contentDescription="@string/go_back_button"
+        />
+        <TextView
+                android:id="@+id/conversations_title"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:textSize="20sp"
+                android:layout_weight="1"
+                android:text="@string/conversations"
+                android:textAppearance="?android:textAppearanceMedium"
                 android:fontFamily="@font/my_font"
+                android:textSize="35sp"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:gravity="center"
+        />
+        <Space
+                android:layout_width="40dp"
+                android:layout_height="match_parent"
         />
     </LinearLayout>
-</ScrollView>
 
+    <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/header"
+            android:focusable="true"
+            android:clickable="true"
+    >
+        <LinearLayout
+                android:id="@+id/main_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+        >
+            <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/conversations_recycler_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:fontFamily="@font/my_font"
+            />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</RelativeLayout>

@@ -473,7 +473,7 @@ class API private constructor(context: Context){
     private fun parseConversationsData(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
         val encounteredConversationIds = mutableListOf<Int>()
-        val updatedConversationsData = conversationsData.toMutableList()
+        val updatedConversationsData = conversationsData.map { it.copy() }.toMutableList()
         for (i in 0 until result.length()) {
             val conversationObject = result.getJSONObject(i)
             val userId = conversationObject.getInt("user_id")
@@ -489,8 +489,8 @@ class API private constructor(context: Context){
             val read = conversationObject.optBoolean("read", false)
             val timestampString = conversationObject.optString("timestamp", "")
             val existingConversation = updatedConversationsData.find { it.conversationID == conversationId }
-            if (existingConversation == null) { //Creating a new conversation with a message
-                if (lastMessageAuthorId != 0) {
+            if (existingConversation == null) {
+                if (lastMessageAuthorId != 0) { //Creating a new conversation with a message
                     updatedConversationsData.add(
                         ConversationData(conversationId,
                         UserData(userId, nickname, profilePictureId), mutableListOf(),
@@ -505,8 +505,6 @@ class API private constructor(context: Context){
                 }
             } else { //Updating existing conversation
                 existingConversation.userData = UserData(userId, nickname, profilePictureId)
-                Log.d("Tagme_conv1", lastMessageId.toString())
-                Log.d("Tagme_conv2", existingConversation.lastMessage.toString())
                 if (lastMessageId != 0) {
                     val lastMessageData = LastMessageData(lastMessageId, lastMessageAuthorId, lastMessageText, lastMessagePictureId,
                         parseAndConvertTimestamp(timestampString), read)
@@ -648,7 +646,6 @@ class API private constructor(context: Context){
         for (i in 0 until result.length()) {
             val requestObject = result.getJSONObject(i)
             val id = requestObject.getInt("user_id")
-            val userLinkId = requestObject.getInt("user_link_id")
             val nickname = requestObject.getString("nickname")
             val relation = requestObject.getString("relation")
             val pictureId = requestObject.optInt("picture_id", 0)
@@ -720,7 +717,25 @@ class API private constructor(context: Context){
         val userId: Int,
         var nickname: String,
         var profilePictureId: Int
-    )
+    ){
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is UserData) return false
+
+            if (userId != other.userId) return false
+            if (nickname != other.nickname) return false
+            if (profilePictureId != other.profilePictureId) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = userId
+            result = 31 * result + nickname.hashCode()
+            result = 31 * result + profilePictureId
+            return result
+        }
+    }
     data class PictureData(
         val pictureId: Int,
         val imagePath: String?
@@ -741,7 +756,25 @@ class API private constructor(context: Context){
         var userData: UserData,
         var messages: MutableList<MessageData>,
         var lastMessage: LastMessageData?
-    )
+    ){
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is ConversationData) return false
+
+            if (conversationID != other.conversationID) return false
+            if (userData != other.userData) return false
+            if (lastMessage != other.lastMessage) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = conversationID
+            result = 31 * result + (userData.hashCode())
+            result = 31 * result + (lastMessage?.hashCode() ?: 0)
+            return result
+        }
+    }
     data class MessageData(
         val messageId: Int,
         val authorId: Int,
@@ -757,7 +790,31 @@ class API private constructor(context: Context){
         val imageId: Int?,
         val timestamp: Timestamp,
         var read: Boolean
-    )
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is LastMessageData) return false
+
+            if (id != other.id) return false
+            if (authorId != other.authorId) return false
+            if (text != other.text) return false
+            if (imageId != other.imageId) return false
+            if (timestamp != other.timestamp) return false
+            if (read != other.read) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = id
+            result = 31 * result + authorId
+            result = 31 * result + text.hashCode()
+            result = if (imageId != null) 31 * result + imageId else result
+            result = 31 * result + timestamp.hashCode()
+            result = 31 * result + read.hashCode()
+            return result
+        }
+    }
 
     companion object {
         @Volatile

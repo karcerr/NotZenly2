@@ -70,7 +70,7 @@ class ConversationsFragment : Fragment() {
         startConversationUpdates()
     }
     override fun onDestroyView() {
-        Log.d("Tagme", "onDestroyView was called")
+        Log.d("Tagme_ws_conv", "onDestroyView")
         super.onDestroyView()
         stopConversationUpdates()
     }
@@ -122,14 +122,12 @@ class ConversationsAdapter(
             override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
                 val oldItem = conversationList[oldItemPosition]
                 val newItem = newConversationListSorted[newItemPosition]
-                val didChange = (oldItem.lastMessage == newItem.lastMessage && oldItem.userData == newItem.userData)
-                return didChange
+                return oldItem == newItem
             }
         })
-        diffResult.dispatchUpdatesTo(this)
         conversationList = newConversationListSorted.map {it.copy()
         }.toMutableList()
-        conversationList.sortByDescending { it.lastMessage?.timestamp }
+        diffResult.dispatchUpdatesTo(this)
         val hasUnreadMessages = conversationList.any { conversation ->
             val lastMessage = conversation.lastMessage
             lastMessage != null && !lastMessage.read && lastMessage.authorId != api.myUserId
