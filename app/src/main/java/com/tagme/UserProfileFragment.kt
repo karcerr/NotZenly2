@@ -1,7 +1,6 @@
 package com.tagme
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -81,49 +80,56 @@ class UserProfileFragment : Fragment() {
             if (result?.getString("status") == "success"){
                 val message = JSONObject(result.getString("message"))
                 val relation = message.optString("relation")
+                pfpId = message.optInt("picture_id", 0)
+                nickname.text = message.getString("nickname")
+                setPic(pfpId)
                 when (relation) {
                     "friend" -> {
-                        val friend = api.getFriendsData().find { it.userData.userId == userId }
-                        if (friend != null) {
-                            nickname.text = friend.userData.nickname
-                            pfpId = friend.userData.profilePictureId
-                        }
                         val dateLinked = api.parseAndConvertTimestamp(message.getString("date_linked"))
                         val timestampDateTime = LocalDateTime.parse(dateLinked.toString(), dateFormatter)
                         val timestampText = timestampDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
                         friendsSince.text = getString(R.string.friends_since_format, timestampText)
                         relationText.text = getString(R.string.friends)
-                        setPic(pfpId)
                         friendLayout.visibility = View.VISIBLE
                         blockLayout.setOnClickListener {
                             darkOverlay.visibility = View.VISIBLE
                             areYouSureLayout.visibility = View.VISIBLE
                             yesButton.setOnClickListener {
                                 CoroutineScope(Dispatchers.Main).launch {
-                                    Log.d("Tagme_ws_block", userId.toString())
                                     api.blockUserWS(userId)
                                     parentFragmentManager.beginTransaction().detach(this@UserProfileFragment).commitNow()
                                     parentFragmentManager.beginTransaction().attach(this@UserProfileFragment).commitNow()
                                 }
                             }
                         }
+                        unfriendLayout.setOnClickListener {
+                            darkOverlay.visibility = View.VISIBLE
+                            areYouSureLayout.visibility = View.VISIBLE
+                            yesButton.setOnClickListener {
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    api.deleteFriendWS(userId)
+                                    parentFragmentManager.beginTransaction().detach(this@UserProfileFragment).commitNow()
+                                    parentFragmentManager.beginTransaction().attach(this@UserProfileFragment).commitNow()
+                                }
+                            }
+                        }
                     }
-                    "blocked_incoming" -> {
+                    "block_incoming" -> {
                         relationText.setTextColor(ContextCompat.getColor(mapActivity, R.color.reddish))
                         relationText.text = getString(R.string.blocked_incoming)
                         setPic(pfpId)
                     }
-                    "blocked_outgoing" -> {
+                    "block_outgoing" -> {
                         relationText.setTextColor(ContextCompat.getColor(mapActivity, R.color.reddish))
                         relationText.text = getString(R.string.blocked_outgoing)
                         setPic(pfpId)
                     }
-                    "blocked_mutual" -> {
+                    "block_mutual" -> {
                         relationText.setTextColor(ContextCompat.getColor(mapActivity, R.color.reddish))
                         relationText.text = getString(R.string.blocked_mutual)
                         setPic(pfpId)
                     }
-                    "outgoing" -> {
+                    "request_outgoing" -> {
                         relationText.setTextColor(ContextCompat.getColor(mapActivity, R.color.white))
                         relationText.text = getString(R.string.outgoing_request)
                         val requestee = api.getFriendRequestDataList().find {it.userData.userId == userId}
@@ -134,7 +140,7 @@ class UserProfileFragment : Fragment() {
 
                         setPic(pfpId)
                     }
-                    "incoming" -> {
+                    "request_incoming" -> {
                         relationText.setTextColor(ContextCompat.getColor(mapActivity, R.color.white))
                         relationText.text = getString(R.string.incoming_request)
                         val requestee = api.getFriendRequestDataList().find {it.userData.userId == userId}
@@ -145,7 +151,7 @@ class UserProfileFragment : Fragment() {
 
                         setPic(pfpId)
                     }
-                    null -> { //не связаны
+                    "default", null -> { //не связаны
                         relationText.setTextColor(ContextCompat.getColor(mapActivity, R.color.white))
                         relationText.text = getString(R.string.no_relation)
                     }
