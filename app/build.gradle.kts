@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.tagme"
-        minSdk = 26
+        minSdk = 31
         targetSdk = 34
         versionCode = 11
         versionName = "1.06"

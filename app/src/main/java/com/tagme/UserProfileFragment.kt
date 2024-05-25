@@ -79,10 +79,14 @@ class UserProfileFragment : Fragment() {
             areYouSureLayout.visibility = View.GONE
         }
         blockButton.setOnClickListener {
-            CoroutineScope(Dispatchers.Main).launch {
-                api.blockUserWS(userId)
-                parentFragmentManager.beginTransaction().detach(this@UserProfileFragment).commitNow()
-                parentFragmentManager.beginTransaction().attach(this@UserProfileFragment).commitNow()
+            darkOverlay.visibility = View.VISIBLE
+            areYouSureLayout.visibility = View.VISIBLE
+            yesButton.setOnClickListener {
+                CoroutineScope(Dispatchers.Main).launch {
+                    api.blockUserWS(userId)
+                    parentFragmentManager.beginTransaction().detach(this@UserProfileFragment).commitNow()
+                    parentFragmentManager.beginTransaction().attach(this@UserProfileFragment).commitNow()
+                }
             }
         }
         CoroutineScope(Dispatchers.Main).launch {
