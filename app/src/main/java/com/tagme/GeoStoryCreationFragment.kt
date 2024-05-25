@@ -14,7 +14,6 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.palette.graphics.Palette
-import com.tagme.R
 import kotlinx.coroutines.*
 import java.io.ByteArrayOutputStream
 
@@ -86,6 +85,7 @@ class GeoStoryCreationFragment : Fragment() {
                             geoStoryPreviewIcon.visibility = View.VISIBLE
                             compressingStatus.visibility = View.GONE
                             Toast.makeText(requireActivity(), getString(R.string.geo_story_created), Toast.LENGTH_LONG).show()
+                            imageCompressed = false
                         } else {
                             Toast.makeText(requireActivity(), getString(R.string.something_went_wrong), Toast.LENGTH_LONG).show()
                         }
