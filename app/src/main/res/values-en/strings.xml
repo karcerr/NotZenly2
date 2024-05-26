@@ -83,4 +83,6 @@
     <string name="are_you_sure_logout">Are you sure you want to log out?</string>
     <string name="are_you_sure_unfriend_format">Are you sure you want to unfriend %s?</string>
     <string name="are_you_sure_block_format">Are you sure you want to block %s?</string>
+    <string name="messages">Messages</string>
+    <string name="you_cannot_message">You cannot message this user :(</string>
 </resources>

@@ -8,12 +8,16 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="red">#FF0000</color>
+    <color name="bright_red">#FE6F6F</color>
+    <color name="dark_red">#A04646</color>
     <color name="grey">#95FFFFFF</color>
     <color name="grey2">#C6C6C6</color>
     <color name="teal">#468281</color>
     <color name="reddish">#FF5C5C</color>
     <color name="greenish">#4C974F</color>
     <color name="green">#93FFA4</color>
+    <color name="bright_green">#56FB70</color>
+    <color name="dark_green">#229935</color>
     <color name="transparent">#00FFFFFF</color>
     <color name="teal_">#A9E5E5</color>
 </resources>

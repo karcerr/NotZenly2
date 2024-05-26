@@ -83,4 +83,6 @@
     <string name="are_you_sure_logout">Вы уверены, что хотите выйти?</string>
     <string name="are_you_sure_block_format">Вы уверены, что хотите заблокировать %s?</string>
     <string name="are_you_sure_unfriend_format">Вы уверены, что хотите удалить %s из друзей?</string>
+    <string name="messages">Сообщения</string>
+    <string name="you_cannot_message">Вы не можете отправить сообщение этому пользователю :(</string>
 </resources>

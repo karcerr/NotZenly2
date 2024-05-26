@@ -3,7 +3,6 @@ package com.tagme
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -136,19 +135,24 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
                 CoroutineScope(Dispatchers.Main).launch {
                     val answer = api.sendMessageToWS(conversationId, text)
                     if (answer != null && answer.getString("status") == "success") {
-                        api.getNewMessagesFromWS(conversationId, lastMessageId)
-                        val updatedMessages = api.getConversationData(conversationId)?.messages.orEmpty()
-                        val updatedMessagesDeepCopy = updatedMessages.map {it.copy()}.sortedBy { it.timestamp }
-                        (recyclerView.adapter as? MessageAdapter)?.updateData(updatedMessagesDeepCopy.toMutableList())
-                        if ((recyclerView.adapter as? MessageAdapter)?.bottomSticking == false) {
-                            if (recyclerView.adapter!!.itemCount > 0) {
-                                recyclerView.smoothScrollToPosition(recyclerView.adapter!!.itemCount - 1)
+                        val message = answer.getString("message")
+                        if (message == "success") {
+                            api.getNewMessagesFromWS(conversationId, lastMessageId)
+                            val updatedMessages = api.getConversationData(conversationId)?.messages.orEmpty()
+                            val updatedMessagesDeepCopy = updatedMessages.map { it.copy() }.sortedBy { it.timestamp }
+                            (recyclerView.adapter as? MessageAdapter)?.updateData(updatedMessagesDeepCopy.toMutableList())
+                            if ((recyclerView.adapter as? MessageAdapter)?.bottomSticking == false) {
+                                if (recyclerView.adapter!!.itemCount > 0) {
+                                    recyclerView.smoothScrollToPosition(recyclerView.adapter!!.itemCount - 1)
+                                }
                             }
+                            editText.text.clear()
+                        } else {
+                            Toast.makeText(mapActivity, getString(R.string.you_cannot_message), Toast.LENGTH_LONG).show()
                         }
-                        editText.text.clear()
                     } else {
                         val errorText = answer?.getString("message")
-                        Toast.makeText(requireContext(), "Error: $errorText", Toast.LENGTH_LONG).show()
+                        Toast.makeText(mapActivity, "Error: $errorText", Toast.LENGTH_LONG).show()
                     }
                     api.getConversationsFromWS()
                 }

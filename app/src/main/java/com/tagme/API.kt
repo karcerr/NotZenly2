@@ -44,6 +44,16 @@ class API private constructor(context: Context){
         set(value) {
             sharedPreferences.edit().putString("TOKEN", value).apply()
         }
+    var friendRequestsNotificationsEnabled: Boolean
+        get() = sharedPreferences.getBoolean("FRIEND_REQUEST_NOTIFICATIONS", true)
+        set(value) {
+            sharedPreferences.edit().putBoolean("FRIEND_REQUEST_NOTIFICATIONS", value).apply()
+        }
+    var messagesNotificationsEnabled: Boolean
+        get() = sharedPreferences.getBoolean("MESSAGES_NOTIFICATIONS", true)
+        set(value) {
+            sharedPreferences.edit().putBoolean("MESSAGES_NOTIFICATIONS", value).apply()
+        }
 
     var myUserId: Int
         get() = sharedPreferences.getInt("UserID", 0)
@@ -531,7 +541,7 @@ class API private constructor(context: Context){
                         parseAndConvertTimestamp(timestampString), read)
                     if (existingConversation.lastMessage?.id != lastMessageId || existingConversation.lastMessage == null) {
                         existingConversation.lastMessage = lastMessageData
-                        if  (!read && lastMessageAuthorId != myUserId ) {
+                        if  (!read && lastMessageAuthorId != myUserId && messagesNotificationsEnabled) {
                             notificationManager.showNewMessageNotification(nickname, lastMessageText, conversationId)
                         }
                     }
@@ -679,7 +689,7 @@ class API private constructor(context: Context){
                 existingFriendRequest.relation = relation
             } else {
                 updatedFriendRequestsData.add(FriendRequestData(UserData(id, nickname, pictureId), relation))
-                if (relation == "request_incoming") {
+                if (relation == "request_incoming" && friendRequestsNotificationsEnabled) {
                     notificationManager.showNewFriendRequestNotification(nickname, id)
                 }
             }

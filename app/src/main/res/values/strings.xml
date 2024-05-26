@@ -95,4 +95,6 @@
     <string name="answer_friend_request">Answer a request</string>
     <string name="loading">Loading…</string>
     <string name="no_location">User location could not be found</string>
+    <string name="messages">Messages</string>
+    <string name="you_cannot_message">You cannot message this user :(</string>
 </resources>
