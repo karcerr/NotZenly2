@@ -41,14 +41,14 @@ class UserProfileFragment : Fragment() {
         val backButton = view.findViewById<ImageButton>(R.id.back_button)
         val headerLayout = view.findViewById<ConstraintLayout>(R.id.user_header)
         val progressBarFrame = view.findViewById<ConstraintLayout>(R.id.progress_bar_layout)
-        val nickname = view.findViewById<TextView>(R.id.user_name)
+        val nicknameTextView = view.findViewById<TextView>(R.id.user_name)
         val relationText = view.findViewById<TextView>(R.id.relation_text)
         val darkOverlay = view.findViewById<View>(R.id.dark_overlay)
         val areYouSureLayout = view.findViewById<LinearLayout>(R.id.are_you_sure_layout)
         val areYouSureText = view.findViewById<TextView>(R.id.are_you_sure_text)
         val yesButton = view.findViewById<Button>(R.id.yes_button)
         val noButton = view.findViewById<Button>(R.id.no_button)
-
+        var nickname: String = ""
         val blockButton = view.findViewById<ImageButton>(R.id.block_button)
 
         pfp = view.findViewById(R.id.user_picture)
@@ -77,7 +77,7 @@ class UserProfileFragment : Fragment() {
         }
         val blockListener = View.OnClickListener {
             darkOverlay.visibility = View.VISIBLE
-            areYouSureText.text = getString(R.string.are_you_sure_block_format, nickname)
+            areYouSureText.text = mapActivity.getString(R.string.are_you_sure_block_format, nickname)
             areYouSureLayout.visibility = View.VISIBLE
             yesButton.setOnClickListener {
                 coroutineScope.launch {
@@ -93,7 +93,8 @@ class UserProfileFragment : Fragment() {
                 val message = JSONObject(result.getString("message"))
                 val relation = message.optString("relation")
                 pfpId = message.optInt("picture_id", 0)
-                nickname.text = message.getString("nickname")
+                nickname = message.getString("nickname")
+                nicknameTextView.text = nickname
                 setPic(pfpId)
                 when (relation) {
                     "friend" -> {
@@ -113,7 +114,7 @@ class UserProfileFragment : Fragment() {
                         blockLayout.setOnClickListener(blockListener)
                         unfriendLayout.setOnClickListener {
                             darkOverlay.visibility = View.VISIBLE
-                            areYouSureText.text = getString(R.string.are_you_sure_unfriend_format, nickname)
+                            areYouSureText.text = mapActivity.getString(R.string.are_you_sure_unfriend_format, nickname)
                             areYouSureLayout.visibility = View.VISIBLE
                             yesButton.setOnClickListener {
                                 coroutineScope.launch {
@@ -212,7 +213,7 @@ class UserProfileFragment : Fragment() {
                         notRelatedLayout.visibility = View.VISIBLE
                         sendFriendRequestLayout.setOnClickListener {
                             coroutineScope.launch {
-                                val answer = api.sendFriendRequestToWS(message.getString("nickname"))
+                                val answer = api.sendFriendRequestToWS(nickname)
                                 val toastMessage = if (answer?.getString("status") == "success") getString(R.string.friend_request_sent)
                                 else getString(R.string.something_went_wrong)
                                 Toast.makeText(requireContext(), toastMessage, Toast.LENGTH_SHORT).show()
