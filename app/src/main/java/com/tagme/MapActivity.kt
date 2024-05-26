@@ -785,7 +785,7 @@ fun openGeoStory(geoStoryData: API.GeoStoryData, geoStoryViewFragment: GeoStoryV
         if (bitmapPfp != null) {
             geoStoryViewFragment.userPicture.setImageBitmap(bitmapPfp)
         } else {
-            geoStoryViewFragment.geoStoryPicture.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.person_placeholder))
+            geoStoryViewFragment.userPicture.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.person_placeholder))
         }
         val bitmapGeo = context.api.getPictureData(geoStoryData.pictureId)
         if (bitmapGeo != null) {
