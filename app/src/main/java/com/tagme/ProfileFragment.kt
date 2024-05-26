@@ -432,10 +432,10 @@ class FriendRequestAdapter(
                 return didChange
             }
         })
-        diffResult.dispatchUpdatesTo(this)
         requestList = newRequestList.map {it.copy()}.toMutableList()
+        diffResult.dispatchUpdatesTo(this)
 
-        val hasUIncomingRequests = requestList.any { it.relation == "incoming"}
+        val hasUIncomingRequests = requestList.any { it.relation == "incoming_request"}
         mapActivity.newRequestIcon.visibility = if (hasUIncomingRequests) View.VISIBLE else { View.INVISIBLE }
     }
     private fun removeItem(position: Int) {
