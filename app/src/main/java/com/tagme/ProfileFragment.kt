@@ -303,12 +303,12 @@ class FriendAdapter(
             override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
                 val oldItem = friendList[oldItemPosition]
                 val newItem = newFriendList[newItemPosition]
-                val didChange = (oldItem.userData == newItem.userData)
+                val didChange = oldItem == newItem
                 return didChange
             }
         })
-        diffResult.dispatchUpdatesTo(this)
         friendList = newFriendList.map {it.copy()}.toMutableList()
+        diffResult.dispatchUpdatesTo(this)
     }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FriendViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.friend_item, parent, false)
@@ -339,9 +339,20 @@ class FriendAdapter(
                 .commit()
         }
         holder.locateButton.setOnClickListener {
-            val friendLocation = GeoPoint(friend.location!!.latitude, friend.location!!.longitude)
-            mapActivity.centralizeMapAnimated(friendLocation, friend.userData.userId, isCenterTargetUser = true, withZoom = true, mutableListOf())
-            mapActivity.onBackPressedDispatcher.onBackPressed()
+            val location = friend.location
+            if (location != null) {
+                val friendLocation = GeoPoint(location.latitude, location.longitude)
+                mapActivity.centralizeMapAnimated(
+                    friendLocation,
+                    friend.userData.userId,
+                    isCenterTargetUser = true,
+                    withZoom = true,
+                    mutableListOf()
+                )
+                mapActivity.onBackPressedDispatcher.onBackPressed()
+            } else {
+                Toast.makeText(context, context.getString(R.string.no_location), Toast.LENGTH_LONG).show()
+            }
         }
         holder.messageButton.setOnClickListener {
             val conversation = api.getConversationsDataList().find { it.userData.userId == friend.userData.userId }

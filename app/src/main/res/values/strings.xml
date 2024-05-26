@@ -3,6 +3,7 @@
     <string name="errorMessage">Some error</string>
     <string name="enter_nickname">Enter Nickname</string>
     <string name="send_request">Send Request</string>
+    <string name="send_friend_request">Send a friend request</string>
     <string name="friend_requests">Friend Requests</string>
     <string name="friends">Friends</string>
     <string name="add_a_friend_button">Add a friend button</string>
@@ -88,4 +89,8 @@
     <string name="new_friend_request">New friend request</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="cancel_friend_request">Cancel friend request</string>
+    <string name="answer_friend_request">Answer a request</string>
+    <string name="loading">Loading…</string>
+    <string name="no_location">User location could not be found</string>
 </resources>

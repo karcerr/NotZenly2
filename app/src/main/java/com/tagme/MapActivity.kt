@@ -64,7 +64,7 @@ class MapActivity: AppCompatActivity() {
     private lateinit var clickedIconDistanceAndSpeedLayout: LinearLayout
     private lateinit var clickedViewsAndTimeLayout: LinearLayout
     private lateinit var onCLickedOverlays: LinearLayout
-    private lateinit var profileFragment: ProfileFragment
+    lateinit var profileFragment: ProfileFragment
     private lateinit var conversationsFragment: ConversationsFragment
     private lateinit var geoStoryCreation: GeoStoryCreationFragment
     private lateinit var geoStoryView: GeoStoryViewFragment

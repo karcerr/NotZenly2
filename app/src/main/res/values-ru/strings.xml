@@ -76,4 +76,9 @@
     <string name="new_message_format">Новое сообщение от %s</string>
     <string name="new_friend_request_format">%s хочет дружить</string>
     <string name="new_friend_request">Новая заявка в друзья!</string>
+    <string name="cancel_friend_request">Отменить запрос в друзья</string>
+    <string name="answer_friend_request">Ответить на запрос</string>
+    <string name="send_friend_request">Отправить запрос в друзья</string>
+    <string name="loading">Загрузка...</string>
+    <string name="no_location">Местоположение пользователя не найдено</string>
 </resources>
