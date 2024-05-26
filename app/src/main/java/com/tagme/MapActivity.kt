@@ -788,6 +788,8 @@ fun openGeoStory(geoStoryData: API.GeoStoryData, geoStoryViewFragment: GeoStoryV
         val bitmapGeo = context.api.getPictureData(geoStoryData.pictureId)
         if (bitmapGeo != null) {
             geoStoryViewFragment.geoStoryPicture.setImageBitmap(bitmapGeo)
+        } else {
+            geoStoryViewFragment.geoStoryPicture.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.person_placeholder))
         }
         context.api.addViewGeoStory(geoStoryData.geoStoryId)
         context.toggleFragmentVisibility(geoStoryViewFragment)

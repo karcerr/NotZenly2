@@ -33,7 +33,7 @@
     <string name="privacy_friends_only">Только друзья</string>
     <string name="privacy_global">Все пользователи</string>
     <string name="photo_preview">Превью фото</string>
-    <string name="compressing">Сжатие...</string>
+    <string name="compressing">Сжатие…</string>
     <string name="add_friend">Добавить друга</string>
     <string name="block">Заблокировать</string>
     <string name="In_friends">В друзьях</string>
@@ -70,7 +70,6 @@
     <string name="blocked_mutual">Взаимная блокировка</string>
     <string name="no_relation">Нет связи</string>
     <string name="not_yet_implemented">Еще не реализовано</string>
-    <string name="are_you_sure">Вы уверены?</string>
     <string name="yes">Да</string>
     <string name="no">Нет</string>
     <string name="new_message_format">Новое сообщение от %s</string>
@@ -79,6 +78,9 @@
     <string name="cancel_friend_request">Отменить запрос в друзья</string>
     <string name="answer_friend_request">Ответить на запрос</string>
     <string name="send_friend_request">Отправить запрос в друзья</string>
-    <string name="loading">Загрузка...</string>
+    <string name="loading">Загрузка…</string>
     <string name="no_location">Местоположение пользователя не найдено</string>
+    <string name="are_you_sure_logout">Вы уверены, что хотите выйти?</string>
+    <string name="are_you_sure_block_format">Вы уверены, что хотите заблокировать %s?</string>
+    <string name="are_you_sure_unfriend_format">Вы уверены, что хотите удалить %s из друзей?</string>
 </resources>

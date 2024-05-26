@@ -33,7 +33,7 @@
     <string name="privacy_friends_only">Friends only</string>
     <string name="privacy_global">Global</string>
     <string name="photo_preview">Photo preview</string>
-    <string name="compressing">Compressing...</string>
+    <string name="compressing">Compressing…</string>
     <string name="add_friend">Add friend</string>
     <string name="block">Block</string>
     <string name="In_friends">Friends</string>
@@ -70,7 +70,6 @@
     <string name="blocked_mutual">Mutually blocked</string>
     <string name="no_relation">No relation</string>
     <string name="not_yet_implemented">Not yet implemented</string>
-    <string name="are_you_sure">Are you sure?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="new_message_format">New message from %s</string>
@@ -79,7 +78,9 @@
     <string name="cancel_friend_request">Cancel friend request</string>
     <string name="answer_friend_request">Answer a request</string>
     <string name="send_friend_request">Send a friend request</string>
-    <string name="loading">Loading...</string>
+    <string name="loading">Loading…</string>
     <string name="no_location">User location could not be found</string>
-
+    <string name="are_you_sure_logout">Are you sure you want to log out?</string>
+    <string name="are_you_sure_unfriend_format">Are you sure you want to unfriend %s?</string>
+    <string name="are_you_sure_block_format">Are you sure you want to block %s?</string>
 </resources>

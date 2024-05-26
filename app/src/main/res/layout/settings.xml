@@ -200,8 +200,9 @@
         <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/are_you_sure"
+                android:text="@string/are_you_sure_logout"
                 android:textSize="30sp"
+                android:textAlignment="center"
                 android:textColor="#425890"
                 android:fontFamily="@font/my_font"
                 android:layout_gravity="center"
@@ -210,7 +211,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="15dp"
-                android:layout_marginHorizontal="15dp"
         >
             <Button
                     android:id="@+id/no_button"
@@ -220,7 +220,7 @@
                     android:textSize="20sp"
                     android:background="@drawable/send_request_background"
                     android:fontFamily="@font/my_font"
-                    android:paddingHorizontal="50dp"
+                    android:paddingHorizontal="40dp"
                     android:paddingVertical="16dp"
                     android:textColor="@color/white"
             />
@@ -237,10 +237,9 @@
                     android:textSize="20sp"
                     android:background="@drawable/send_request_background"
                     android:fontFamily="@font/my_font"
-                    android:paddingHorizontal="50dp"
+                    android:paddingHorizontal="40dp"
                     android:paddingVertical="16dp"
                     android:textColor="@color/white"
-
             />
         </LinearLayout>
     </LinearLayout>

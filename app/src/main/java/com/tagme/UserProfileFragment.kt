@@ -45,6 +45,7 @@ class UserProfileFragment : Fragment() {
         val relationText = view.findViewById<TextView>(R.id.relation_text)
         val darkOverlay = view.findViewById<View>(R.id.dark_overlay)
         val areYouSureLayout = view.findViewById<LinearLayout>(R.id.are_you_sure_layout)
+        val areYouSureText = view.findViewById<TextView>(R.id.are_you_sure_text)
         val yesButton = view.findViewById<Button>(R.id.yes_button)
         val noButton = view.findViewById<Button>(R.id.no_button)
 
@@ -76,6 +77,7 @@ class UserProfileFragment : Fragment() {
         }
         val blockListener = View.OnClickListener {
             darkOverlay.visibility = View.VISIBLE
+            areYouSureText.text = getString(R.string.are_you_sure_block_format, nickname)
             areYouSureLayout.visibility = View.VISIBLE
             yesButton.setOnClickListener {
                 coroutineScope.launch {
@@ -111,6 +113,7 @@ class UserProfileFragment : Fragment() {
                         blockLayout.setOnClickListener(blockListener)
                         unfriendLayout.setOnClickListener {
                             darkOverlay.visibility = View.VISIBLE
+                            areYouSureText.text = getString(R.string.are_you_sure_unfriend_format, nickname)
                             areYouSureLayout.visibility = View.VISIBLE
                             yesButton.setOnClickListener {
                                 coroutineScope.launch {

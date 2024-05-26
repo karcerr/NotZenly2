@@ -37,7 +37,7 @@
     <string name="privacy_friends_only">privacy friends only</string>
     <string name="privacy_global">privacy global</string>
     <string name="photo_preview">Photo preview</string>
-    <string name="compressing">Compressing...</string>
+    <string name="compressing">Compressing…</string>
     <string name="add_friend">Add friend</string>
     <string name="tagme" translatable="false">TagMe!</string>
     <string name="block">Block</string>
@@ -83,7 +83,9 @@
     <string name="blocked_mutual">Mutually blocked</string>
     <string name="no_relation">No relation</string>
     <string name="not_yet_implemented">Not yet implemented</string>
-    <string name="are_you_sure">Are you sure?</string>
+    <string name="are_you_sure_logout">Are you sure you want to log out?</string>
+    <string name="are_you_sure_block_format">Are you sure you want to block %s?</string>
+    <string name="are_you_sure_unfriend_format">Are you sure you want to unfriend %s?</string>
     <string name="new_message_format">New message from %s</string>
     <string name="new_friend_request_format">You have a new friend request from %s</string>
     <string name="new_friend_request">New friend request</string>

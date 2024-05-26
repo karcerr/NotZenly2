@@ -10,7 +10,6 @@ import android.util.Log
 import android.view.MotionEvent
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toBitmap
-import com.tagme.R
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Overlay
@@ -336,9 +335,6 @@ class CustomIconOverlay(
     fun getUserId(): Int {
         return userId
     }
-    fun getStoryId(): Int {
-        return storyId
-    }
     fun getIntersectedIds(): MutableList<Pair<Int, Int>> {
         return intersectedOverlays
     }
@@ -366,45 +362,45 @@ class CustomIconOverlay(
         )
 
         val renderNode = RenderNode("BlurEffect")
-
         val hardwareRenderer = HardwareRenderer()
-
         hardwareRenderer.setSurface(imageReader.surface)
         hardwareRenderer.setContentRoot(renderNode)
-
         renderNode.setPosition(0, 0, bitmap.width, bitmap.height)
 
         val blurRenderEffect = RenderEffect.createBlurEffect(
             blurRadius, blurRadius,
             Shader.TileMode.MIRROR
         )
-
         renderNode.setRenderEffect(blurRenderEffect)
 
         executor.execute {
-            val renderCanvas = renderNode.beginRecording()
-            renderCanvas.drawBitmap(bitmap, 0f, 0f, null)
-            renderNode.endRecording()
+            try {
+                val renderCanvas = renderNode.beginRecording()
+                renderCanvas.drawBitmap(bitmap, 0f, 0f, null)
+                renderNode.endRecording()
 
-            hardwareRenderer.createRenderRequest()
-                .setWaitForPresent(true)
-                .syncAndDraw()
+                hardwareRenderer.createRenderRequest()
+                    .setWaitForPresent(true)
+                    .syncAndDraw()
 
-            val image = imageReader.acquireNextImage() ?: throw RuntimeException("No Image")
-            val hardwareBuffer = image.hardwareBuffer ?: throw RuntimeException("No HardwareBuffer")
+                val image = imageReader.acquireNextImage() ?: throw RuntimeException("No Image")
+                val hardwareBuffer = image.hardwareBuffer ?: throw RuntimeException("No HardwareBuffer")
 
-            val blurredBitmap = Bitmap.wrapHardwareBuffer(hardwareBuffer, null)
-                ?: throw RuntimeException("Create Bitmap Failed")
+                val blurredBitmap = Bitmap.wrapHardwareBuffer(hardwareBuffer, null)
+                    ?: throw RuntimeException("Create Bitmap Failed")
+                val blurredDrawable = BitmapDrawable(context.resources, blurredBitmap)
 
-            val blurredDrawable = BitmapDrawable(context.resources, blurredBitmap)
+                callback(blurredDrawable)
 
-            hardwareBuffer.close()
-            image.close()
-            imageReader.close()
-            renderNode.discardDisplayList()
-            hardwareRenderer.destroy()
-
-            callback(blurredDrawable)
+                hardwareBuffer.close()
+                image.close()
+            } catch (e: Exception) {
+                Log.d("Tagme_blur", "Error during blurDrawable execution", e)
+            } finally {
+                renderNode.discardDisplayList()
+                hardwareRenderer.destroy()
+                imageReader.close()
+            }
         }
     }
 }
