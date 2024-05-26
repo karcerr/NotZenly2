@@ -111,6 +111,7 @@ class UserProfileFragment : Fragment() {
                         relationText.text = getString(R.string.friends)
                         friendLayout.visibility = View.VISIBLE
                         blockButton.visibility = View.GONE
+                        friendsSince.visibility = View.VISIBLE
                         blockLayout.setOnClickListener(blockListener)
                         unfriendLayout.setOnClickListener {
                             darkOverlay.visibility = View.VISIBLE

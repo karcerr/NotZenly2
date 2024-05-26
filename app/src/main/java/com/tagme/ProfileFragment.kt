@@ -57,6 +57,7 @@ class ProfileFragment : Fragment() {
         val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         val addFriendButton = view.findViewById<ImageButton>(R.id.add_friend_button)
         val addFriendWindow = view.findViewById<View>(R.id.add_friend_window)
+        val ratingLayout = view.findViewById<LinearLayout>(R.id.rating_layout)
         val nicknameText = view.findViewById<TextView>(R.id.nickname_text)
         myProfilePic = view.findViewById(R.id.profile_picture)
         val darkOverlay = view.findViewById<View>(R.id.dark_overlay)
@@ -165,6 +166,9 @@ class ProfileFragment : Fragment() {
                 .add(R.id.profile_fragment, settingsFragment)
                 .addToBackStack(null)
                 .commit()
+        }
+        ratingLayout.setOnClickListener {
+            Toast.makeText(context, getString(R.string.not_yet_implemented), Toast.LENGTH_LONG).show()
         }
         backButton.setOnClickListener{
             mapActivity.onBackPressedDispatcher.onBackPressed()

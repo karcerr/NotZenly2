@@ -92,10 +92,12 @@
                     android:importantForAccessibility="no"
             />
             <LinearLayout
+                    android:id="@+id/rating_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:layout_marginHorizontal="15dp"
+                    android:clickable="true"
             >
                 <TextView
                         android:layout_width="0dp"

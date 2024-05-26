@@ -4,8 +4,6 @@ import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
-import android.widget.Toast
-import androidx.core.content.ContextCompat.getString
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.future.await
@@ -133,7 +131,6 @@ class API private constructor(context: Context){
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                 Log.d("Tagme_WS", "onFailure trigger: $response")
-                Toast.makeText(context, getString(context, R.string.connect_error), Toast.LENGTH_LONG).show()
                 future.complete(false)
             }
 
