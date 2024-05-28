@@ -60,6 +60,11 @@ class API private constructor(context: Context){
         set(value) {
             sharedPreferences.edit().putInt("UserID", value).apply()
         }
+    var myTags: Int
+        get() = sharedPreferences.getInt("TAGS", 0)
+        set(value) {
+            sharedPreferences.edit().putInt("TAGS", value).apply()
+        }
     var myPfpId: Int
         get() = sharedPreferences.getInt("PfpId", 0)
         set(value) {
@@ -175,7 +180,7 @@ class API private constructor(context: Context){
                         "success" -> parseMessagesData(answer.getString("message"))
                     }
                     "get my data" -> when (answer.getString("status")) {
-                        "success" -> parseMyData(answer.getString("message"))
+                        "success" -> parseMyData(JSONObject(answer.getString("message")))
                     }
                     "insert picture" -> when (answer.getString("status")) {
                         "success" -> parseInsertedPictureId(context, answer.getString("message"))
@@ -493,15 +498,13 @@ class API private constructor(context: Context){
         }
     }
 
-    private fun parseMyData(jsonString: String){
-        val result = JSONObject(jsonString).getJSONArray("result")
-        for (i in 0 until result.length()) {
-            val locationObject = result.getJSONObject(i)
-            val userId = locationObject.getInt("user_id")
-            val picId = locationObject.optInt("picture_id", 0)
-            myUserId = userId
-            myPfpId = picId
-        }
+    private fun parseMyData(myData: JSONObject){
+        val userId = myData.getInt("user_id")
+        val picId = myData.optInt("picture_id", 0)
+        val tags = myData.optInt("user_score", 0)
+        myUserId = userId
+        myPfpId = picId
+        myTags = tags
     }
     private fun parseConversationsData(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")

@@ -59,6 +59,7 @@ class ProfileFragment : Fragment() {
         val addFriendWindow = view.findViewById<View>(R.id.add_friend_window)
         val ratingLayout = view.findViewById<LinearLayout>(R.id.rating_layout)
         val nicknameText = view.findViewById<TextView>(R.id.nickname_text)
+        val myTagCounter = view.findViewById<TextView>(R.id.my_tag_counter)
         myProfilePic = view.findViewById(R.id.profile_picture)
         val darkOverlay = view.findViewById<View>(R.id.dark_overlay)
         val requestInput = view.findViewById<EditText>(R.id.nickname_edit_text)
@@ -70,6 +71,7 @@ class ProfileFragment : Fragment() {
         val statusText = view.findViewById<TextView>(R.id.status_text)
         nestedScrollView = view.findViewById(R.id.profile_nested_scroll_view)
         nicknameText.text = api.myNickname
+        myTagCounter.text = getString(R.string.tag_counter_format, api.myTags)
         if (api.myPfpId != 0) {
             coroutineScope.launch {
                 val bitmap = api.getPictureData(api.myPfpId)

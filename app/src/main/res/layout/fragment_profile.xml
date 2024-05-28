@@ -34,10 +34,11 @@
                         android:background="@null"
                         android:contentDescription="@string/go_back_button"/>
                 <TextView
+                        android:id="@+id/my_tag_counter"
                         android:layout_width="0dp"
                         android:layout_weight="1"
                         android:layout_height="wrap_content"
-                        android:text="@string/Tag_counter"
+                        android:text="@string/tag_counter_format"
                         android:textColor="@color/white"
                         android:textStyle="bold"
                         android:textAppearance="?android:textAppearanceMedium"

@@ -43,6 +43,7 @@ class UserProfileFragment : Fragment() {
         val progressBarFrame = view.findViewById<ConstraintLayout>(R.id.progress_bar_layout)
         val nicknameTextView = view.findViewById<TextView>(R.id.user_name)
         val relationText = view.findViewById<TextView>(R.id.relation_text)
+        val tagCounter = view.findViewById<TextView>(R.id.tag_counter)
         val darkOverlay = view.findViewById<View>(R.id.dark_overlay)
         val areYouSureLayout = view.findViewById<LinearLayout>(R.id.are_you_sure_layout)
         val areYouSureText = view.findViewById<TextView>(R.id.are_you_sure_text)
@@ -95,6 +96,7 @@ class UserProfileFragment : Fragment() {
                 pfpId = message.optInt("picture_id", 0)
                 nickname = message.getString("nickname")
                 nicknameTextView.text = nickname
+                tagCounter.text = getString(R.string.tag_counter_format, message.getInt("user_score"))
                 setPic(pfpId)
                 when (relation) {
                     "friend" -> {

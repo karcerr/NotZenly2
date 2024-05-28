@@ -10,7 +10,7 @@
     <string name="go_to_rating_button">Go to rating button</string>
     <string name="Rating">Rating</string>
     <string name="nickname">Nickname</string>
-    <string name="Tag_counter" translatable="false">Tags: 0</string>
+    <string name="tag_counter_format" translatable="false">Tags: %d</string>
     <string name="go_back_button">go back button</string>
     <string name="settings_button">settings button</string>
     <string name="nickname_text_placeholder">Nickname</string>
