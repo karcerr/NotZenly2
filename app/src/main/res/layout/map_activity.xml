@@ -25,7 +25,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 android:layout_margin="2dp"
-                android:paddingEnd="15dp"
+                android:paddingHorizontal="20dp"
                 android:textStyle="italic"
                 android:textColorLink="@color/teal"
                 android:textColor="@color/teal"
@@ -73,6 +73,7 @@
                     android:layout_marginHorizontal="20dp"
                     android:layout_marginVertical="16dp"
                     android:clickable="true"
+                    android:visibility="gone"
             >
                 <ImageView
                         android:layout_width="match_parent"
