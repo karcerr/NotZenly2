@@ -124,6 +124,7 @@ class API private constructor(context: Context){
             val jsonString = serializePicturesData(value)
             sharedPreferences.edit().putString("PICTURES_DATA", jsonString).apply()
         }
+
     suspend fun connectToServer(context: Context): CompletableFuture<Boolean> {
         val future = CompletableFuture<Boolean>()
         val url = "ws://141.8.193.201:8765"
@@ -151,6 +152,7 @@ class API private constructor(context: Context){
                 when (answer.getString("action")) {
                     "login", "register" -> when (answer.getString("status")) {
                         "success" -> {
+                            conversationsData = listOf()
                             myToken = answer.getString("message")
                         }
                     }
