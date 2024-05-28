@@ -85,4 +85,11 @@
     <string name="are_you_sure_unfriend_format">Вы уверены, что хотите удалить %s из друзей?</string>
     <string name="messages">Сообщения</string>
     <string name="you_cannot_message">Вы не можете отправить сообщение этому пользователю :(</string>
+    <string name="error_too_short">Пароль должен быть не менее 8 символов.</string>
+    <string name="error_no_capital">Пароль должен содержать хотя бы одну заглавную букву.</string>
+    <string name="error_no_digits">Пароль должен содержать хотя бы одну цифру.</string>
+    <string name="error_login_too_long">Логин не должен превышать 14 символов.</string>
+    <string name="error_password_too_long">Пароль не должен превышать 19 символов.</string>
+    <string name="error_user_already_exists">Имя пользователя уже занято</string>
+    <string name="error_incorrect_login_or_pass">Неправильный логин или пароль</string>
 </resources>

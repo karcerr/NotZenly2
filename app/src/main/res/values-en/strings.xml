@@ -85,4 +85,11 @@
     <string name="are_you_sure_block_format">Are you sure you want to block %s?</string>
     <string name="messages">Messages</string>
     <string name="you_cannot_message">You cannot message this user :(</string>
+    <string name="error_too_short">Password must be at least 8 symbols.</string>
+    <string name="error_no_capital">Password must contain at least one capital letter.</string>
+    <string name="error_no_digits">Password must contain at least one digit.</string>
+    <string name="error_login_too_long">Login must not exceed 14 symbols.</string>
+    <string name="error_password_too_long">Password must not exceed 19 symbols.</string>
+    <string name="error_user_already_exists">Username is already taken</string>
+    <string name="error_incorrect_login_or_pass">Incorrect login or password</string>
 </resources>

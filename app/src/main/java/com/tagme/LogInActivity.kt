@@ -104,8 +104,9 @@ class LogInActivity : AppCompatActivity() {
                             hideLoginShowGpsOverlay()
                             isAuthorized = true
                         } else {
+
                             errorText.visibility = View.VISIBLE
-                            errorText.text = answer.getString("message")
+                            errorText.text = getString(R.string.error_incorrect_login_or_pass)
                         }
 
                     }
@@ -134,7 +135,10 @@ class LogInActivity : AppCompatActivity() {
                             isAuthorized = true
                         } else {
                             errorText.visibility = View.VISIBLE
-                            errorText.text = answer.getString("message")
+                            val errorMessages = getLocalizedErrorMessages(answer.getString("message"))
+                            Log.d("Tagme_login", errorMessages.toString())
+                            val combinedErrorMessage = errorMessages.joinToString("\n")
+                            errorText.text = combinedErrorMessage
                         }
                     }
                 }
@@ -202,6 +206,23 @@ class LogInActivity : AppCompatActivity() {
             finish()
         }
     }
+    private fun getLocalizedErrorMessages(inputError: String): List<String> {
+        val errorMessages = mutableListOf<String>()
+        val errors = inputError.replace("input_error:", "").trim().split(", ")
+
+        errors.forEach { error ->
+            when (error) {
+                "too short" -> errorMessages.add(getString(R.string.error_too_short))
+                "no capital" -> errorMessages.add(getString(R.string.error_no_capital))
+                "no digits" -> errorMessages.add(getString(R.string.error_no_digits))
+                "login too long" -> errorMessages.add(getString(R.string.error_login_too_long))
+                "password too long" -> errorMessages.add(getString(R.string.error_password_too_long))
+                "username already exists" -> errorMessages.add(getString(R.string.error_user_already_exists))
+            }
+        }
+        return errorMessages
+    }
+
     override fun onResume() {
         super.onResume()
         if (isAuthorized) {
