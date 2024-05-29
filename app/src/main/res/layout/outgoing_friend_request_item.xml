@@ -29,12 +29,12 @@
         <TextView
                 android:id="@+id/friend_name"
                 android:text="Friend name"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:textSize="16sp"
                 android:layout_weight="1"
                 android:textStyle="bold"
-                android:textColor="@color/teal"
+                android:textColor="@color/black"
                 android:fontFamily="@font/my_font"
                 android:layout_gravity="center_vertical"/>
         <ImageButton
