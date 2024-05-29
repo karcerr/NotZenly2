@@ -351,7 +351,6 @@ class MapActivity: AppCompatActivity() {
             slideView(profileButtonFrame, true)
             slideView(messagesButtonFrame, true)
             slideView(centralizeButtonFrame, true)
-            onCLickedOverlays.visibility = View.VISIBLE
             slideView(onCLickedOverlays, false)
         }
         if (isCenteredOnUser) {
@@ -439,43 +438,37 @@ class MapActivity: AppCompatActivity() {
             slideView(profileButtonFrame, false)
             slideView(messagesButtonFrame, false)
             slideView(centralizeButtonFrame, false)
-            onCLickedOverlays.visibility = View.VISIBLE
             slideView(onCLickedOverlays, true)
         }
     }
 
     private fun slideView(view: View, hide: Boolean) {
-        val parentHeight = (view.parent as View).height.toFloat()
-        val animate: Animation = if (!hide) {
-            TranslateAnimation(
-                0f,
-                0f,
-                parentHeight,
-                0f
-            )
+        view.visibility = View.VISIBLE
+        val parentHeight = 1000f
+        val animate = if (!hide) {
+            TranslateAnimation(0f, 0f, parentHeight, 0f)
         } else {
-            TranslateAnimation(
-                0f,
-                0f,
-                0f,
-                parentHeight
-            )
+            TranslateAnimation(0f, 0f, 0f, parentHeight)
         }
+
         animate.duration = 500
         animate.fillAfter = true
-        if (!hide) {
-            view.visibility = View.VISIBLE
-            view.isClickable = true
-        }
-        view.startAnimation(animate)
-        handler.postDelayed({
-            if (hide) {
-                view.visibility = View.INVISIBLE
-                view.isClickable = false
-            }
-        }, animate.duration)
-    }
 
+        animate.setAnimationListener(object : Animation.AnimationListener {
+            override fun onAnimationStart(animation: Animation) { }
+
+            override fun onAnimationEnd(animation: Animation) {
+                view.clearAnimation()
+                if (hide) {
+                    view.visibility = View.GONE
+                }
+            }
+
+            override fun onAnimationRepeat(animation: Animation) {}
+        })
+
+        view.startAnimation(animate)
+    }
 
     //Функции ниже "нужны" для my location overlays. Хотя вроде и без них работает
      override fun onResume() {

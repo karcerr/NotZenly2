@@ -83,6 +83,8 @@
                     android:fontFamily="@font/my_font"
                     android:textSize="35sp"
                     android:layout_gravity="center"
+                    android:autoSizeTextType="uniform"
+                    android:maxLines="1"
             />
             <ImageView
                     android:layout_width="match_parent"

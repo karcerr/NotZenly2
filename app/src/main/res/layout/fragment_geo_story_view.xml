@@ -42,6 +42,8 @@
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:textColor="@color/white"
+                android:autoSizeTextType="uniform"
+                android:maxLines="1"
         />
         <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/user_picture"

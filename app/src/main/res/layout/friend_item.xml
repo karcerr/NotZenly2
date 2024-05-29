@@ -32,7 +32,8 @@
             android:textStyle="bold"
             android:fontFamily="@font/my_font"
             android:textColor="@color/black"
-            android:layout_gravity="center_vertical"/>
+            android:layout_gravity="center_vertical"
+    />
     <ImageButton
             android:id="@+id/locate_friend_button"
             android:layout_width="40dp"
