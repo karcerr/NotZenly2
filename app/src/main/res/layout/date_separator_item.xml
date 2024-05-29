@@ -23,7 +23,7 @@
             android:textSize="18sp"
             android:textStyle="bold"
             android:fontFamily="@font/my_font"
-            android:textColor="@color/teal"
+            android:textColor="@color/white"
             android:layout_gravity="center_vertical"
             android:maxWidth="250dp"
     />

@@ -96,7 +96,7 @@ class UserProfileFragment : Fragment() {
                 pfpId = message.optInt("picture_id", 0)
                 nickname = message.getString("nickname")
                 nicknameTextView.text = nickname
-                tagCounter.text = getString(R.string.tag_counter_format, message.getInt("user_score"))
+                tagCounter.text = getString(R.string.tag_counter_format, message.optInt("user_score", 0))
                 setPic(pfpId)
                 when (relation) {
                     "friend" -> {

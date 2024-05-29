@@ -55,6 +55,7 @@
     <string name="empty_login_password">Enter login and password</string>
     <string name="conversation">Conversation</string>
     <string name="You">You</string>
+    <string name="thats_you">Thats you!</string>
     <string name="notifications">Notifications</string>
     <string name="memory">Memory</string>
     <string name="language">Language</string>

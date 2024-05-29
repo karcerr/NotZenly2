@@ -24,7 +24,7 @@
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:fontFamily="@font/my_font"
-                android:textColor="@color/teal"
+                android:textColor="@color/black"
                 android:layout_gravity="center_vertical"
                 android:maxWidth="250dp"
         />
@@ -36,7 +36,7 @@
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:fontFamily="@font/my_font"
-                android:textColor="@color/teal"
+                android:textColor="@color/black"
                 android:gravity="end"
                 android:layout_gravity="bottom"
         />

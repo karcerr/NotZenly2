@@ -57,7 +57,7 @@
                         android:background="@null"
                         android:scaleType="fitCenter"
                         android:layout_gravity="center"
-                        android:padding="8dp"
+                        android:padding="10dp"
                 />
             </FrameLayout>
             <Space

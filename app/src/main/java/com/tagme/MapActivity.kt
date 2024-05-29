@@ -51,7 +51,7 @@ import kotlin.coroutines.resume
 class MapActivity: AppCompatActivity() {
     private lateinit var map : MapView
     private lateinit var mapController: IMapController
-    private lateinit var centralizeButtonFrame: FrameLayout
+    lateinit var centralizeButtonFrame: FrameLayout
     private lateinit var profileButtonFrame: FrameLayout
     private lateinit var messagesButtonFrame: FrameLayout
     private lateinit var createGeoStoryFrame: FrameLayout
@@ -761,6 +761,9 @@ class OverlappedIconsAdapter(
                         .add(R.id.profile_fragment, userProfileFragment)
                         .addToBackStack(null)
                         .commit()
+                }
+                else {
+                    Toast.makeText(mapActivity, mapActivity.getString(R.string.thats_you), Toast.LENGTH_LONG).show()
                 }
             }
             Log.d("Tagme_overlapped", "$itemList, $item")
