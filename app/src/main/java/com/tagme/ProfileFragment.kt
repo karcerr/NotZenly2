@@ -1,22 +1,16 @@
 package com.tagme
 
-import android.app.Activity
 import android.content.Context
-import android.content.Intent
-import android.graphics.*
+import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
-import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
@@ -25,7 +19,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
 import java.io.ByteArrayOutputStream
@@ -35,8 +28,8 @@ class ProfileFragment : Fragment() {
     lateinit var friendRequestAdapter: FriendRequestAdapter
     private lateinit var outputStream: ByteArrayOutputStream
     private lateinit var myProfilePic: ImageView
+    private lateinit var addPfpPic: ImageView
     private var imageCompressed: Boolean = false
-    private lateinit var imagePickerLauncher: ActivityResultLauncher<Intent>
     private lateinit var api: API
     private lateinit var mapActivity: MapActivity
     private var friendRequestUpdateRunnable: Runnable? = null
@@ -44,6 +37,7 @@ class ProfileFragment : Fragment() {
     private val friendRequestInterval = 2000L
     lateinit var nestedScrollView: NestedScrollView
     private lateinit var friendRequestsRecyclerView: RecyclerView
+    private lateinit var imageHandler: ImageHandler
     companion object{
         const val MAX_SIZE_BEFORE_ENCODING = 100 * 1024
     }
@@ -61,6 +55,8 @@ class ProfileFragment : Fragment() {
         val nicknameText = view.findViewById<TextView>(R.id.nickname_text)
         val myTagCounter = view.findViewById<TextView>(R.id.my_tag_counter)
         myProfilePic = view.findViewById(R.id.profile_picture)
+        addPfpPic = view.findViewById(R.id.add_profile_picture_icon)
+        val compressingStatus = view.findViewById<LinearLayout>(R.id.compressing_status)
         val darkOverlay = view.findViewById<View>(R.id.dark_overlay)
         val requestInput = view.findViewById<EditText>(R.id.nickname_edit_text)
         val backButton = view.findViewById<ImageButton>(R.id.back_arrow_button)
@@ -70,6 +66,8 @@ class ProfileFragment : Fragment() {
         val sendRequestButton = view.findViewById<Button>(R.id.send_request_button)
         val statusText = view.findViewById<TextView>(R.id.status_text)
         nestedScrollView = view.findViewById(R.id.profile_nested_scroll_view)
+        imageHandler = ImageHandler(mapActivity, myProfilePic, addPfpPic, compressingStatus, false, 600, 600, 40f)
+        imageHandler.initImagePickerLauncher(this)
         nicknameText.text = api.myNickname
         myTagCounter.text = getString(R.string.tag_counter_format, api.myTags)
         if (api.myPfpId != 0) {
@@ -77,17 +75,11 @@ class ProfileFragment : Fragment() {
                 val bitmap = api.getPictureData(api.myPfpId)
                 if (bitmap != null) {
                     myProfilePic.setImageBitmap(bitmap)
+                    addPfpPic.visibility = View.GONE
                 }
             }
         }
-        imagePickerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                val data: Intent? = result.data
-                data?.data?.let { uri ->
-                    compressImage(uri)
-                }
-            }
-        }
+
         val friendRecyclerView: RecyclerView = view.findViewById(R.id.friends_recycler_view)
         friendAdapter = FriendAdapter(
             requireContext(),
@@ -145,13 +137,12 @@ class ProfileFragment : Fragment() {
             }
         }
         myProfilePic.setOnClickListener {
-            imageCompressed = false
-            pickImageGallery()
+            imageHandler.pickImageGallery()
             coroutineScope.launch {
-                while (!imageCompressed) {
+                while (!imageHandler.isImageCompressed()) {
                     kotlinx.coroutines.delay(100)
                 }
-                api.insertPictureIntoWS(outputStream)
+                api.insertPictureIntoWS(imageHandler.getOutputStream())
                 if (api.lastInsertedPicId != 0) {
                     val message = api.setProfilePictureWS(api.lastInsertedPicId)?.getString("message")
                     if (message == "success") {
@@ -194,82 +185,6 @@ class ProfileFragment : Fragment() {
         friendRequestUpdateRunnable?.let { friendRequestUpdateHandler?.postDelayed(it,
             friendRequestInterval
         ) }
-    }
-    private fun pickImageGallery() {
-        val intent = Intent(Intent.ACTION_PICK)
-        intent.type = "image/*"
-        imagePickerLauncher.launch(intent)
-    }
-    private fun compressImage(uri: Uri) {
-        GlobalScope.launch(Dispatchers.IO) {
-            val inputStream = requireContext().contentResolver.openInputStream(uri)
-            inputStream?.use { stream ->
-                val originalBitmap = BitmapFactory.decodeStream(stream)
-                val compressedBitmap = (compressBitmap(originalBitmap))
-                originalBitmap.recycle()
-                mapActivity.runOnUiThread {
-                    val roundedImageBitmap = applyRoundedCorners(compressedBitmap, 20f)
-                    imageCompressed = true
-                    myProfilePic.setImageBitmap(roundedImageBitmap)
-                }
-            }
-        }
-    }
-    private fun applyRoundedCorners(bitmap: Bitmap, radius: Float): Bitmap {
-        val roundedBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(roundedBitmap)
-        val paint = Paint()
-        paint.isAntiAlias = true
-        val rectF = RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat())
-        val shader = BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
-        val path = Path()
-        path.addRoundRect(rectF, radius, radius, Path.Direction.CW)
-        canvas.drawPath(path, paint)
-        paint.shader = shader
-        canvas.drawPath(path, paint)
-        return roundedBitmap
-    }
-    private fun compressBitmap(bitmap: Bitmap): Bitmap {
-        val maxWidth = 600
-        val maxHeight = 600
-
-        val originalWidth = bitmap.width
-        val originalHeight = bitmap.height
-
-        val aspectRatio = originalWidth.toFloat() / originalHeight.toFloat()
-        val targetWidth: Int
-        val targetHeight: Int
-        if (aspectRatio > maxWidth.toFloat() / maxHeight.toFloat()) {
-            targetWidth = maxWidth
-            targetHeight = (maxWidth.toFloat() / aspectRatio).toInt()
-        } else {
-            targetWidth = (maxHeight.toFloat() * aspectRatio).toInt()
-            targetHeight = maxHeight
-        }
-
-        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
-        outputStream = ByteArrayOutputStream()
-        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-        val initialByteArray = outputStream.toByteArray()
-        mapActivity.runOnUiThread {
-            myProfilePic.setImageResource(R.drawable.photo_bg)
-        }
-        if (initialByteArray.size <= MAX_SIZE_BEFORE_ENCODING) {
-            Log.d("Tagme_PIC", "Image size is already within the desired range.")
-            return BitmapFactory.decodeByteArray(initialByteArray, 0, initialByteArray.size)
-        }
-        var quality = 100
-        var byteArray = initialByteArray
-        Log.d("Tagme_PIC", "Before compressing: ${byteArray.size}")
-        while (byteArray.size > MAX_SIZE_BEFORE_ENCODING && quality > 0) {
-            outputStream.reset()
-            quality -= if (quality <= 20) 5 else 10
-            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
-            byteArray = outputStream.toByteArray()
-            Log.d("Tagme_PIC", "Compressing: $quality ${byteArray.size}")
-        }
-
-        return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
     }
 }
 

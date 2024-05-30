@@ -57,20 +57,62 @@
                         android:contentDescription="@string/settings_button"/>
 
             </LinearLayout>
-
-            <com.google.android.material.imageview.ShapeableImageView
-                    android:id="@+id/profile_picture"
-                    android:layout_width="256dp"
-                    android:layout_height="256dp"
-                    android:src="@drawable/person_placeholder"
-                    app:shapeAppearanceOverlay="@style/roundImageView"
-                    app:strokeWidth="4dp"
-                    android:padding="4dp"
-                    app:strokeColor="@color/white"
+            <FrameLayout
+                    android:layout_width="260dp"
+                    android:layout_height="260dp"
                     android:layout_margin="8dp"
                     android:layout_gravity="center"
-                    android:scaleType="centerCrop"
-            />
+            >
+                <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/profile_picture"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/pfp_placeholder_bg"
+                        app:shapeAppearanceOverlay="@style/roundImageView"
+                        app:strokeWidth="4dp"
+                        android:padding="4dp"
+                        app:strokeColor="@color/white"
+                        android:layout_margin="8dp"
+                        android:layout_gravity="center"
+                        android:scaleType="centerCrop"
+                />
+                <ImageView
+                        android:id="@+id/add_profile_picture_icon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:src="@drawable/add_a_photo"
+                        android:importantForAccessibility="no"
+                        android:focusable="false"
+                        android:clickable="false"
+                />
+                <LinearLayout
+                        android:id="@+id/compressing_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_gravity="center"
+                        android:visibility="gone"
+                >
+                    <ProgressBar
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginVertical="10dp"
+                            android:progressTint="@color/red"
+                    />
+                    <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/compressing"
+                            android:textAppearance="?android:textAppearanceMedium"
+                            android:fontFamily="@font/my_font"
+                            android:textSize="20sp"
+                            android:textColor="@color/black"
+                            android:textStyle="bold"
+                    />
+                </LinearLayout>
+            </FrameLayout>
             <TextView
                     android:id="@+id/nickname_text"
                     android:layout_width="wrap_content"
