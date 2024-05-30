@@ -16,6 +16,7 @@ class GeoStoryViewFragment : Fragment() {
     var geoStoryId: Int = 0
     var userId: Int = 0
     lateinit var nicknameText: TextView
+    lateinit var timeAgo: TextView
     lateinit var viewCounter: TextView
     lateinit var geoStoryPicture: ImageView
     lateinit var userPicture: ImageView
@@ -27,6 +28,7 @@ class GeoStoryViewFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_geo_story_view, container, false)
         nicknameText = view.findViewById(R.id.nickname)
+        timeAgo = view.findViewById(R.id.time_ago)
         viewCounter = view.findViewById(R.id.views)
         geoStoryPicture = view.findViewById(R.id.geo_story_picture)
         userPicture = view.findViewById(R.id.user_picture)

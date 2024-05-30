@@ -20,7 +20,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:background="@drawable/blackout_gradient_2"
-            android:paddingBottom="10dp"
+            android:paddingBottom="15dp"
     >
         <ImageButton
                 android:id="@+id/back_button"
@@ -31,20 +31,40 @@
                 android:layout_marginTop="17dp"
                 android:background="@color/transparent"
         />
-        <TextView
-                android:id="@+id/nickname"
+        <LinearLayout
                 android:layout_width="0dp"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:textSize="36sp"
-                android:textStyle="bold"
-                android:text="@string/nickname"
-                android:layout_gravity="center"
-                android:gravity="center"
-                android:textColor="@color/white"
-                android:autoSizeTextType="uniform"
-                android:maxLines="1"
-        />
+                android:orientation="vertical"
+        >
+            <TextView
+                    android:id="@+id/nickname"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="36sp"
+                    android:textStyle="bold"
+                    android:text="@string/nickname"
+                    android:layout_gravity="center"
+                    android:textColor="@color/white"
+                    android:autoSizeTextType="uniform"
+                    android:gravity="center"
+                    android:maxLines="1"
+            />
+            <TextView
+                    android:id="@+id/time_ago"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="32sp"
+                    android:textStyle="bold"
+                    android:text="@string/hours_ago_format"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:textColor="@color/grey2"
+                    android:autoSizeTextType="uniform"
+                    android:maxLines="1"
+            />
+        </LinearLayout>
+
         <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/user_picture"
                 android:layout_width="64dp"

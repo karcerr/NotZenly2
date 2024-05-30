@@ -10,10 +10,10 @@ android {
 
     defaultConfig {
         applicationId = "com.tagme"
-        minSdk = 31
+        minSdk = 27
         targetSdk = 34
-        versionCode = 18
-        versionName = "1.12"
+        versionCode = 19
+        versionName = "1.13"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

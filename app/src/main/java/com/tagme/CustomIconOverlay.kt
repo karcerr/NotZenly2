@@ -6,6 +6,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.hardware.HardwareBuffer
 import android.media.ImageReader
+import android.os.Build
 import android.util.Log
 import android.view.MotionEvent
 import androidx.core.content.res.ResourcesCompat
@@ -352,7 +353,17 @@ class CustomIconOverlay(
     }
 
 
-    private fun blurDrawable(drawable: Drawable, blurRadius: Float, executor: Executor, callback: (Drawable) -> Unit) {
+    private fun blurDrawable(
+        drawable: Drawable,
+        blurRadius: Float,
+        executor: Executor,
+        callback: (Drawable) -> Unit
+    ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) { // Check if API level is below 31
+            callback(drawable)
+            return
+        }
+
         val bitmap = drawable.toBitmap()
 
         val imageReader = ImageReader.newInstance(

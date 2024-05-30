@@ -6,6 +6,7 @@ import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.graphics.drawable.BitmapDrawable
 import android.location.Location
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -45,6 +46,7 @@ import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.IMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+import java.sql.Timestamp
 import kotlin.coroutines.resume
 
 
@@ -415,14 +417,7 @@ class MapActivity: AppCompatActivity() {
                 clickedFriendNicknameTextView.text = getString(R.string.geo_story_by_format, geoStory.creatorData.nickname)
                 clickedGeoStoryViewsTextView.text = geoStory.views.toString()
 
-                val duration = api.calculateDurationFromTimestamp(geoStory.timestamp)
-                val timestampText = when {
-                    duration.seconds < 60 -> getString(R.string.seconds_ago_format, duration.seconds)
-                    duration.toMinutes() < 60 -> getString(R.string.minutes_ago_format, duration.toMinutes())
-                    else -> getString(R.string.hours_ago_format, duration.toHours())
-                }
-
-                clickedGeoStoryTimeTextView.text = timestampText
+                clickedGeoStoryTimeTextView.text = getTimeAgoString(geoStory.timestamp, this)
             }
         }
         if (intersectedOverlays != overlappedIconsAdapter.getItemList()) {
@@ -726,11 +721,13 @@ class OverlappedIconsAdapter(
         val drawablePlaceholder = ContextCompat.getDrawable(mapActivity, R.drawable.person_placeholder)
         holder.pictureImageView.setImageDrawable(drawablePlaceholder)
         if (picId != null) {
-            if (userId == 0) {
-                val blurEffect = RenderEffect.createBlurEffect(5f, 5f, Shader.TileMode.CLAMP)
-                holder.pictureImageView.setRenderEffect(blurEffect)
-            } else {
-                holder.pictureImageView.setRenderEffect(null)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (userId == 0) {
+                    val blurEffect = RenderEffect.createBlurEffect(5f, 5f, Shader.TileMode.CLAMP)
+                    holder.pictureImageView.setRenderEffect(blurEffect)
+                } else {
+                    holder.pictureImageView.setRenderEffect(null)
+                }
             }
             holder.coroutineScope.launch {
                 val bitmap = api.getPictureData(picId)
@@ -773,6 +770,7 @@ class OverlappedIconsAdapter(
 fun openGeoStory(geoStoryData: API.GeoStoryData, geoStoryViewFragment: GeoStoryViewFragment, context: MapActivity){
     context.api.markGeoStoryViewed(geoStoryData.geoStoryId)
     geoStoryViewFragment.nicknameText.text = geoStoryData.creatorData.nickname
+    geoStoryViewFragment.timeAgo.text = getTimeAgoString(geoStoryData.timestamp, context)
     geoStoryViewFragment.userId = geoStoryData.creatorData.userId
     geoStoryViewFragment.viewCounter.text = geoStoryData.views.toString()
     geoStoryViewFragment.geoStoryId = geoStoryData.geoStoryId
@@ -789,5 +787,13 @@ fun openGeoStory(geoStoryData: API.GeoStoryData, geoStoryViewFragment: GeoStoryV
         }
         context.api.addViewGeoStory(geoStoryData.geoStoryId)
         context.toggleFragmentVisibility(geoStoryViewFragment)
+    }
+}
+fun getTimeAgoString(timestamp: Timestamp, context: MapActivity): String {
+    val duration = context.api.calculateDurationFromTimestamp(timestamp)
+    return when {
+        duration.seconds < 60 -> context.getString(R.string.seconds_ago_format, duration.seconds)
+        duration.toMinutes() < 60 -> context.getString(R.string.minutes_ago_format, duration.toMinutes())
+        else -> context.getString(R.string.hours_ago_format, duration.toHours())
     }
 }
