@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.*
+import android.media.ExifInterface
 import android.net.Uri
 import android.util.Log
 import android.view.View
@@ -59,7 +60,7 @@ class ImageHandler(
         GlobalScope.launch(Dispatchers.IO) {
             val inputStream = context.contentResolver.openInputStream(uri)
             inputStream?.use { stream ->
-                val originalBitmap = BitmapFactory.decodeStream(stream)
+                val originalBitmap = applyExifOrientation(uri, BitmapFactory.decodeStream(stream))
                 val compressedBitmap = if(applyOverlayGradient)
                     compressBitmap(overlayGradient(compressBitmap(originalBitmap)))
                 else compressBitmap(originalBitmap)
@@ -114,6 +115,18 @@ class ImageHandler(
         }
 
         return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+    }
+    private fun applyExifOrientation(uri: Uri, bitmap: Bitmap): Bitmap {
+        val inputStream = context.contentResolver.openInputStream(uri)
+        val exif = inputStream?.use { ExifInterface(it) }
+        val orientation = exif?.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+        val matrix = Matrix()
+        when (orientation) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+            ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+            ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+        }
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 
     private fun overlayGradient(bitmap: Bitmap): Bitmap {
