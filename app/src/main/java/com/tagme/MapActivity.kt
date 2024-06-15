@@ -239,6 +239,7 @@ class MapActivity: AppCompatActivity() {
                 conversationsFragment.conversationsAdapter.updateData(updatedConversations)
             }
             toggleFragmentVisibility(conversationsFragment)
+            conversationsFragment.nestedScrollView.scrollTo(0, 0)
         }
         createGeoStoryFrame.setOnClickListener {
             toggleFragmentVisibility(geoStoryCreation)

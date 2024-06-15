@@ -1,13 +1,14 @@
 package com.tagme
 
+import android.animation.Animator
+import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -21,25 +22,71 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.math.abs
+import kotlin.math.max
 
 
 class ConversationsFragment : Fragment() {
+    private lateinit var view: View
     lateinit var conversationsAdapter: ConversationsAdapter
     private lateinit var api: API
+    lateinit var nestedScrollView: CustomNestedScrollView
+    private lateinit var mapActivity: MapActivity
     private val conversationUpdateInterval = 1500L
     var conversationUpdateHandler: Handler? = null
     private var conversationUpdateRunnable: Runnable? = null
     private lateinit var recyclerView: RecyclerView
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.fragment_conversations, container, false)
+    ): View {
+        view = inflater.inflate(R.layout.fragment_conversations, container, false)
         val backButton: ImageButton = view.findViewById(R.id.back_arrow_button)
-        val mapActivity = (requireActivity() as MapActivity)
+        mapActivity = requireActivity() as MapActivity
         api = mapActivity.api
         recyclerView = view.findViewById(R.id.conversations_recycler_view)
+        nestedScrollView = view.findViewById(R.id.nested_scroll_view)
+        var shouldInterceptTouch = false
+        val gestureListener = SwipeGestureListener(
+            onSwipe = { deltaY ->
+                if (nestedScrollView.scrollY == 0) {
+                    val newTranslationY = view.translationY + deltaY
+                    if (shouldInterceptTouch || newTranslationY > 0F){
+                        shouldInterceptTouch = true
+                        view.translationY = max(newTranslationY, 0F)
+                        nestedScrollView.scrollTo(0, 0)
+                        true
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            },
+            onSwipeEnd = {
+                shouldInterceptTouch = false
+                if (abs(view.translationY) > 150) { //swipe threshold
+                    animateFragmentClose()
+                } else {
+                    animateFragmentReset()
+                }
+            }
+        )
+        val gestureDetector = GestureDetector(mapActivity, gestureListener)
+        nestedScrollView.gestureDetector = gestureDetector
+        nestedScrollView.setOnTouchListener { v, event ->
+            if (gestureDetector.onTouchEvent(event)) {
+                return@setOnTouchListener true
+            }
+            if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
+                gestureListener.onUp(event)
+                shouldInterceptTouch = false
+                v.performClick()
+            }
+            false
+        }
         val conversationListSorted = api.getConversationsDataList().map { it.copy()
         }.sortedByDescending { it.lastMessage?.timestamp }.toMutableList()
         conversationsAdapter = ConversationsAdapter(
@@ -85,6 +132,35 @@ class ConversationsFragment : Fragment() {
     private fun stopConversationUpdates() {
         conversationUpdateRunnable?.let { conversationUpdateHandler?.removeCallbacks(it) }
         conversationUpdateHandler = null
+    }
+    private fun animateFragmentClose() {
+        val animator = ValueAnimator.ofFloat(view.translationY, view.height.toFloat())
+        animator.addUpdateListener { animation ->
+            view.translationY = animation.animatedValue as Float
+        }
+        animator.duration = 300
+        animator.start()
+
+        animator.addListener(object : Animator.AnimatorListener {
+            override fun onAnimationStart(animation: Animator) {}
+            override fun onAnimationEnd(animation: Animator) {
+                mapActivity.onBackPressedDispatcher.onBackPressed()
+                view.clearAnimation()
+                view.translationY = 0F
+            }
+
+            override fun onAnimationCancel(animation: Animator) {}
+            override fun onAnimationRepeat(animation: Animator) {}
+        })
+    }
+
+    private fun animateFragmentReset() {
+        val animator = ValueAnimator.ofFloat(view.translationY, 0f)
+        animator.addUpdateListener { animation ->
+            view.translationY = animation.animatedValue as Float
+        }
+        animator.duration = 300
+        animator.start()
     }
 }
 
