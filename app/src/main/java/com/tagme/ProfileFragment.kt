@@ -1,5 +1,7 @@
 package com.tagme
 
+import android.animation.Animator
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
@@ -11,7 +13,6 @@ import android.view.*
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.core.content.ContextCompat
-import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -20,8 +21,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
+import kotlin.math.abs
+import kotlin.math.max
 
 class ProfileFragment : Fragment() {
+    private lateinit var view: View
     lateinit var friendAdapter: FriendAdapter
     lateinit var friendRequestAdapter: FriendRequestAdapter
     private lateinit var myProfilePic: ImageView
@@ -31,18 +35,17 @@ class ProfileFragment : Fragment() {
     private var friendRequestUpdateRunnable: Runnable? = null
     var friendRequestUpdateHandler: Handler? = null
     private val friendRequestInterval = 2000L
-    lateinit var nestedScrollView: NestedScrollView
     private lateinit var friendRequestsRecyclerView: RecyclerView
     private lateinit var imageHandler: ImageHandler
-    private lateinit var gestureDetector: GestureDetector
+    lateinit var nestedScrollView: CustomNestedScrollView
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.fragment_profile, container, false)
+    ): View {
+        view = inflater.inflate(R.layout.fragment_profile, container, false)
         mapActivity = requireActivity() as MapActivity
         api = mapActivity.api
         val coroutineScope = CoroutineScope(Dispatchers.Main)
@@ -62,17 +65,41 @@ class ProfileFragment : Fragment() {
         val sendRequestButton = view.findViewById<Button>(R.id.send_request_button)
         val statusText = view.findViewById<TextView>(R.id.status_text)
         nestedScrollView = view.findViewById(R.id.profile_nested_scroll_view)
-        gestureDetector = GestureDetector(mapActivity, SwipeGestureListener {
-            if (nestedScrollView.scrollY == 0) {
-                mapActivity.onBackPressedDispatcher.onBackPressed()
+        var shouldInterceptTouch = false
+        val gestureListener = SwipeGestureListener(
+            onSwipe = { deltaY ->
+                if (nestedScrollView.scrollY == 0) {
+                    val newTranslationY = view.translationY + deltaY
+                    if (shouldInterceptTouch || newTranslationY > 0F){
+                        shouldInterceptTouch = true
+                        view.translationY = max(newTranslationY, 0F)
+                        nestedScrollView.scrollTo(0, 0)
+                        true
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            },
+            onSwipeEnd = {
+                shouldInterceptTouch = false
+                if (abs(view.translationY) > 150) { //swipe threshold
+                    animateFragmentClose()
+                } else {
+                    animateFragmentReset()
+                }
             }
-        })
-
+        )
+        val gestureDetector = GestureDetector(mapActivity, gestureListener)
+        nestedScrollView.gestureDetector = gestureDetector
         nestedScrollView.setOnTouchListener { v, event ->
             if (gestureDetector.onTouchEvent(event)) {
                 return@setOnTouchListener true
             }
             if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
+                gestureListener.onUp(event)
+                shouldInterceptTouch = false
                 v.performClick()
             }
             false
@@ -197,6 +224,35 @@ class ProfileFragment : Fragment() {
         friendRequestUpdateRunnable?.let { friendRequestUpdateHandler?.postDelayed(it,
             friendRequestInterval
         ) }
+    }
+    private fun animateFragmentClose() {
+        val animator = ValueAnimator.ofFloat(view.translationY, view.height.toFloat())
+        animator.addUpdateListener { animation ->
+            view.translationY = animation.animatedValue as Float
+        }
+        animator.duration = 300
+        animator.start()
+
+        animator.addListener(object : Animator.AnimatorListener {
+            override fun onAnimationStart(animation: Animator) {}
+            override fun onAnimationEnd(animation: Animator) {
+                mapActivity.onBackPressedDispatcher.onBackPressed()
+                view.clearAnimation()
+                view.translationY = 0F
+            }
+
+            override fun onAnimationCancel(animation: Animator) {}
+            override fun onAnimationRepeat(animation: Animator) {}
+        })
+    }
+
+    private fun animateFragmentReset() {
+        val animator = ValueAnimator.ofFloat(view.translationY, 0f)
+        animator.addUpdateListener { animation ->
+            view.translationY = animation.animatedValue as Float
+        }
+        animator.duration = 300
+        animator.start()
     }
 }
 
@@ -478,3 +534,4 @@ class FriendRequestAdapter(
         private const val VIEW_TYPE_OUTGOING = 1
     }
 }
+

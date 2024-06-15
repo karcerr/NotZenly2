@@ -1,9 +1,10 @@
 package com.tagme
 
+import android.animation.Animator
+import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.*
 import androidx.activity.OnBackPressedCallback
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -16,12 +17,18 @@ import org.json.JSONObject
 import org.osmdroid.util.GeoPoint
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.math.abs
+import kotlin.math.max
 
 class UserProfileFragment : Fragment() {
+    private lateinit var view: View
     private lateinit var api: API
     private var userId: Int = 0
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
     private lateinit var pfp: ImageView
+    private lateinit var frameLayout: FrameLayout
+    private lateinit var mapActivity: MapActivity
+    private lateinit var coroutineScope: CoroutineScope
     companion object {
         private const val ARG_USER_ID = "userId"
 
@@ -33,11 +40,13 @@ class UserProfileFragment : Fragment() {
             return fragment
         }
     }
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.fragment_user_profile, container, false)
+    ): View {
+        view = inflater.inflate(R.layout.fragment_user_profile, container, false)
+        mapActivity = requireActivity() as MapActivity
         val backButton = view.findViewById<ImageButton>(R.id.back_button)
         val headerLayout = view.findViewById<ConstraintLayout>(R.id.user_header)
         val progressBarFrame = view.findViewById<ConstraintLayout>(R.id.progress_bar_layout)
@@ -49,18 +58,71 @@ class UserProfileFragment : Fragment() {
         val areYouSureText = view.findViewById<TextView>(R.id.are_you_sure_text)
         val yesButton = view.findViewById<Button>(R.id.yes_button)
         val noButton = view.findViewById<Button>(R.id.no_button)
-        var nickname: String = ""
         val blockButton = view.findViewById<ImageButton>(R.id.block_button)
+        val nestedScrollView = view.findViewById<CustomNestedScrollView>(R.id.profile_nested_scroll_view)
+        val linearLayout = view.findViewById<LinearLayout>(R.id.profile_linear_layout)
+        frameLayout = view.findViewById(R.id.profile_frame_layout)
+        var shouldInterceptTouch = false
+        val gestureListener = SwipeGestureListener(
+            onSwipe = { deltaY ->
+                if (nestedScrollView.scrollY == 0) {
+                    val newTranslationY = view.translationY + deltaY
+                    if (shouldInterceptTouch || newTranslationY > 0F){
+                        shouldInterceptTouch = true
+                        view.translationY = max(newTranslationY, 0F)
+                        nestedScrollView.scrollTo(0, 0)
+                        true
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            },
+            onSwipeEnd = {
+                shouldInterceptTouch = false
+                if (abs(view.translationY) > 150) { //swipe threshold
+                    animateFragmentClose()
+                } else {
+                    animateFragmentReset()
+                }
+            }
+        )
+        val gestureDetector = GestureDetector(mapActivity, gestureListener)
+        nestedScrollView.gestureDetector = gestureDetector
+        nestedScrollView.setOnTouchListener { v, event ->
+            if (gestureDetector.onTouchEvent(event)) {
+                return@setOnTouchListener true
+            }
+            if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
+                gestureListener.onUp(event)
+                shouldInterceptTouch = false
+                v.performClick()
+            }
+            false
+        }
+        linearLayout.setOnTouchListener { v, event ->
+            if (gestureDetector.onTouchEvent(event)) {
+                return@setOnTouchListener true
+            }
+            if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
+                gestureListener.onUp(event)
+                shouldInterceptTouch = false
+                v.performClick()
+            }
+            false
+        }
+
+        var nickname = ""
 
         pfp = view.findViewById(R.id.user_picture)
 
         headerLayout.visibility = View.GONE
         progressBarFrame.visibility = View.VISIBLE
 
-        val mapActivity = requireActivity() as MapActivity
         var pfpId: Int
         api = mapActivity.api
-        val coroutineScope = CoroutineScope(Dispatchers.Main)
+        coroutineScope = CoroutineScope(Dispatchers.Main)
         userId = requireArguments().getInt(ARG_USER_ID)
 
         backButton.setOnClickListener{
@@ -264,7 +326,32 @@ class UserProfileFragment : Fragment() {
         }
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    private fun animateFragmentClose() {
+        val animator = ValueAnimator.ofFloat(view.translationY, view.height.toFloat())
+        animator.addUpdateListener { animation ->
+            view.translationY = animation.animatedValue as Float
+        }
+        animator.duration = 300
+        animator.start()
+
+        animator.addListener(object : Animator.AnimatorListener {
+            override fun onAnimationStart(animation: Animator) {}
+            override fun onAnimationEnd(animation: Animator) {
+                updateFriends(coroutineScope, mapActivity)
+                mapActivity.onBackPressedDispatcher.onBackPressed()
+            }
+
+            override fun onAnimationCancel(animation: Animator) {}
+            override fun onAnimationRepeat(animation: Animator) {}
+        })
+    }
+
+    private fun animateFragmentReset() {
+        val animator = ValueAnimator.ofFloat(view.translationY, 0f)
+        animator.addUpdateListener { animation ->
+            view.translationY = animation.animatedValue as Float
+        }
+        animator.duration = 300
+        animator.start()
     }
 }

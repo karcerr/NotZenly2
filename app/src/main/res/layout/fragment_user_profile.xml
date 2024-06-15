@@ -1,16 +1,20 @@
 <FrameLayout
+        android:id="@+id/profile_frame_layout"
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
 >
     <LinearLayout
+            android:id="@+id/profile_linear_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@drawable/background_for_user"
             android:orientation="vertical"
+            android:clickable="true"
+            android:focusable="true"
     >
-    <androidx.core.widget.NestedScrollView
+    <com.tagme.CustomNestedScrollView
             android:id="@+id/profile_nested_scroll_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -19,8 +23,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical"
-                android:clickable="true"
-                android:focusable="true"
         >
             <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/user_header"
@@ -468,7 +470,7 @@
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
-        </androidx.core.widget.NestedScrollView>
+        </com.tagme.CustomNestedScrollView>
         <Space android:layout_width="wrap_content" android:layout_height="0dp" android:layout_weight="1"/>
         <TextView
                 android:id="@+id/friends_since"
