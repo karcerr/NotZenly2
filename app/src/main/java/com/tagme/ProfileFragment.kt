@@ -1,14 +1,13 @@
 package com.tagme
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.core.content.ContextCompat
@@ -21,15 +20,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
-import java.io.ByteArrayOutputStream
 
 class ProfileFragment : Fragment() {
     lateinit var friendAdapter: FriendAdapter
     lateinit var friendRequestAdapter: FriendRequestAdapter
-    private lateinit var outputStream: ByteArrayOutputStream
     private lateinit var myProfilePic: ImageView
     private lateinit var addPfpPic: ImageView
-    private var imageCompressed: Boolean = false
     private lateinit var api: API
     private lateinit var mapActivity: MapActivity
     private var friendRequestUpdateRunnable: Runnable? = null
@@ -38,17 +34,19 @@ class ProfileFragment : Fragment() {
     lateinit var nestedScrollView: NestedScrollView
     private lateinit var friendRequestsRecyclerView: RecyclerView
     private lateinit var imageHandler: ImageHandler
-    companion object{
-        const val MAX_SIZE_BEFORE_ENCODING = 100 * 1024
-    }
+    private lateinit var gestureDetector: GestureDetector
+
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_profile, container, false)
+        mapActivity = requireActivity() as MapActivity
+        api = mapActivity.api
         val coroutineScope = CoroutineScope(Dispatchers.Main)
-        val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        val inputMethodManager = mapActivity.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         val addFriendButton = view.findViewById<ImageButton>(R.id.add_friend_button)
         val addFriendWindow = view.findViewById<View>(R.id.add_friend_window)
         val ratingLayout = view.findViewById<LinearLayout>(R.id.rating_layout)
@@ -61,11 +59,25 @@ class ProfileFragment : Fragment() {
         val requestInput = view.findViewById<EditText>(R.id.nickname_edit_text)
         val backButton = view.findViewById<ImageButton>(R.id.back_arrow_button)
         val settingsButton = view.findViewById<ImageButton>(R.id.settings_button)
-        mapActivity = requireActivity() as MapActivity
-        api = mapActivity.api
         val sendRequestButton = view.findViewById<Button>(R.id.send_request_button)
         val statusText = view.findViewById<TextView>(R.id.status_text)
         nestedScrollView = view.findViewById(R.id.profile_nested_scroll_view)
+        gestureDetector = GestureDetector(mapActivity, SwipeGestureListener {
+            if (nestedScrollView.scrollY == 0) {
+                mapActivity.onBackPressedDispatcher.onBackPressed()
+            }
+        })
+
+        nestedScrollView.setOnTouchListener { v, event ->
+            if (gestureDetector.onTouchEvent(event)) {
+                return@setOnTouchListener true
+            }
+            if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
+                v.performClick()
+            }
+            false
+        }
+
         imageHandler = ImageHandler(mapActivity, myProfilePic, addPfpPic, compressingStatus, false, 600, 600, 40f)
         imageHandler.initImagePickerLauncher(this)
         nicknameText.text = api.myNickname
@@ -82,23 +94,23 @@ class ProfileFragment : Fragment() {
 
         val friendRecyclerView: RecyclerView = view.findViewById(R.id.friends_recycler_view)
         friendAdapter = FriendAdapter(
-            requireContext(),
+            mapActivity,
             api.getFriendsData(),
             api,
             mapActivity
         )
         friendRecyclerView.adapter = friendAdapter
-        friendRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
+        friendRecyclerView.layoutManager = MyLinearLayoutManager(mapActivity)
 
         friendRequestsRecyclerView = view.findViewById(R.id.friend_requests_recycler_view)
         friendRequestAdapter = FriendRequestAdapter(
-            requireContext(),
+            mapActivity,
             api.getFriendRequestDataList().toMutableList(),
             api,
             friendAdapter,
             mapActivity)
         friendRequestsRecyclerView.adapter = friendRequestAdapter
-        friendRequestsRecyclerView.layoutManager = MyLinearLayoutManager(requireContext())
+        friendRequestsRecyclerView.layoutManager = MyLinearLayoutManager(mapActivity)
         addFriendButton.setOnClickListener {
             addFriendWindow.visibility = View.VISIBLE
             darkOverlay.visibility = View.VISIBLE
@@ -120,7 +132,7 @@ class ProfileFragment : Fragment() {
                         inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
                         darkOverlay.visibility = View.GONE
                         addFriendWindow.visibility = View.GONE
-                        Toast.makeText(requireContext(), getString(R.string.friend_request_sent), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(mapActivity, getString(R.string.friend_request_sent), Toast.LENGTH_SHORT).show()
                         api.getFriendRequestsFromWS()
                         val updatedRequests = api.getFriendRequestDataList()
                         friendRequestAdapter.updateData(updatedRequests)
