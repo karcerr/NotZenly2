@@ -10,7 +10,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.*
-import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -49,7 +48,6 @@ class ProfileFragment : Fragment() {
         mapActivity = requireActivity() as MapActivity
         api = mapActivity.api
         val coroutineScope = CoroutineScope(Dispatchers.Main)
-        val inputMethodManager = mapActivity.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         val addFriendButton = view.findViewById<ImageButton>(R.id.add_friend_button)
         val addFriendWindow = view.findViewById<View>(R.id.add_friend_window)
         val ratingLayout = view.findViewById<LinearLayout>(R.id.rating_layout)
@@ -145,7 +143,7 @@ class ProfileFragment : Fragment() {
         darkOverlay.setOnClickListener {
             addFriendWindow.visibility = View.GONE
             darkOverlay.visibility = View.GONE
-            inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
+            hideKeyboard()
         }
         sendRequestButton.setOnClickListener{
             val nickname = requestInput.text.toString()
@@ -156,7 +154,7 @@ class ProfileFragment : Fragment() {
                     if (answer.getString("status") == "success") {
                         statusText.visibility = View.GONE
                         requestInput.setText("")
-                        inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
+                        hideKeyboard()
                         darkOverlay.visibility = View.GONE
                         addFriendWindow.visibility = View.GONE
                         Toast.makeText(mapActivity, getString(R.string.friend_request_sent), Toast.LENGTH_SHORT).show()
@@ -366,7 +364,8 @@ class FriendRequestAdapter(
     private val api: API,
     private val friendAdapter: FriendAdapter,
     private val mapActivity: MapActivity
-) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {    inner class IncomingFriendRequestViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    inner class IncomingFriendRequestViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTextView: TextView = itemView.findViewById(R.id.friend_name)
         val pictureImageView: ImageView = itemView.findViewById(R.id.friend_picture)
         val acceptButton: ImageButton = itemView.findViewById(R.id.accept_button)

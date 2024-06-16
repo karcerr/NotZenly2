@@ -50,6 +50,7 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
         savedInstanceState: Bundle?
     ): View? {
         val mapActivity = (requireActivity() as MapActivity)
+        mapActivity.setSoftInputMode(true)
         api = mapActivity.api
         val view = inflater.inflate(R.layout.fragment_conversation, container, false)
         val nickname: TextView = view.findViewById(R.id.conversation_name)

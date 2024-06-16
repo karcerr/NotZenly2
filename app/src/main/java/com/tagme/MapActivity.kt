@@ -10,13 +10,17 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.text.Editable
+import android.text.TextWatcher
 import android.text.method.LinkMovementMethod
 import android.transition.Slide
 import android.util.Log
 import android.view.*
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.Animation
 import android.view.animation.TranslateAnimation
 import android.widget.*
+import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -32,6 +36,7 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.shape.ShapeAppearanceModel
+import com.tagme.databinding.MapActivityBinding
 import kotlinx.coroutines.*
 import org.osmdroid.api.IMapController
 import org.osmdroid.config.Configuration.getInstance
@@ -53,6 +58,7 @@ import kotlin.coroutines.resume
 class MapActivity: AppCompatActivity() {
     private lateinit var map : MapView
     private lateinit var mapController: IMapController
+    private lateinit var binding: MapActivityBinding
     lateinit var centralizeButtonFrame: FrameLayout
     private lateinit var profileButtonFrame: FrameLayout
     private lateinit var messagesButtonFrame: FrameLayout
@@ -66,6 +72,10 @@ class MapActivity: AppCompatActivity() {
     private lateinit var clickedIconDistanceAndSpeedLayout: LinearLayout
     private lateinit var clickedViewsAndTimeLayout: LinearLayout
     private lateinit var onCLickedOverlays: LinearLayout
+    private lateinit var topButtonsOverlay: LinearLayout
+    private lateinit var bottomButtonsOverlay: LinearLayout
+    private lateinit var searchWindow: FrameLayout
+    private lateinit var searchAdapter: SearchedFriendsAdapter
     lateinit var profileFragment: ProfileFragment
     private lateinit var conversationsFragment: ConversationsFragment
     private lateinit var geoStoryCreation: GeoStoryCreationFragment
@@ -78,6 +88,10 @@ class MapActivity: AppCompatActivity() {
     private lateinit var copyrightOSV: TextView
     private lateinit var overlappedIconsAdapter: OverlappedIconsAdapter
     private lateinit var recyclerView: RecyclerView
+    private lateinit var searchEditText: EditText
+    private lateinit var searchedFriendsListView: RecyclerView
+    private lateinit var searchDarkOverlay: View
+    lateinit var coroutineScope: CoroutineScope
     lateinit var myLatitude: String
     lateinit var myLongitute: String
     private var scaleFactor = 15.0
@@ -86,9 +100,10 @@ class MapActivity: AppCompatActivity() {
     private var isAnimating = false
     private var isUiHidden = false
     var customOverlaySelf: CustomIconOverlay? = null
+    private var isSearchLayoutVisible = false
     //private var lastY = -1f
     //these are for constant sending location:
-    val coroutineScope = CoroutineScope(Dispatchers.Main)
+
     lateinit var api: API
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     //these are for storing friends and drawing overlays:
@@ -98,11 +113,19 @@ class MapActivity: AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         api = API.getInstance(applicationContext)
+        coroutineScope = CoroutineScope(Dispatchers.Main)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         getInstance().load(this, getDefaultSharedPreferences(this))
-        setContentView(R.layout.map_activity)
+        binding = MapActivityBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        binding.root.setOnApplyWindowInsetsListener { _, windowInsets -> //this is for keyboard
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                val imeHeight = windowInsets.getInsets(WindowInsets.Type.ime()).bottom
+                binding.root.setPadding(0, 0, 0, imeHeight)
+            }
+            windowInsets
+        }
         map = findViewById(R.id.map)
         centralizeButtonFrame = findViewById(R.id.center_button_frame)
         profileButtonFrame = findViewById(R.id.profile_button_frame)
@@ -112,6 +135,12 @@ class MapActivity: AppCompatActivity() {
         createGeoStoryFrame = findViewById(R.id.create_geo_story_frame)
         searchFrame = findViewById(R.id.search_frame)
         onCLickedOverlays = findViewById(R.id.overlay_on_clicked_menus)
+        topButtonsOverlay = findViewById(R.id.top_buttons_overlay)
+        bottomButtonsOverlay = findViewById(R.id.bottom_buttons_overlay)
+        searchWindow = findViewById(R.id.search_window)
+        searchEditText = findViewById(R.id.search_edit_text)
+        searchedFriendsListView = findViewById(R.id.friends_list_view)
+        searchDarkOverlay = findViewById(R.id.dark_overlay)
         clickedFriendNicknameTextView = findViewById(R.id.nickname_text)
         clickedFriendDistanceTextView = findViewById(R.id.distance_text)
         clickedFriendSpeedTextView = findViewById(R.id.speed_text)
@@ -215,7 +244,18 @@ class MapActivity: AppCompatActivity() {
                 }
             }
         }
-
+        onBackPressedDispatcher.addCallback(this) {
+            if (isSearchLayoutVisible) {
+                hideSearchLayout()
+            } else {
+                if (supportFragmentManager.backStackEntryCount > 0) {
+                    supportFragmentManager.popBackStack()
+                } else {
+                    finish() //todo: Add the "are you sure" thingy
+                    // Also this finishes the activity, resulting in messages/friend requests updating end :(
+                }
+            }
+        }
         centralizeButtonFrame.setOnClickListener{
             customOverlaySelf?.let { centralizeMapAnimated(it.getLocation(), api.myUserId, isCenterTargetUser = true, withZoom = true, mutableListOf()) }
         }
@@ -244,8 +284,12 @@ class MapActivity: AppCompatActivity() {
         createGeoStoryFrame.setOnClickListener {
             toggleFragmentVisibility(geoStoryCreation)
         }
+        initializeFriendsList()
         searchFrame.setOnClickListener {
-            Toast.makeText(this, getString(R.string.not_yet_implemented), Toast.LENGTH_LONG).show()
+            showSearchLayout()
+        }
+        searchDarkOverlay.setOnClickListener {
+            hideSearchLayout()
         }
 
         map.addMapListener(object : MapListener {
@@ -263,9 +307,8 @@ class MapActivity: AppCompatActivity() {
                 return true
             }
         })
-
-
     }
+
     fun toggleFragmentVisibility(fragment: Fragment) {
         val transaction = fragmentManager.beginTransaction()
         transaction.setCustomAnimations(R.anim.slide_up, 0, 0, R.anim.slide_down)
@@ -287,7 +330,59 @@ class MapActivity: AppCompatActivity() {
             })
         }
     }
+    private fun showSearchLayout(){
+        isSearchLayoutVisible = true
+        setSoftInputMode(false)
+        topButtonsOverlay.visibility = View.GONE
+        bottomButtonsOverlay.visibility = View.GONE
+        copyrightOSV.visibility = View.GONE
+        searchEditText.setText("")
+        searchWindow.visibility = View.VISIBLE
+        searchWindow.alpha = 0f
+        searchWindow.animate()
+            .alpha(1f)
+            .setDuration(300)
+            .setInterpolator(AccelerateDecelerateInterpolator())
+            .start()
+    }
+    fun hideSearchLayout(){
+        isSearchLayoutVisible = false
+        setSoftInputMode(true)
+        hideKeyboard()
+        searchWindow.visibility = View.GONE
+        topButtonsOverlay.visibility = View.VISIBLE
+        bottomButtonsOverlay.visibility = View.VISIBLE
+        copyrightOSV.visibility = View.VISIBLE
+    }
 
+    private fun initializeFriendsList() {
+        initializeSearchAdapter()
+        searchEditText.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                val query = s.toString()
+                searchFriends(query)
+            }
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        })
+    }
+
+    private fun searchFriends(query: String) {
+        val friends = api.getFriendsData()
+        val filteredFriends = friends.filter { it.userData.nickname.contains(query, ignoreCase = true) }.take(5)
+        Log.d("Tagme_search", "query: $query")
+        Log.d("Tagme_search", "result: $filteredFriends")
+        updateFriendsListView(filteredFriends)
+    }
+    private fun initializeSearchAdapter() {
+        searchAdapter = SearchedFriendsAdapter(this, mutableListOf())
+        searchedFriendsListView.adapter = searchAdapter
+        searchedFriendsListView.layoutManager = MyLinearLayoutManager(this)
+    }
+    private fun updateFriendsListView(friends: List<API.FriendData>) {
+        searchAdapter.updateData(friends)
+    }
 
     /* Пытался сделать зум по свайпу, не вышло
     override fun onTouchEvent(event: MotionEvent): Boolean {

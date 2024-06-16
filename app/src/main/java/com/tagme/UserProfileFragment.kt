@@ -212,7 +212,9 @@ class UserProfileFragment : Fragment() {
                                 val transaction = mapActivity.fragmentManager.beginTransaction()
                                 transaction.hide(mapActivity.profileFragment)
                                 transaction.commit()
-                                mapActivity.onBackPressedDispatcher.onBackPressed()
+                                while (mapActivity.supportFragmentManager.backStackEntryCount > 0) {
+                                    mapActivity.supportFragmentManager.popBackStackImmediate()
+                                }
                             } else {
                                 Toast.makeText(context, getString(R.string.no_location), Toast.LENGTH_LONG).show()
                             }
