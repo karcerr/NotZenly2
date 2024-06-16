@@ -59,7 +59,7 @@ class MapActivity: AppCompatActivity() {
     private lateinit var map : MapView
     private lateinit var mapController: IMapController
     private lateinit var binding: MapActivityBinding
-    lateinit var centralizeButtonFrame: FrameLayout
+    private lateinit var centralizeButtonFrame: FrameLayout
     private lateinit var profileButtonFrame: FrameLayout
     private lateinit var messagesButtonFrame: FrameLayout
     private lateinit var createGeoStoryFrame: FrameLayout
@@ -107,8 +107,8 @@ class MapActivity: AppCompatActivity() {
     lateinit var api: API
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     //these are for storing friends and drawing overlays:
-    val friendOverlays: MutableMap<Int, CustomIconOverlay> = mutableMapOf()
-    private val geoStoryOverlays: MutableMap<Int, CustomIconOverlay> = mutableMapOf()
+    lateinit var friendOverlays: MutableMap<Int, CustomIconOverlay>
+    lateinit var geoStoryOverlays: MutableMap<Int, CustomIconOverlay>
     lateinit var fragmentManager : FragmentManager
     private val handler = Handler(Looper.getMainLooper())
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -127,6 +127,8 @@ class MapActivity: AppCompatActivity() {
             windowInsets
         }
         map = findViewById(R.id.map)
+        friendOverlays = mutableMapOf()
+        geoStoryOverlays = mutableMapOf()
         centralizeButtonFrame = findViewById(R.id.center_button_frame)
         profileButtonFrame = findViewById(R.id.profile_button_frame)
         messagesButtonFrame = findViewById(R.id.messages_button_frame)
@@ -158,7 +160,7 @@ class MapActivity: AppCompatActivity() {
         profileFragment = fragmentManager.findFragmentById(R.id.profile_fragment) as ProfileFragment
         geoStoryCreation = fragmentManager.findFragmentById(R.id.geo_story_creation_fragment) as GeoStoryCreationFragment
         geoStoryView = fragmentManager.findFragmentById(R.id.geo_story_view_fragment) as GeoStoryViewFragment
-        overlappedIconsAdapter = OverlappedIconsAdapter(this, mutableListOf(), api, geoStoryView)
+        overlappedIconsAdapter = OverlappedIconsAdapter(this, mutableListOf(), api)
         recyclerView = findViewById(R.id.overlapped_icons_recyclerview)
         recyclerView.adapter = overlappedIconsAdapter
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
@@ -227,7 +229,14 @@ class MapActivity: AppCompatActivity() {
                         api.myUserId,
                         0,
                         R.font.my_font,
-                        clickListener = null
+                        clickListener = {
+                            centralizeMapAnimated(
+                                it,
+                                api.myUserId,
+                                isCenterTargetUser = true,
+                                withZoom = false
+                            )
+                        }
                     ).apply {
                         mapView = map
                     }
@@ -425,10 +434,15 @@ class MapActivity: AppCompatActivity() {
 
         if (!isAnimating) {
             isAnimating = true
-            setCenteredTrue(targetId, isCenterTargetUser, overlay.getIntersectedIds())
+            val intersectedIds = overlay.getIntersectedIds()
+            setCenteredTrue(targetId, isCenterTargetUser, intersectedIds)
             val zoomLevel = if(withZoom) scaleFactor else map.zoomLevelDouble
             mapController.animateTo(overlay.getLocation(), zoomLevel, 500)
+            Log.d("Tagme_Overlays", intersectedIds.toString())
             handler.postDelayed({
+                if (targetId == centeredTargetId && isCenteredUser == isCenterTargetUser) { //check if still centered on the same target after 0.5 sec
+                    setCenteredTrue(targetId, isCenterTargetUser, intersectedIds)
+                }
                 isAnimating = false
             }, 550)
         }
@@ -441,7 +455,7 @@ class MapActivity: AppCompatActivity() {
         mapController.setZoom(scaleFactor)
     }
 
-    private fun setCenteredTrue(targetId: Int, isCenteredOnUser: Boolean, intersectedOverlays: MutableList<Pair<Int, Int>>) {
+    private fun setCenteredTrue(targetId: Int, isCenteredOnUser: Boolean, intersectedOverlays: MutableSet<Pair<Int, Int>>) {
         centeredTargetId = targetId
         isCenteredUser = isCenteredOnUser
         if (!isUiHidden) {
@@ -501,7 +515,6 @@ class MapActivity: AppCompatActivity() {
         } else { //focusing on Geo Story
             val geoStory = api.getGeoStoriesDataList().find {it.geoStoryId == targetId}
             if (geoStory != null) {
-
                 clickedFriendMessageFrame.visibility = View.GONE
                 clickedFriendProfileFrame.visibility = View.GONE
                 clickedGeoStoryViewFrame.visibility = View.VISIBLE
@@ -517,7 +530,7 @@ class MapActivity: AppCompatActivity() {
             }
         }
         if (intersectedOverlays != overlappedIconsAdapter.getItemList()) {
-            overlappedIconsAdapter.updateData(intersectedOverlays)
+            overlappedIconsAdapter.updateData(intersectedOverlays.toList())
         }
     }
 
@@ -738,8 +751,7 @@ class MapActivity: AppCompatActivity() {
 class OverlappedIconsAdapter(
     private val mapActivity: MapActivity,
     private var itemList: MutableList<Pair<Int, Int>>,
-    private val api: API,
-    private val geoStoryViewFragment: GeoStoryViewFragment,
+    private val api: API
 ) : RecyclerView.Adapter<OverlappedIconsAdapter.OverlappedIconViewHolder>() {
     private var friendData: API.FriendData? = null
     private var geoStoryData: API.GeoStoryData? = null
@@ -762,18 +774,24 @@ class OverlappedIconsAdapter(
                 return itemList[oldItemPosition] == newItemList[newItemPosition]
             }
 
-            override fun areContentsTheSame(p0: Int, p1: Int): Boolean {
-                val newUserId = newItemList[p1].first
-                if (newUserId != 0) {
-                    val newFriendData = api.getFriendsData().find { it.userData.userId == newUserId }
-                    return newFriendData == friendData
-                } else {
-                    val newGeoStoryId = newItemList[p1].second
-                    val newGeoStoryData = api.getGeoStoriesDataList().find {it.geoStoryId == newGeoStoryId}
-                    return newGeoStoryData == geoStoryData
+            override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                val oldItem = itemList[oldItemPosition]
+                val newItem = newItemList[newItemPosition]
+
+                if (oldItem.first != newItem.first || oldItem.second != newItem.second) {
+                    return false
                 }
+
+                val oldFriendData = if (oldItem.first != 0) api.getFriendsData().find { it.userData.userId == oldItem.first } else null
+                val newFriendData = if (newItem.first != 0) api.getFriendsData().find { it.userData.userId == newItem.first } else null
+
+                val oldGeoStoryData = if (oldItem.first == 0) api.getGeoStoriesDataList().find { it.geoStoryId == oldItem.second } else null
+                val newGeoStoryData = if (newItem.first == 0) api.getGeoStoriesDataList().find { it.geoStoryId == newItem.second } else null
+
+                return (oldFriendData == newFriendData) && (oldGeoStoryData == newGeoStoryData)
             }
         })
+
         diffResult.dispatchUpdatesTo(this)
         itemList = newItemList.map {it.copy()}.toMutableList()
     }
@@ -797,11 +815,9 @@ class OverlappedIconsAdapter(
         val pictureBgStyle =
             if(userId == 0)
                 if (geoStoryData?.viewed == true) {
-                    Log.d("Tagme_geo", "viewed: $geoStoryData")
                     R.drawable.overlapped_geostory_viewed_bg
                 }
                 else {
-                    Log.d("Tagme_geo", "new: $geoStoryData")
                     R.drawable.overlapped_geostory_new_bg
                 }
             else
@@ -834,25 +850,23 @@ class OverlappedIconsAdapter(
         }
         holder.pictureImageView.setOnClickListener {
             if (item.first == 0) {
-                //show geo story
-                val geoStory = api.getGeoStoriesDataList().find {it.geoStoryId == item.second}
-                if (geoStory != null) {
-                    openGeoStory(geoStory, geoStoryViewFragment, mapActivity)
-                    holder.pictureBgImageView.setImageDrawable(ContextCompat.getDrawable(mapActivity, R.drawable.overlapped_geostory_viewed_bg))
+                val geoStoryOverlay = mapActivity.geoStoryOverlays[item.second]
+                if (geoStoryOverlay != null) {
+                    mapActivity.centralizeMapAnimated(geoStoryOverlay, item.second, isCenterTargetUser = false, withZoom = true)
                 }
             } else {
                 if (item.first != api.myUserId) {
-                    val userProfileFragment = UserProfileFragment.newInstance(item.first)
-                    mapActivity.fragmentManager.beginTransaction()
-                        .add(R.id.profile_fragment, userProfileFragment)
-                        .addToBackStack(null)
-                        .commit()
+                    val friendOverlay = mapActivity.friendOverlays[item.first]
+                    if (friendOverlay != null) {
+                        mapActivity.centralizeMapAnimated(friendOverlay, item.first, isCenterTargetUser = true, withZoom = true)
+                    }
                 }
                 else {
-                    Toast.makeText(mapActivity, mapActivity.getString(R.string.thats_you), Toast.LENGTH_LONG).show()
+                    mapActivity.customOverlaySelf?.let { it1 ->
+                        mapActivity.centralizeMapAnimated(it1, api.myUserId, isCenterTargetUser = true, withZoom = true)
+                    }
                 }
             }
-            Log.d("Tagme_overlapped", "$itemList, $item")
         }
 
     }

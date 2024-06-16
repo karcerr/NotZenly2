@@ -31,7 +31,7 @@ class CustomIconOverlay(
     private val fontResId: Int,
     private val clickListener: ((CustomIconOverlay) -> Unit)?
 ) : Overlay(context) {
-    private var intersectedOverlays: MutableList<Pair<Int, Int>> = mutableListOf()
+    private var intersectedOverlays: MutableSet<Pair<Int, Int>> = mutableSetOf()
     private var visible = true
     private var closestVisibleOverlay : CustomIconOverlay? = null
 
@@ -336,15 +336,30 @@ class CustomIconOverlay(
     fun getUserId(): Int {
         return userId
     }
-    fun getIntersectedIds(): MutableList<Pair<Int, Int>> {
+    fun getIntersectedIds(): MutableSet<Pair<Int, Int>> {
         if (intersectedOverlays.isEmpty() && !visible && closestVisibleOverlay != null) {
-            visible = true
-            val parentIntersectedOverlays = closestVisibleOverlay!!.getIntersectedIds().map {it.copy()}.toMutableList()
-            parentIntersectedOverlays.add(closestVisibleOverlay!!.userId to closestVisibleOverlay!!.storyId)
-            parentIntersectedOverlays.remove(userId to storyId)
-            return parentIntersectedOverlays
-        } else {
-            return intersectedOverlays
+            swapWithClosestVisibleOverlay()
+        }
+        return intersectedOverlays
+    }
+    private fun swapWithClosestVisibleOverlay() {
+        closestVisibleOverlay?.let { visibleOverlay ->
+            this.visible = true
+            visibleOverlay.visible = false
+
+            val intersectedOverlaySet = mutableSetOf<Pair<Int, Int>>()
+            intersectedOverlaySet.addAll(visibleOverlay.getIntersectedIds())
+            intersectedOverlaySet.add(visibleOverlay.userId to visibleOverlay.storyId)
+            intersectedOverlaySet.remove(userId to storyId)
+
+            this.intersectedOverlays = intersectedOverlaySet
+            visibleOverlay.intersectedOverlays.clear()
+
+
+            this.closestVisibleOverlay = null
+            visibleOverlay.closestVisibleOverlay = this
+
+            mapView?.invalidate()
         }
     }
 
