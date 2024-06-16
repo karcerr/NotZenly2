@@ -761,22 +761,25 @@ class OverlappedIconsAdapter(
         val coroutineScope = CoroutineScope(Dispatchers.Main)
     }
     fun updateData(newItemList: List<Pair<Int, Int>>) {
+        val orderedNewItemList = itemList.mapNotNull { oldItem ->
+            newItemList.find { newItem -> newItem == oldItem }
+        } + newItemList.filter { newItem -> itemList.none { oldItem -> oldItem == newItem } }
         val diffResult = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
             override fun getOldListSize(): Int {
                 return itemList.size
             }
 
             override fun getNewListSize(): Int {
-                return newItemList.size
+                return orderedNewItemList.size
             }
 
             override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-                return itemList[oldItemPosition] == newItemList[newItemPosition]
+                return itemList[oldItemPosition] == orderedNewItemList[newItemPosition]
             }
 
             override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
                 val oldItem = itemList[oldItemPosition]
-                val newItem = newItemList[newItemPosition]
+                val newItem = orderedNewItemList[newItemPosition]
 
                 if (oldItem.first != newItem.first || oldItem.second != newItem.second) {
                     return false
@@ -793,7 +796,7 @@ class OverlappedIconsAdapter(
         })
 
         diffResult.dispatchUpdatesTo(this)
-        itemList = newItemList.map {it.copy()}.toMutableList()
+        itemList = orderedNewItemList.map {it.copy()}.toMutableList()
     }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OverlappedIconViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.overlapped_icon_item, parent, false)
