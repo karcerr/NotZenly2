@@ -14,7 +14,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONObject
-import org.osmdroid.util.GeoPoint
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.abs
@@ -199,24 +198,24 @@ class UserProfileFragment : Fragment() {
                         }
                         findOnMapLayout.setOnClickListener {
                             val friend = api.getFriendsData().find{it.userData.userId == userId}
-                            val location = friend?.location
-                            if (location != null) {
-                                val friendLocation = GeoPoint(location.latitude, location.longitude)
-                                mapActivity.centralizeMapAnimated(
-                                    friendLocation,
-                                    friend.userData.userId,
-                                    isCenterTargetUser = true,
-                                    withZoom = true,
-                                    mutableListOf()
-                                )
-                                val transaction = mapActivity.fragmentManager.beginTransaction()
-                                transaction.hide(mapActivity.profileFragment)
-                                transaction.commit()
-                                while (mapActivity.supportFragmentManager.backStackEntryCount > 0) {
-                                    mapActivity.supportFragmentManager.popBackStackImmediate()
+                            if (friend != null) {
+                                val friendOverlay = mapActivity.friendOverlays[friend.userData.userId]
+                                if (friendOverlay != null) {
+                                    mapActivity.centralizeMapAnimated(
+                                        friendOverlay,
+                                        friend.userData.userId,
+                                        isCenterTargetUser = true,
+                                        withZoom = true
+                                    )
+                                    val transaction = mapActivity.fragmentManager.beginTransaction()
+                                    transaction.hide(mapActivity.profileFragment)
+                                    transaction.commit()
+                                    while (mapActivity.supportFragmentManager.backStackEntryCount > 0) {
+                                        mapActivity.supportFragmentManager.popBackStackImmediate()
+                                    }
+                                } else {
+                                    Toast.makeText(context, getString(R.string.no_location), Toast.LENGTH_LONG).show()
                                 }
-                            } else {
-                                Toast.makeText(context, getString(R.string.no_location), Toast.LENGTH_LONG).show()
                             }
                         }
                     }

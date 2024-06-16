@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.imageview.ShapeableImageView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.osmdroid.util.GeoPoint
 
 class SearchedFriendsAdapter(
     private val context: MapActivity,
@@ -63,16 +62,14 @@ class SearchedFriendsAdapter(
                 context.hideSearchLayout()
             }
             locateButton.setOnClickListener {
-                val location = friend.location
-                if (location != null) {
-                    val friendLocation = GeoPoint(location.latitude, location.longitude)
+                val friendOverlay = context.friendOverlays[friend.userData.userId]
+                if (friendOverlay != null) {
                     context.hideSearchLayout()
                     context.centralizeMapAnimated(
-                        friendLocation,
+                        friendOverlay,
                         friend.userData.userId,
                         isCenterTargetUser = true,
-                        withZoom = true,
-                        mutableListOf()
+                        withZoom = true
                     )
                 } else {
                     Toast.makeText(context, context.getString(R.string.no_location), Toast.LENGTH_LONG).show()

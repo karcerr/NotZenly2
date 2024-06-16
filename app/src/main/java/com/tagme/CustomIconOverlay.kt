@@ -337,7 +337,15 @@ class CustomIconOverlay(
         return userId
     }
     fun getIntersectedIds(): MutableList<Pair<Int, Int>> {
-        return intersectedOverlays
+        if (intersectedOverlays.isEmpty() && !visible && closestVisibleOverlay != null) {
+            visible = true
+            val parentIntersectedOverlays = closestVisibleOverlay!!.getIntersectedIds().map {it.copy()}.toMutableList()
+            parentIntersectedOverlays.add(closestVisibleOverlay!!.userId to closestVisibleOverlay!!.storyId)
+            parentIntersectedOverlays.remove(userId to storyId)
+            return parentIntersectedOverlays
+        } else {
+            return intersectedOverlays
+        }
     }
 
     fun updateDrawable(newDrawable: Drawable) {

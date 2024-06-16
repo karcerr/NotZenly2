@@ -19,7 +19,6 @@ import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.osmdroid.util.GeoPoint
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -326,17 +325,16 @@ class FriendAdapter(
                 .commit()
         }
         holder.locateButton.setOnClickListener {
-            val location = friend.location
-            if (location != null) {
-                val friendLocation = GeoPoint(location.latitude, location.longitude)
+            val friendOverlay = mapActivity.friendOverlays[friend.userData.userId]
+            if (friendOverlay != null) {
+                mapActivity.hideSearchLayout()
                 mapActivity.centralizeMapAnimated(
-                    friendLocation,
+                    friendOverlay,
                     friend.userData.userId,
                     isCenterTargetUser = true,
-                    withZoom = true,
-                    mutableListOf()
+                    withZoom = true
                 )
-                mapActivity.onBackPressedDispatcher.onBackPressed()
+            mapActivity.onBackPressedDispatcher.onBackPressed()
             } else {
                 Toast.makeText(context, context.getString(R.string.no_location), Toast.LENGTH_LONG).show()
             }
