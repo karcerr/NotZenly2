@@ -19,10 +19,14 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.vk.id.onetap.xml.OneTap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class LogInActivity : AppCompatActivity() {
 
@@ -38,6 +42,7 @@ class LogInActivity : AppCompatActivity() {
     private lateinit var errorText : TextView
     private lateinit var loginBtn : Button
     private lateinit var registerBtn : Button
+    private lateinit var vkidButton : OneTap
     private lateinit var loginLayout : LinearLayout
     private lateinit var loadingLayout : LinearLayout
     private lateinit var enableGpsLayout : LinearLayout
@@ -54,6 +59,7 @@ class LogInActivity : AppCompatActivity() {
         passwordInput = findViewById(R.id.password_input)
         loginBtn = findViewById(R.id.login_btn)
         registerBtn = findViewById(R.id.register_btn)
+        vkidButton = findViewById(R.id.vkidButton)
         errorText = findViewById(R.id.error_message)
 
         val api = API.getInstance(applicationContext)
@@ -83,6 +89,29 @@ class LogInActivity : AppCompatActivity() {
                 Log.d("Tagme_", "Failed to connect to the server")
             }
         }
+        vkidButton.setCallbacks(
+            onAuth = { accessToken ->
+                val token = accessToken.token
+                val fields = "photo_200"
+                Log.d("Tagme_VK", "The token: $token")
+                RetrofitInstance.api.getUsers(accessToken = token, fields = fields)
+                    .enqueue(object : Callback<VkResponse> {
+                        override fun onResponse(call: Call<VkResponse>, response: Response<VkResponse>) {
+                            if (response.isSuccessful) {
+                                val users = response.body()?.response
+                                Log.d("Tagme_VK_ACCESS", users.toString())
+                            } else {
+                                Log.d("Tagme_VK_ACCESS_ERROR", "$call, $response")
+                            }
+                        }
+
+                        override fun onFailure(call: Call<VkResponse>, t: Throwable) {
+                            Log.d("Tagme_VK_ACCESS_FAILURE", "$call, $t")
+                        }
+                    })
+            }
+        )
+
         loginBtn.setOnClickListener {
             val username = usernameInput.text.toString()
             val password = passwordInput.text.toString()
