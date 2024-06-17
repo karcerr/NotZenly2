@@ -31,7 +31,7 @@ class CustomIconOverlay(
     private val storyId: Int,
     private val fontResId: Int,
     private val clickListener: ((CustomIconOverlay) -> Unit)?
-) : Overlay(context) {
+) : Overlay() {
     private var intersectedOverlays: MutableSet<Pair<Int, Int>> = mutableSetOf()
     private var closestVisibleOverlay : CustomIconOverlay? = null
     private var size = 100 //0 for invisible, 100 for normal, 120 for focused on
@@ -85,7 +85,7 @@ class CustomIconOverlay(
     private val executor: Executor = Executors.newSingleThreadExecutor()
     init {
         if (storyId != 0) {
-            blurDrawable(drawable, 25f, executor) { blurredDrawable ->
+            blurDrawable(drawable, executor) { blurredDrawable ->
                 drawable = blurredDrawable
                 mapView?.invalidate()
             }
@@ -401,7 +401,7 @@ class CustomIconOverlay(
 
     fun updateDrawable(newDrawable: Drawable) {
         if (storyId != 0) {
-            blurDrawable(newDrawable, 25f, executor) { blurredDrawable ->
+            blurDrawable(newDrawable, executor) { blurredDrawable ->
                 drawable = blurredDrawable
                 mapView?.invalidate()
             }
@@ -414,7 +414,6 @@ class CustomIconOverlay(
 
     private fun blurDrawable(
         drawable: Drawable,
-        blurRadius: Float,
         executor: Executor,
         callback: (Drawable) -> Unit
     ) {
@@ -438,7 +437,7 @@ class CustomIconOverlay(
         renderNode.setPosition(0, 0, bitmap.width, bitmap.height)
 
         val blurRenderEffect = RenderEffect.createBlurEffect(
-            blurRadius, blurRadius,
+            25f, 25f,
             Shader.TileMode.MIRROR
         )
         renderNode.setRenderEffect(blurRenderEffect)
