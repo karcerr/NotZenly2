@@ -12,13 +12,13 @@ android {
         applicationId = "com.tagme"
         minSdk = 27
         targetSdk = 34
-        versionCode = 22
-        versionName = "1.16"
+        versionCode = 23
+        versionName = "1.17"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         addManifestPlaceholders(mapOf(
-            "VKIDRedirectHost" to "vk.com", // typically vk.com.
-            "VKIDRedirectScheme" to "vk51952644", // vk{Your application ID}.
+            "VKIDRedirectHost" to "vk.com",
+            "VKIDRedirectScheme" to "vk51952644",
             "VKIDClientID" to 51952644,
             "VKIDClientSecret" to "uudqv6vZoGOgYfirdxbY"
         ))
