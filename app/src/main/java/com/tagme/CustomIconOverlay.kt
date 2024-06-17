@@ -1,5 +1,6 @@
 package com.tagme
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
@@ -32,11 +33,35 @@ class CustomIconOverlay(
     private val clickListener: ((CustomIconOverlay) -> Unit)?
 ) : Overlay(context) {
     private var intersectedOverlays: MutableSet<Pair<Int, Int>> = mutableSetOf()
-    private var visible = true
     private var closestVisibleOverlay : CustomIconOverlay? = null
-
+    private var size = 100 //0 for invisible, 100 for normal, 120 for focused on
     private var overlayScale = calculateScaleFactor(drawable)
     var mapView: MapView? = null
+    private var _visible = true
+    companion object {
+        private const val HITBOX_RADIUS = 90
+    }
+    private var visible: Boolean
+        get() = _visible
+        set(value) {
+            if (_visible != value) {
+                _visible = value
+                if (_visible) {
+                    animateSizeChange(100)
+                } else {
+                    animateSizeChange(0)
+                }
+            }
+        }
+    private fun animateSizeChange(newSize: Int) {
+        val animator = ValueAnimator.ofInt(size, newSize)
+        animator.duration = 300
+        animator.addUpdateListener { animation ->
+            size = animation.animatedValue as Int
+            mapView?.invalidate()
+        }
+        animator.start()
+    }
     private val textPaintBlack = Paint().apply {
         color = Color.BLACK
         textSize = 48f
@@ -87,7 +112,7 @@ class CustomIconOverlay(
         val point = projection?.toPixels(location, null)
 
         val rotation = -(mapView?.mapOrientation ?: 0f)
-        val intersectCircleRadius = 40f
+        val intersectCircleRadius = 40f * (size / 100f)
         point?.let { currentPoint ->
             var intersected = false
             var minDistanceToVisible = Double.MAX_VALUE
@@ -107,7 +132,6 @@ class CustomIconOverlay(
                     intersected = true
                 }
             }
-
             visible = !intersected
             if (closestVisibleOverlay != null) {
                 closestVisibleOverlay!!.intersectedOverlays.remove(userId to storyId)
@@ -119,11 +143,11 @@ class CustomIconOverlay(
             }
         }
 
-        if(!visible) return
+        if(size == 0) return
         point?.let {
             canvas.save()
             canvas.rotate(rotation, it.x.toFloat(), it.y.toFloat())
-            overlayScale = calculateScaleFactor(drawable)
+            overlayScale = calculateScaleFactor(drawable) * (size / 100f)
             val scaledWidth = (drawable.intrinsicWidth * overlayScale).toInt()
             val scaledHeight = (drawable.intrinsicHeight * overlayScale).toInt()
             val x0 = (it.x - scaledWidth / 2).toFloat()
@@ -140,14 +164,14 @@ class CustomIconOverlay(
             var intersectCircleY = y1
             if (storyId != 0) {
                 y0 += scaledHeight / 4
-                val circleRadius = 80f
-                intersectCircleY = y0  +  circleRadius
+                val circleRadius = 80f * (size / 100f)
+                intersectCircleY = y0 + circleRadius
                 val circleY = y0 + (scaledHeight - 2 * circleRadius)
-                // flipped triangle
+                // Flipped triangle
                 val trianglePath = Path().apply {
-                    moveTo(it.x.toFloat() - 80, circleY)
+                    moveTo(it.x.toFloat() - 80 * (size / 100f), circleY)
                     lineTo(it.x.toFloat(), y1)
-                    lineTo(it.x.toFloat() + 80, circleY)
+                    lineTo(it.x.toFloat() + 80 * (size / 100f), circleY)
                     close()
                 }
                 val trianglePaint = Paint().apply {
@@ -162,12 +186,16 @@ class CustomIconOverlay(
                         gradientStartColor, gradientEndColor,
                         Shader.TileMode.CLAMP
                     )
-
                     style = Paint.Style.FILL
                 }
 
                 canvas.drawCircle(circleX, circleY, circleRadius, circlePaint)
-                drawable.setBounds(it.x - 80, circleY.toInt() - 80, it.x + 80, circleY.toInt() + 80)
+                drawable.setBounds(
+                    (it.x - 80 * (size / 100f)).toInt(),
+                    (circleY - 80 * (size / 100f)).toInt(),
+                    (it.x + 80 * (size / 100f)).toInt(),
+                    (circleY + 80 * (size / 100f)).toInt()
+                )
                 val circlePath = Path().apply {
                     addCircle(circleX, circleY, circleRadius, Path.Direction.CW)
                     close()
@@ -184,11 +212,10 @@ class CustomIconOverlay(
                         op(this, circleIntersectPath, Path.Op.UNION)
                     }
 
-
                 val strokePaint = Paint().apply {
                     shader = fillGradient
                     style = Paint.Style.STROKE
-                    strokeWidth = 15f
+                    strokeWidth = 15f * (size / 100f)
                 }
                 canvas.clipPath(combinedPath)
                 drawable.draw(canvas)
@@ -197,7 +224,7 @@ class CustomIconOverlay(
                 drawable.setBounds(x0.toInt(), y0.toInt(), x1.toInt(), y1.toInt())
                 val strokePaint = Paint().apply {
                     style = Paint.Style.STROKE
-                    strokeWidth = 15.0F
+                    strokeWidth = 15f * (size / 100f)
                     shader = fillGradient
                 }
                 val strokeRect = RectF(x0, y0, x1, y1)
@@ -233,7 +260,7 @@ class CustomIconOverlay(
 
                 val circleStrokePaint = Paint().apply {
                     style = Paint.Style.STROKE
-                    strokeWidth = 10.0F
+                    strokeWidth = 10.0F * (size / 100f)
                     shader = fillGradient
                 }
 
@@ -251,6 +278,7 @@ class CustomIconOverlay(
             canvas.rotate(rotation, it.x.toFloat(), it.y.toFloat())
             val simplifiedIntersectCount = min(intersectedOverlays.count(), 99)
             val intersectCountText = "+$simplifiedIntersectCount"
+            textPaintBlack.strokeWidth = 2f * (size / 100f)
             if (storyId == 0) {
                 val nameText = name
                 canvas.drawText(
@@ -277,7 +305,7 @@ class CustomIconOverlay(
                     textSize =  32f - (6f * greaterThanTen)
                     isAntiAlias = true
                     typeface = ResourcesCompat.getFont(context, fontResId)
-                    strokeWidth = 2f
+                    strokeWidth = 2f * (size / 100f)
                     style = Paint.Style.FILL_AND_STROKE
                 }
                 canvas.drawText(
@@ -309,15 +337,11 @@ class CustomIconOverlay(
                 (currentPoint.x - otherPoint.x).toDouble().pow(2.0) +
                         (currentPoint.y - otherPoint.y).toDouble().pow(2.0)
             )
-            val iconRadius = (drawable.intrinsicWidth * overlayScale / 2)
-            val otherIconRadius = (overlay2.drawable.intrinsicWidth * calculateScaleFactor(overlay2.drawable) / 2)
-            return (distance <= iconRadius + otherIconRadius)
+            val hitboxRadius = dpToPx(HITBOX_RADIUS.toFloat()) / 2.0
+            return distance <= hitboxRadius * 2
         }
         return false
     }
-
-
-
 
     private fun dpToPx(dp: Float): Int {
         val scale = context.resources.displayMetrics.density
