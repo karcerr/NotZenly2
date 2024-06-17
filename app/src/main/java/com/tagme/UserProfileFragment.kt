@@ -1,7 +1,5 @@
 package com.tagme
 
-import android.animation.Animator
-import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.*
@@ -81,9 +79,9 @@ class UserProfileFragment : Fragment() {
             onSwipeEnd = {
                 shouldInterceptTouch = false
                 if (abs(view.translationY) > 150) { //swipe threshold
-                    animateFragmentClose()
+                    animateFragmentClose(view)
                 } else {
-                    animateFragmentReset()
+                    animateFragmentReset(view)
                 }
             }
         )
@@ -325,34 +323,5 @@ class UserProfileFragment : Fragment() {
                 pfp.setImageBitmap(it)
             }
         }
-    }
-
-    private fun animateFragmentClose() {
-        val animator = ValueAnimator.ofFloat(view.translationY, view.height.toFloat())
-        animator.addUpdateListener { animation ->
-            view.translationY = animation.animatedValue as Float
-        }
-        animator.duration = 300
-        animator.start()
-
-        animator.addListener(object : Animator.AnimatorListener {
-            override fun onAnimationStart(animation: Animator) {}
-            override fun onAnimationEnd(animation: Animator) {
-                updateFriends(coroutineScope, mapActivity)
-                mapActivity.onBackPressedDispatcher.onBackPressed()
-            }
-
-            override fun onAnimationCancel(animation: Animator) {}
-            override fun onAnimationRepeat(animation: Animator) {}
-        })
-    }
-
-    private fun animateFragmentReset() {
-        val animator = ValueAnimator.ofFloat(view.translationY, 0f)
-        animator.addUpdateListener { animation ->
-            view.translationY = animation.animatedValue as Float
-        }
-        animator.duration = 300
-        animator.start()
     }
 }

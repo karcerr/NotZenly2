@@ -11,7 +11,6 @@ class SwipeGestureListener(
 ) : GestureDetector.SimpleOnGestureListener() {
     private var startY = 0f
     private var isScrolling = false
-    private var startedScrolling = false
     override fun onDown(e: MotionEvent?): Boolean {
         startY = e?.y ?: 0f
         Log.d("Tagme_gest", "onDown $startY")

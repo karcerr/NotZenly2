@@ -380,8 +380,6 @@ class MapActivity: AppCompatActivity() {
     private fun searchFriends(query: String) {
         val friends = api.getFriendsData()
         val filteredFriends = friends.filter { it.userData.nickname.contains(query, ignoreCase = true) }.take(5)
-        Log.d("Tagme_search", "query: $query")
-        Log.d("Tagme_search", "result: $filteredFriends")
         updateFriendsListView(filteredFriends)
     }
     private fun initializeSearchAdapter() {
@@ -430,15 +428,12 @@ class MapActivity: AppCompatActivity() {
         isCenterTargetUser: Boolean,
         withZoom: Boolean,
     ){
-        Log.d("Tagme", "centralizing on $targetId")
-
         if (!isAnimating) {
             isAnimating = true
             val intersectedIds = overlay.getIntersectedIds()
             setCenteredTrue(targetId, isCenterTargetUser, intersectedIds)
             val zoomLevel = if(withZoom) scaleFactor else map.zoomLevelDouble
             mapController.animateTo(overlay.getLocation(), zoomLevel, 500)
-            Log.d("Tagme_Overlays", intersectedIds.toString())
             handler.postDelayed({
                 if (targetId == centeredTargetId && isCenteredUser == isCenterTargetUser) { //check if still centered on the same target after 0.5 sec
                     setCenteredTrue(targetId, isCenterTargetUser, intersectedIds)

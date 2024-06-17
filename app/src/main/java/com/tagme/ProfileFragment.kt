@@ -82,9 +82,9 @@ class ProfileFragment : Fragment() {
             onSwipeEnd = {
                 shouldInterceptTouch = false
                 if (abs(view.translationY) > 150) { //swipe threshold
-                    animateFragmentClose()
+                    animateFragmentClose(view)
                 } else {
-                    animateFragmentReset()
+                    animateFragmentReset(view)
                 }
             }
         )
@@ -221,35 +221,6 @@ class ProfileFragment : Fragment() {
         friendRequestUpdateRunnable?.let { friendRequestUpdateHandler?.postDelayed(it,
             friendRequestInterval
         ) }
-    }
-    private fun animateFragmentClose() {
-        val animator = ValueAnimator.ofFloat(view.translationY, view.height.toFloat())
-        animator.addUpdateListener { animation ->
-            view.translationY = animation.animatedValue as Float
-        }
-        animator.duration = 300
-        animator.start()
-
-        animator.addListener(object : Animator.AnimatorListener {
-            override fun onAnimationStart(animation: Animator) {}
-            override fun onAnimationEnd(animation: Animator) {
-                mapActivity.onBackPressedDispatcher.onBackPressed()
-                view.clearAnimation()
-                view.translationY = 0F
-            }
-
-            override fun onAnimationCancel(animation: Animator) {}
-            override fun onAnimationRepeat(animation: Animator) {}
-        })
-    }
-
-    private fun animateFragmentReset() {
-        val animator = ValueAnimator.ofFloat(view.translationY, 0f)
-        animator.addUpdateListener { animation ->
-            view.translationY = animation.animatedValue as Float
-        }
-        animator.duration = 300
-        animator.start()
     }
 }
 

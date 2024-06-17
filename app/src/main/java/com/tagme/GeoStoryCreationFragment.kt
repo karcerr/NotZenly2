@@ -1,7 +1,6 @@
 package com.tagme
 
-import android.animation.Animator
-import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.graphics.Color
 import android.os.Bundle
 import android.view.*
@@ -23,6 +22,7 @@ class GeoStoryCreationFragment : Fragment() {
     private lateinit var imageHandler: ImageHandler
     private lateinit var mapActivity: MapActivity
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -61,9 +61,9 @@ class GeoStoryCreationFragment : Fragment() {
             onSwipeEnd = {
                 shouldInterceptTouch = false
                 if (abs(view.translationY) > 150) { //swipe threshold
-                    animateFragmentClose()
+                    animateFragmentClose(view)
                 } else {
-                    animateFragmentReset()
+                    animateFragmentReset(view)
                 }
             }
         )
@@ -125,34 +125,5 @@ class GeoStoryCreationFragment : Fragment() {
             privacy = "friends only"
         }
         return view
-    }
-    private fun animateFragmentClose() {
-        val animator = ValueAnimator.ofFloat(view.translationY, view.height.toFloat())
-        animator.addUpdateListener { animation ->
-            view.translationY = animation.animatedValue as Float
-        }
-        animator.duration = 300
-        animator.start()
-
-        animator.addListener(object : Animator.AnimatorListener {
-            override fun onAnimationStart(animation: Animator) {}
-            override fun onAnimationEnd(animation: Animator) {
-                mapActivity.onBackPressedDispatcher.onBackPressed()
-                view.clearAnimation()
-                view.translationY = 0F
-            }
-
-            override fun onAnimationCancel(animation: Animator) {}
-            override fun onAnimationRepeat(animation: Animator) {}
-        })
-    }
-
-    private fun animateFragmentReset() {
-        val animator = ValueAnimator.ofFloat(view.translationY, 0f)
-        animator.addUpdateListener { animation ->
-            view.translationY = animation.animatedValue as Float
-        }
-        animator.duration = 300
-        animator.start()
     }
 }

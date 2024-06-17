@@ -1,18 +1,18 @@
 package com.tagme
 
+import android.annotation.SuppressLint
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.Toast
+import android.view.*
+import android.widget.*
 import androidx.fragment.app.Fragment
+import kotlin.math.abs
+import kotlin.math.max
 
 class GeoStoryViewFragment : Fragment() {
     private lateinit var mapActivity: MapActivity
     private lateinit var api: API
+    private lateinit var frameLayout: FrameLayout
+    private lateinit var view: View
     var geoStoryId: Int = 0
     var userId: Int = 0
     lateinit var nicknameText: TextView
@@ -21,12 +21,13 @@ class GeoStoryViewFragment : Fragment() {
     lateinit var geoStoryPicture: ImageView
     lateinit var userPicture: ImageView
     lateinit var msgButton: ImageButton
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.fragment_geo_story_view, container, false)
+    ): View {
+        view = inflater.inflate(R.layout.fragment_geo_story_view, container, false)
         nicknameText = view.findViewById(R.id.nickname)
         timeAgo = view.findViewById(R.id.time_ago)
         viewCounter = view.findViewById(R.id.views)
@@ -35,6 +36,40 @@ class GeoStoryViewFragment : Fragment() {
         msgButton = view.findViewById(R.id.msg_button)
         mapActivity = requireActivity() as MapActivity
         api = mapActivity.api
+        frameLayout = view.findViewById(R.id.frame_layout)
+        var shouldInterceptTouch = false
+        val gestureListener = SwipeGestureListener(
+            onSwipe = { deltaY ->
+                val newTranslationY = view.translationY + deltaY
+                if (shouldInterceptTouch || newTranslationY > 0F){
+                    shouldInterceptTouch = true
+                    view.translationY = max(newTranslationY, 0F)
+                    true
+                } else {
+                    false
+                }
+            },
+            onSwipeEnd = {
+                shouldInterceptTouch = false
+                if (abs(view.translationY) > 150) { //swipe threshold
+                    animateFragmentClose(view)
+                } else {
+                    animateFragmentReset(view)
+                }
+            }
+        )
+        val gestureDetector = GestureDetector(mapActivity, gestureListener)
+        frameLayout.setOnTouchListener { v, event ->
+            if (gestureDetector.onTouchEvent(event)) {
+                return@setOnTouchListener true
+            }
+            if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
+                gestureListener.onUp(event)
+                shouldInterceptTouch = false
+                v.performClick()
+            }
+            false
+        }
         val backButton = view.findViewById<ImageButton>(R.id.back_button)
         backButton.setOnClickListener{
             mapActivity.onBackPressedDispatcher.onBackPressed()
@@ -66,6 +101,5 @@ class GeoStoryViewFragment : Fragment() {
         }
         return view
     }
-
 }
 
