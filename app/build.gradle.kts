@@ -7,7 +7,6 @@ plugins {
 android {
     namespace = "com.tagme"
     compileSdk = 34
-
     defaultConfig {
         applicationId = "com.tagme"
         minSdk = 27
