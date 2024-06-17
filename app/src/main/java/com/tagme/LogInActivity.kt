@@ -99,7 +99,7 @@ class LogInActivity : AppCompatActivity() {
                         override fun onResponse(call: Call<VkResponse>, response: Response<VkResponse>) {
                             if (response.isSuccessful) {
                                 val users = response.body()?.response
-                                Log.d("Tagme_VK_ACCESS", users.toString())
+                                Log.d("Tagme_VK_ACCESS_SUCCESS", users.toString())
                             } else {
                                 Log.d("Tagme_VK_ACCESS_ERROR", "$call, $response")
                             }

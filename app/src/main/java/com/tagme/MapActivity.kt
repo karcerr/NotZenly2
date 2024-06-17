@@ -91,9 +91,19 @@ class MapActivity: AppCompatActivity() {
     private lateinit var searchEditText: EditText
     private lateinit var searchedFriendsListView: RecyclerView
     private lateinit var searchDarkOverlay: View
+    private var _centeredOverlay: CustomIconOverlay? = null
+    var centeredOverlay: CustomIconOverlay?
+        get() = _centeredOverlay
+    set(value) {
+        if (_centeredOverlay != value) {
+            _centeredOverlay?.setSize(100)
+            _centeredOverlay = value
+            centeredOverlay?.setSize(150)
+        }
+    }
     lateinit var coroutineScope: CoroutineScope
     lateinit var myLatitude: String
-    lateinit var myLongitute: String
+    lateinit var myLongitude: String
     private var scaleFactor = 15.0
     private var centeredTargetId = -1
     private var isCenteredUser = false
@@ -430,6 +440,7 @@ class MapActivity: AppCompatActivity() {
     ){
         if (!isAnimating) {
             isAnimating = true
+            centeredOverlay = overlay
             val intersectedIds = overlay.getIntersectedIds()
             setCenteredTrue(targetId, isCenterTargetUser, intersectedIds)
             val zoomLevel = if(withZoom) scaleFactor else map.zoomLevelDouble
@@ -474,7 +485,7 @@ class MapActivity: AppCompatActivity() {
                         val results = FloatArray(1)
                         Location.distanceBetween(
                             myLatitude.toDouble(),
-                            myLongitute.toDouble(),
+                            myLongitude.toDouble(),
                             clickedFriend.location!!.latitude,
                             clickedFriend.location!!.longitude,
                             results
@@ -530,6 +541,7 @@ class MapActivity: AppCompatActivity() {
     }
 
     private fun setCenteredFalse() {
+        centeredOverlay = null
         centeredTargetId = -1
         isCenteredUser = false
         if (isUiHidden) {
@@ -588,11 +600,11 @@ class MapActivity: AppCompatActivity() {
 
                 location?.let {
                     myLatitude = it.latitude.toString()
-                    myLongitute = it.longitude.toString()
+                    myLongitude = it.longitude.toString()
                     val accuracy = it.accuracy.toString()
                     val speed = it.speed.toString()
                     try {
-                        api.sendLocationToWS(myLatitude, myLongitute, accuracy, speed)
+                        api.sendLocationToWS(myLatitude, myLongitude, accuracy, speed)
                         api.getLocationsFromWS()
                         api.getGeoStories()
                     } catch (e: Exception) {

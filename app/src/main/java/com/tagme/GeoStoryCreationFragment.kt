@@ -91,7 +91,7 @@ class GeoStoryCreationFragment : Fragment() {
                     api.insertPictureIntoWS(imageHandler.getOutputStream())
                     if (api.lastInsertedPicId != 0) {
                         val latitude = (requireActivity() as MapActivity).myLatitude
-                        val longitude = (requireActivity() as MapActivity).myLongitute
+                        val longitude = (requireActivity() as MapActivity).myLongitude
                         val result = api.createGeoStory(
                             api.lastInsertedPicId,
                             privacy,
