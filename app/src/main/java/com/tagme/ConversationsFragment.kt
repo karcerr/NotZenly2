@@ -7,11 +7,9 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.*
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.*
 import androidx.core.content.ContextCompat
+import androidx.core.widget.TextViewCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -24,7 +22,7 @@ import kotlin.math.abs
 import kotlin.math.max
 
 
-class ConversationsFragment : Fragment() {
+class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickListener {
     private lateinit var view: View
     lateinit var conversationsAdapter: ConversationsAdapter
     private lateinit var api: API
@@ -85,12 +83,16 @@ class ConversationsFragment : Fragment() {
             }
             false
         }
-        val conversationListSorted = api.getConversationsDataList().map { it.copy()
-        }.sortedByDescending { it.lastMessage?.timestamp }.toMutableList()
+        val conversationListSorted = api.getConversationsDataList().map { it.copy() }
+            .sortedWith(compareByDescending<API.ConversationData> { it.pinned }
+                .thenByDescending { it.lastMessage?.timestamp })
+            .toMutableList()
+
         conversationsAdapter = ConversationsAdapter(
             requireContext(),
             conversationListSorted, api,
-            mapActivity
+            mapActivity,
+            this
         )
 
         recyclerView.adapter = conversationsAdapter
@@ -131,15 +133,63 @@ class ConversationsFragment : Fragment() {
         conversationUpdateRunnable?.let { conversationUpdateHandler?.removeCallbacks(it) }
         conversationUpdateHandler = null
     }
+
+    override fun onItemLongClick(position: Int) {
+        showContextualMenu(position)
+    }
+    private fun showContextualMenu(position: Int) {
+        // Inflate the contextual menu layout
+        val conversation = conversationsAdapter.conversationList[position]
+        val menuView = LayoutInflater.from(context).inflate(R.layout.conversation_contextual_menu, null)
+        val popupWindow = PopupWindow(menuView, LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        popupWindow.isOutsideTouchable = true
+        popupWindow.isFocusable = true
+        val pinButton = menuView.findViewById<ImageView>(R.id.action_pin)
+        if (conversation.pinned) {
+            pinButton.setImageDrawableResource(R.drawable.unpin)
+        } else {
+            pinButton.setImageDrawableResource(R.drawable.pin)
+        }
+        // Set up menu item click listeners
+        pinButton.setOnClickListener {
+            api.togglePinnedStatus(conversation.conversationID)
+            Log.d("Tagme_conversation", conversation.toString())
+            updateConversationsLocal()
+            popupWindow.dismiss()
+        }
+        menuView.findViewById<ImageView>(R.id.action_read).setOnClickListener {
+            // Handle mute action
+            popupWindow.dismiss()
+        }
+        menuView.findViewById<ImageView>(R.id.action_delete).setOnClickListener {
+            // Handle delete action
+            popupWindow.dismiss()
+        }
+
+        // Show the popup window
+        val itemView = recyclerView.findViewHolderForAdapterPosition(position)?.itemView
+        itemView?.let {
+            popupWindow.showAsDropDown(it)
+        }
+    }
+    private fun updateConversationsLocal() {
+        val conversationList = api.getConversationsDataList()
+        conversationsAdapter.updateData(conversationList)
+        Log.d("Tagme_conversations", conversationList.toString())
+    }
 }
 
 class ConversationsAdapter(
     private val context: Context,
-    private var conversationList: MutableList<API.ConversationData>,
+    var conversationList: MutableList<API.ConversationData>,
     private val api: API,
-    private val parentActivity: MapActivity
+    private val parentActivity: MapActivity,
+    private val listener: OnItemLongClickListener
 ) : RecyclerView.Adapter<ConversationsAdapter.ConversationViewHolder>() {
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
+    interface OnItemLongClickListener {
+        fun onItemLongClick(position: Int)
+    }
     inner class ConversationViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTextView: TextView = itemView.findViewById(R.id.conversation_name)
         val lastMessageText: TextView = itemView.findViewById(R.id.last_message_text)
@@ -148,9 +198,18 @@ class ConversationsAdapter(
         val pictureImageView: ImageView = itemView.findViewById(R.id.conversation_picture)
         val conversationLayout: LinearLayout = itemView.findViewById(R.id.conversation_layout)
         val coroutineScope = CoroutineScope(Dispatchers.Main)
+        init {
+            itemView.setOnLongClickListener {
+                listener.onItemLongClick(adapterPosition)
+                true
+            }
+        }
     }
     fun updateData(newConversationList: List<API.ConversationData>) {
-        val newConversationListSorted = newConversationList.sortedByDescending { it.lastMessage?.timestamp }
+        val newConversationListSorted = newConversationList
+            .sortedWith(compareByDescending<API.ConversationData> { it.pinned }
+                .thenByDescending { it.lastMessage?.timestamp })
+            .toList()
         val diffResult = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
             override fun getOldListSize(): Int {
                 return conversationList.size
@@ -170,8 +229,8 @@ class ConversationsAdapter(
                 return oldItem == newItem
             }
         })
-        conversationList = newConversationListSorted.map {it.copy()
-        }.toMutableList()
+        conversationList.clear()
+        conversationList.addAll(newConversationListSorted)
         diffResult.dispatchUpdatesTo(this)
         val hasUnreadMessages = conversationList.any { conversation ->
             val lastMessage = conversation.lastMessage
@@ -187,7 +246,19 @@ class ConversationsAdapter(
     override fun onBindViewHolder(holder: ConversationViewHolder, position: Int) {
         val conversation = conversationList[position]
         val conversationId = conversation.conversationID
-
+        if (conversation.pinned) {
+            Log.d("Tagme_conv pinned", conversation.toString())
+            TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                holder.nameTextView,
+                0, 0, R.drawable.pin_blue, 0
+            )
+        } else {
+            Log.d("Tagme_conv unpinned", conversation.toString())
+            TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                holder.nameTextView,
+                0, 0, 0, 0
+            )
+        }
         holder.nameTextView.text = conversation.userData.nickname
         val lastMessage = conversation.lastMessage
         if (lastMessage != null) {

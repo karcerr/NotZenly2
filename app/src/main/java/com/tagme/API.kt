@@ -155,7 +155,7 @@ class API private constructor(context: Context){
                 val answer = JSONObject(text)
                 val requestId = answer.getInt("request_id")
                 when (answer.getString("action")) {
-                    "login", "register" -> when (answer.getString("status")) {
+                    "login", "register", "auth vk" -> when (answer.getString("status")) {
                         "success" -> {
                             conversationsData = listOf()
                             myToken = answer.getString("message")
@@ -203,7 +203,13 @@ class API private constructor(context: Context){
             put("username", username)
             put("password", password)
         }
-        myNickname = username
+        return sendRequestToWS(requestData)
+    }
+    suspend fun authVK(accessToken: String): JSONObject? {
+        val requestData = JSONObject().apply {
+            put("action", "auth vk")
+            put("access_token", accessToken)
+        }
         return sendRequestToWS(requestData)
     }
 
@@ -213,7 +219,6 @@ class API private constructor(context: Context){
             put("username", username)
             put("password", password)
         }
-        myNickname = username
         return sendRequestToWS(requestData)
     }
     suspend fun loginToken(): JSONObject? {
@@ -501,10 +506,12 @@ class API private constructor(context: Context){
     private fun parseMyData(myData: JSONObject){
         val userId = myData.getInt("user_id")
         val picId = myData.optInt("picture_id", 0)
+        val nickname = myData.getString("nickname")
         val tags = myData.optInt("user_score", 0)
         myUserId = userId
         myPfpId = picId
         myTags = tags
+        myNickname = nickname
     }
     private fun parseConversationsData(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
@@ -529,14 +536,15 @@ class API private constructor(context: Context){
                 if (lastMessageAuthorId != 0) { //Creating a new conversation with a message
                     updatedConversationsData.add(
                         ConversationData(conversationId,
-                        UserData(userId, nickname, profilePictureId), mutableListOf(),
-                        LastMessageData(lastMessageAuthorId, lastMessageAuthorId, lastMessageText, lastMessagePictureId, parseAndConvertTimestamp(timestampString), read)
+                            UserData(userId, nickname, profilePictureId), mutableListOf(),
+                            LastMessageData(lastMessageAuthorId, lastMessageAuthorId, lastMessageText, lastMessagePictureId, parseAndConvertTimestamp(timestampString), read),
+                            false
                         )
                     )
                 } else { //Creating a new conversation without a message
                     updatedConversationsData.add(
                         ConversationData(conversationId,
-                        UserData(userId, nickname, profilePictureId), mutableListOf(),null)
+                        UserData(userId, nickname, profilePictureId), mutableListOf(),null, false)
                     )
                 }
             } else { //Updating existing conversation
@@ -791,7 +799,8 @@ class API private constructor(context: Context){
         val conversationID: Int,
         var userData: UserData,
         var messages: MutableList<MessageData>,
-        var lastMessage: LastMessageData?
+        var lastMessage: LastMessageData?,
+        var pinned: Boolean
     ){
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -800,6 +809,7 @@ class API private constructor(context: Context){
             if (conversationID != other.conversationID) return false
             if (userData != other.userData) return false
             if (lastMessage != other.lastMessage) return false
+            if (pinned != other.pinned) return false
 
             return true
         }
@@ -810,6 +820,12 @@ class API private constructor(context: Context){
             result = 31 * result + (lastMessage?.hashCode() ?: 0)
             return result
         }
+    }
+    fun togglePinnedStatus(conversationId: Int) {
+        val updatedConversations = conversationsData.toMutableList()
+        val conversation = updatedConversations.find { it.conversationID == conversationId }
+        conversation?.pinned = conversation?.pinned?.not() ?: false
+        conversationsData = updatedConversations
     }
     data class MessageData(
         val messageId: Int,

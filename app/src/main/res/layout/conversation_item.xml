@@ -39,6 +39,7 @@
                 android:layout_gravity="center_vertical"
                 android:shadowColor="#000000"
                 android:shadowRadius=".5"
+                app:drawableEndCompat="@drawable/pin_blue"
         />
         <TextView
                 android:id="@+id/last_message_text"

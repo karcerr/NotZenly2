@@ -24,9 +24,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 
 class LogInActivity : AppCompatActivity() {
 
@@ -92,23 +89,20 @@ class LogInActivity : AppCompatActivity() {
         vkidButton.setCallbacks(
             onAuth = { accessToken ->
                 val token = accessToken.token
-                val fields = "photo_200"
-                Log.d("Tagme_VK", "The token: $token")
-                RetrofitInstance.api.getUsers(accessToken = token, fields = fields)
-                    .enqueue(object : Callback<VkResponse> {
-                        override fun onResponse(call: Call<VkResponse>, response: Response<VkResponse>) {
-                            if (response.isSuccessful) {
-                                val users = response.body()?.response
-                                Log.d("Tagme_VK_ACCESS_SUCCESS", users.toString())
-                            } else {
-                                Log.d("Tagme_VK_ACCESS_ERROR", "$call, $response")
-                            }
+                Log.d("Tagme_VK", "Access Token: $token")
+                CoroutineScope(Dispatchers.Main).launch {
+                    val answer = api.authVK(token)
+                    if (answer != null) {
+                        if (answer.getString("status") == "success") {
+                            api.getMyDataFromWS()
+                            hideLoginShowGpsOverlay()
+                            isAuthorized = true
+                        } else {
+                            loadingLayout.visibility = View.GONE
+                            loginLayout.visibility = View.VISIBLE
                         }
-
-                        override fun onFailure(call: Call<VkResponse>, t: Throwable) {
-                            Log.d("Tagme_VK_ACCESS_FAILURE", "$call, $t")
-                        }
-                    })
+                    }
+                }
             }
         )
 

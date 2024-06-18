@@ -7,6 +7,8 @@ import android.content.Context
 import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
+import android.widget.ImageView
+import androidx.annotation.DrawableRes
 import androidx.fragment.app.Fragment
 
 fun Fragment.hideKeyboard() {
@@ -57,4 +59,7 @@ fun Fragment.animateFragmentReset(view: View) {
     }
     animator.duration = 300
     animator.start()
+}
+fun ImageView.setImageDrawableResource(@DrawableRes resId: Int) {
+    setImageResource(resId)
 }
