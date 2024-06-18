@@ -26,21 +26,33 @@
             android:layout_weight="1"
             android:layout_height="match_parent"
             android:orientation="vertical">
-        <TextView
-                android:id="@+id/conversation_name"
+        <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:paddingTop="6dp"
-                android:text="@string/nickname_text_placeholder"
-                android:textColor="@color/black"
-                android:fontFamily="@font/my_font"
-                android:layout_gravity="center_vertical"
-                android:shadowColor="#000000"
-                android:shadowRadius=".5"
-                app:drawableEndCompat="@drawable/pin_blue"
-        />
+        >
+            <TextView
+                    android:id="@+id/conversation_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:paddingTop="6dp"
+                    android:text="@string/nickname_text_placeholder"
+                    android:textColor="@color/black"
+                    android:fontFamily="@font/my_font"
+                    android:layout_gravity="center_vertical"
+                    android:shadowColor="#000000"
+                    android:shadowRadius=".5"
+            />
+            <ImageView
+                    android:id="@+id/pin_icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/pin_blue"
+                    android:layout_gravity="bottom"
+            />
+        </LinearLayout>
+
         <TextView
                 android:id="@+id/last_message_text"
                 android:layout_width="wrap_content"

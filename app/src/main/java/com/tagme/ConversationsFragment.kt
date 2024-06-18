@@ -5,11 +5,11 @@ import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.DisplayMetrics
 import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.core.content.ContextCompat
-import androidx.core.widget.TextViewCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -32,6 +32,7 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
     var conversationUpdateHandler: Handler? = null
     private var conversationUpdateRunnable: Runnable? = null
     private lateinit var recyclerView: RecyclerView
+    private lateinit var darkOverlay: View
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -44,6 +45,7 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
         api = mapActivity.api
         recyclerView = view.findViewById(R.id.conversations_recycler_view)
         nestedScrollView = view.findViewById(R.id.nested_scroll_view)
+        darkOverlay = view.findViewById(R.id.dark_overlay)
         var shouldInterceptTouch = false
         val gestureListener = SwipeGestureListener(
             onSwipe = { deltaY ->
@@ -138,40 +140,85 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
         showContextualMenu(position)
     }
     private fun showContextualMenu(position: Int) {
-        // Inflate the contextual menu layout
-        val conversation = conversationsAdapter.conversationList[position]
-        val menuView = LayoutInflater.from(context).inflate(R.layout.conversation_contextual_menu, null)
-        val popupWindow = PopupWindow(menuView, LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-        popupWindow.isOutsideTouchable = true
-        popupWindow.isFocusable = true
-        val pinButton = menuView.findViewById<ImageView>(R.id.action_pin)
-        if (conversation.pinned) {
-            pinButton.setImageDrawableResource(R.drawable.unpin)
-        } else {
-            pinButton.setImageDrawableResource(R.drawable.pin)
-        }
-        // Set up menu item click listeners
-        pinButton.setOnClickListener {
-            api.togglePinnedStatus(conversation.conversationID)
-            Log.d("Tagme_conversation", conversation.toString())
-            updateConversationsLocal()
-            popupWindow.dismiss()
-        }
-        menuView.findViewById<ImageView>(R.id.action_read).setOnClickListener {
-            // Handle mute action
-            popupWindow.dismiss()
-        }
-        menuView.findViewById<ImageView>(R.id.action_delete).setOnClickListener {
-            // Handle delete action
-            popupWindow.dismiss()
-        }
-
-        // Show the popup window
+        // Get the original item view
         val itemView = recyclerView.findViewHolderForAdapterPosition(position)?.itemView
         itemView?.let {
-            popupWindow.showAsDropDown(it)
+            // Create a copy of the original item view
+            val copiedView = LayoutInflater.from(context).inflate(R.layout.conversation_item, null)
+            conversationsAdapter.cloneItemViewHolder(itemView, copiedView)
+
+            // Add the copied view to the Window.DecorView
+            val decorView = (activity?.window?.decorView as? ViewGroup)
+            decorView?.addView(copiedView)
+
+            // Get the original layout parameters
+            val layoutParams = itemView.layoutParams as ViewGroup.MarginLayoutParams
+
+            // Set the layout parameters of the copied view with margins
+            val copiedLayoutParams = FrameLayout.LayoutParams(layoutParams.width, layoutParams.height)
+            copiedLayoutParams.setMargins(layoutParams.leftMargin, layoutParams.topMargin, layoutParams.rightMargin, layoutParams.bottomMargin)
+            copiedView.layoutParams = copiedLayoutParams
+
+            // Position the copied view to match the original item's position
+            val location = IntArray(2)
+            itemView.getLocationOnScreen(location)
+            val left = location[0]
+            val top = location[1]
+
+            // Adjust for margins
+            copiedView.x = left.toFloat() - layoutParams.leftMargin
+            copiedView.y = top.toFloat() - layoutParams.topMargin
+
+            // Show the dark overlay
+            darkOverlay.visibility = View.VISIBLE
+
+            // Show the popup window
+            val menuView = LayoutInflater.from(context).inflate(R.layout.conversation_contextual_menu, decorView, false)
+            // Calculate effective width with margins
+            val displayMetrics = mapActivity.resources.displayMetrics
+            val screenWidth = displayMetrics.widthPixels
+            val horizontalMargin = mapActivity.resources.getDimensionPixelSize(R.dimen.popup_horizontal_margin)
+            val effectiveWidth = screenWidth - 2 * horizontalMargin
+            val params = ViewGroup.LayoutParams(effectiveWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
+            menuView.layoutParams = params
+
+            val popupWindow = PopupWindow(menuView, effectiveWidth, ViewGroup.LayoutParams.WRAP_CONTENT, true)
+            popupWindow.isOutsideTouchable = true
+            popupWindow.isFocusable = true
+
+            // Set up menu item click listeners
+            val pinButton = menuView.findViewById<ImageView>(R.id.action_pin)
+            val conversation = conversationsAdapter.conversationList[position]
+            if (conversation.pinned) {
+                pinButton.setImageResource(R.drawable.unpin)
+            } else {
+                pinButton.setImageResource(R.drawable.pin)
+            }
+
+            pinButton.setOnClickListener {
+                api.togglePinnedStatus(conversation.conversationID)
+                updateConversationsLocal()
+                popupWindow.dismiss()
+            }
+
+            menuView.findViewById<ImageView>(R.id.action_read).setOnClickListener {
+                popupWindow.dismiss()
+            }
+            menuView.findViewById<ImageView>(R.id.action_delete).setOnClickListener {
+                popupWindow.dismiss()
+            }
+
+            // Show the popup window anchored to the copied view
+            popupWindow.showAsDropDown(copiedView, 0, 0, Gravity.CENTER_HORIZONTAL)
+
+            popupWindow.setOnDismissListener {
+                darkOverlay.visibility = View.GONE
+                decorView?.removeView(copiedView) // Remove the copied view when the popup is dismissed
+            }
         }
     }
+
+
     private fun updateConversationsLocal() {
         val conversationList = api.getConversationsDataList()
         conversationsAdapter.updateData(conversationList)
@@ -195,6 +242,7 @@ class ConversationsAdapter(
         val lastMessageText: TextView = itemView.findViewById(R.id.last_message_text)
         val lastMessageTimestamp: TextView = itemView.findViewById(R.id.last_message_timestamp)
         val readIcon: ImageView = itemView.findViewById(R.id.read_icon)
+        val pinIcon: ImageView = itemView.findViewById(R.id.pin_icon)
         val pictureImageView: ImageView = itemView.findViewById(R.id.conversation_picture)
         val conversationLayout: LinearLayout = itemView.findViewById(R.id.conversation_layout)
         val coroutineScope = CoroutineScope(Dispatchers.Main)
@@ -247,17 +295,9 @@ class ConversationsAdapter(
         val conversation = conversationList[position]
         val conversationId = conversation.conversationID
         if (conversation.pinned) {
-            Log.d("Tagme_conv pinned", conversation.toString())
-            TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                holder.nameTextView,
-                0, 0, R.drawable.pin_blue, 0
-            )
+            holder.pinIcon.visibility = View.VISIBLE
         } else {
-            Log.d("Tagme_conv unpinned", conversation.toString())
-            TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                holder.nameTextView,
-                0, 0, 0, 0
-            )
+            holder.pinIcon.visibility = View.GONE
         }
         holder.nameTextView.text = conversation.userData.nickname
         val lastMessage = conversation.lastMessage
@@ -291,7 +331,28 @@ class ConversationsAdapter(
                 .commit()
         }
     }
+    fun cloneItemViewHolder(originalView: View?, newView: View?) {
+        originalView?.let { original ->
+            newView?.let { copy ->
+                val nameTextView = copy.findViewById<TextView>(R.id.conversation_name)
+                val lastMessageText = copy.findViewById<TextView>(R.id.last_message_text)
+                val lastMessageTimestamp = copy.findViewById<TextView>(R.id.last_message_timestamp)
+                val readIcon = copy.findViewById<ImageView>(R.id.read_icon)
+                val pinIcon = copy.findViewById<ImageView>(R.id.pin_icon)
+                val pictureImageView = copy.findViewById<ImageView>(R.id.conversation_picture)
 
+                val originalNameTextView = original.findViewById<TextView>(R.id.conversation_name)
+
+                nameTextView.text = originalNameTextView.text
+                lastMessageText.text = original.findViewById<TextView>(R.id.last_message_text).text
+                lastMessageTimestamp.text = original.findViewById<TextView>(R.id.last_message_timestamp).text
+                lastMessageTimestamp.visibility = original.findViewById<TextView>(R.id.last_message_timestamp).visibility
+                readIcon.visibility = original.findViewById<ImageView>(R.id.read_icon).visibility
+                pinIcon.visibility = original.findViewById<ImageView>(R.id.pin_icon).visibility
+                pictureImageView.setImageDrawable(original.findViewById<ImageView>(R.id.conversation_picture).drawable)
+            }
+        }
+    }
     override fun getItemCount(): Int {
         return conversationList.size
     }

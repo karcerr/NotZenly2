@@ -126,7 +126,7 @@
                         android:textStyle="bold"
                         android:textAppearance="?android:textAppearanceMedium"
                         android:fontFamily="@font/my_font"
-                        android:autoSizeMinTextSize="20sp"
+                        android:autoSizeMinTextSize="15sp"
                         android:autoSizeTextType="uniform"
                         android:maxLines="2"
                         android:gravity="center"
