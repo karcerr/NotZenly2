@@ -93,4 +93,9 @@
     <string name="error_user_already_exists">Имя пользователя уже занято</string>
     <string name="error_incorrect_login_or_pass">Неправильный логин или пароль</string>
     <string name="thats_you">Это вы!</string>
+    <string name="change_username">Изменить имя пользователя</string>
+    <string name="changing_username">Изменение имени пользователя</string>
+    <string name="enter_new_username">Введите новое имя пользователя</string>
+    <string name="username_changed">Имя пользователя успешно изменено</string>
+    <string name="username_taken">Такое имя занято :(</string>
 </resources>

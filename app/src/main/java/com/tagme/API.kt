@@ -221,6 +221,14 @@ class API private constructor(context: Context){
         }
         return sendRequestToWS(requestData)
     }
+    suspend fun changeNickname(newNickname: String): JSONObject? {
+        val requestData = JSONObject().apply {
+            put("action", "change nickname")
+            put("token", myToken)
+            put("nickname", newNickname)
+        }
+        return sendRequestToWS(requestData)
+    }
     suspend fun loginToken(): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "validate token")

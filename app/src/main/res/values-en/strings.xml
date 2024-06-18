@@ -93,4 +93,9 @@
     <string name="error_user_already_exists">Username is already taken</string>
     <string name="error_incorrect_login_or_pass">Incorrect login or password</string>
     <string name="thats_you">Thats you!</string>
+    <string name="change_username">Change username</string>
+    <string name="changing_username">Changing username</string>
+    <string name="enter_new_username">Enter New Username</string>
+    <string name="username_changed">Username was successfully changed!</string>
+    <string name="username_taken">Username is already taken :(</string>
 </resources>

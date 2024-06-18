@@ -1,7 +1,5 @@
 package com.tagme
 
-import android.animation.Animator
-import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
@@ -48,7 +46,9 @@ class ProfileFragment : Fragment() {
         api = mapActivity.api
         val coroutineScope = CoroutineScope(Dispatchers.Main)
         val addFriendButton = view.findViewById<ImageButton>(R.id.add_friend_button)
+        val changeNicknameButton1 = view.findViewById<ImageButton>(R.id.change_nickname_button1)
         val addFriendWindow = view.findViewById<View>(R.id.add_friend_window)
+        val changeNicknameWindow = view.findViewById<View>(R.id.change_nickname_window)
         val ratingLayout = view.findViewById<LinearLayout>(R.id.rating_layout)
         val nicknameText = view.findViewById<TextView>(R.id.nickname_text)
         val myTagCounter = view.findViewById<TextView>(R.id.my_tag_counter)
@@ -56,11 +56,14 @@ class ProfileFragment : Fragment() {
         addPfpPic = view.findViewById(R.id.add_profile_picture_icon)
         val compressingStatus = view.findViewById<LinearLayout>(R.id.compressing_status)
         val darkOverlay = view.findViewById<View>(R.id.dark_overlay)
-        val requestInput = view.findViewById<EditText>(R.id.nickname_edit_text)
+        val requestInput = view.findViewById<EditText>(R.id.add_friend_nickname_edit_text)
+        val changeNicknameInput = view.findViewById<EditText>(R.id.change_nickname_edit_text)
         val backButton = view.findViewById<ImageButton>(R.id.back_arrow_button)
         val settingsButton = view.findViewById<ImageButton>(R.id.settings_button)
         val sendRequestButton = view.findViewById<Button>(R.id.send_request_button)
-        val statusText = view.findViewById<TextView>(R.id.status_text)
+        val changeNicknameButton2 = view.findViewById<Button>(R.id.change_nickname_button2)
+        val requestStatusText = view.findViewById<TextView>(R.id.status_text)
+        val nicknameChangeStatusText = view.findViewById<TextView>(R.id.status_text_2)
         nestedScrollView = view.findViewById(R.id.profile_nested_scroll_view)
         var shouldInterceptTouch = false
         val gestureListener = SwipeGestureListener(
@@ -139,8 +142,13 @@ class ProfileFragment : Fragment() {
             addFriendWindow.visibility = View.VISIBLE
             darkOverlay.visibility = View.VISIBLE
         }
+        changeNicknameButton1.setOnClickListener {
+            changeNicknameWindow.visibility = View.VISIBLE
+            darkOverlay.visibility = View.VISIBLE
+        }
         darkOverlay.setOnClickListener {
             addFriendWindow.visibility = View.GONE
+            changeNicknameWindow.visibility = View.GONE
             darkOverlay.visibility = View.GONE
             hideKeyboard()
         }
@@ -151,7 +159,7 @@ class ProfileFragment : Fragment() {
                 if (answer != null) {
                     val message = answer.getString("message")
                     if (answer.getString("status") == "success") {
-                        statusText.visibility = View.GONE
+                        requestStatusText.visibility = View.GONE
                         requestInput.setText("")
                         hideKeyboard()
                         darkOverlay.visibility = View.GONE
@@ -161,17 +169,45 @@ class ProfileFragment : Fragment() {
                         val updatedRequests = api.getFriendRequestDataList()
                         friendRequestAdapter.updateData(updatedRequests)
                     } else {
-                        statusText.setTextColor(Color.RED)
+                        requestStatusText.setTextColor(Color.RED)
                         if (message == "no user") {
-                            statusText.text = getString(R.string.user_not_found)
+                            requestStatusText.text = getString(R.string.user_not_found)
                         } else {
-                            statusText.text = message
+                            requestStatusText.text = message
                         }
                     }
-                    statusText.visibility = View.VISIBLE
+                    requestStatusText.visibility = View.VISIBLE
                 }
             }
         }
+        changeNicknameButton2.setOnClickListener{
+            val nickname = changeNicknameInput.text.toString()
+            coroutineScope.launch {
+                val answer = api.changeNickname(nickname)
+                if (answer != null) {
+                    val message = answer.getString("message")
+                    if (answer.getString("status") == "success") {
+                        api.getMyDataFromWS()
+                        nicknameText.text = api.myNickname
+                        nicknameChangeStatusText.visibility = View.GONE
+                        changeNicknameInput.setText("")
+                        hideKeyboard()
+                        darkOverlay.visibility = View.GONE
+                        changeNicknameWindow.visibility = View.GONE
+                        Toast.makeText(mapActivity, getString(R.string.username_changed), Toast.LENGTH_SHORT).show()
+                    } else {
+                        nicknameChangeStatusText.setTextColor(Color.RED)
+                        if (message == "username already exists") {
+                            nicknameChangeStatusText.text = getString(R.string.username_taken)
+                        } else {
+                            nicknameChangeStatusText.text = message
+                        }
+                    }
+                    nicknameChangeStatusText.visibility = View.VISIBLE
+                }
+            }
+        }
+
         myProfilePic.setOnClickListener {
             imageHandler.pickImageGallery()
             coroutineScope.launch {
