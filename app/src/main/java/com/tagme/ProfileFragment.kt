@@ -139,10 +139,12 @@ class ProfileFragment : Fragment() {
         friendRequestsRecyclerView.adapter = friendRequestAdapter
         friendRequestsRecyclerView.layoutManager = MyLinearLayoutManager(mapActivity)
         addFriendButton.setOnClickListener {
+            requestInput.text.clear()
             addFriendWindow.visibility = View.VISIBLE
             darkOverlay.visibility = View.VISIBLE
         }
         changeNicknameButton1.setOnClickListener {
+            changeNicknameInput.text.clear()
             changeNicknameWindow.visibility = View.VISIBLE
             darkOverlay.visibility = View.VISIBLE
         }
