@@ -18,5 +18,10 @@
         <item name="cornerFamily"> rounded </item>
         <item name="cornerSize"> 24dp </item>
     </style>
-
+    <style name="NoAnimationPopupStyle" parent="@android:style/Animation">
+        <item name="android:windowEnterAnimation">@null</item>
+        <item name="android:windowExitAnimation">@null</item>
+        <item name="android:windowExitTransition">@null</item>
+        <item name="android:windowHideAnimation">@null</item>
+    </style>
 </resources>

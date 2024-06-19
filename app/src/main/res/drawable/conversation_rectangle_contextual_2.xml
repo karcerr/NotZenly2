@@ -3,19 +3,19 @@
     android:width="344dp"
     android:height="70dp"
     android:viewportWidth="344"
-    android:viewportHeight="72">
+    android:viewportHeight="70">
   <path
-      android:pathData="M20,0L324,0A20,20 0,0 1,344 20L344,52A20,20 0,0 1,324 72L20,72A20,20 0,0 1,0 52L0,20A20,20 0,0 1,20 0z"
-      android:fillAlpha="0.6">
+      android:pathData="M0,20C0,8.95 8.95,0 20,0H324C335.05,0 344,8.95 344,20V70H0V20Z"
+      android:fillAlpha="0.8">
     <aapt:attr name="android:fillColor">
       <gradient 
           android:startX="0"
-          android:startY="36"
+          android:startY="35"
           android:endX="344"
-          android:endY="36"
+          android:endY="35"
           android:type="linear">
         <item android:offset="0" android:color="#FFFFFFFF"/>
-        <item android:offset="1" android:color="#E1E1E1"/>
+        <item android:offset="1" android:color="#E5E1E1E1"/>
       </gradient>
     </aapt:attr>
   </path>
