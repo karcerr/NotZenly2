@@ -1,5 +1,6 @@
 package com.tagme
 
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.RenderEffect
@@ -231,19 +232,37 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
 
         // Set dismiss listener to handle cleanup
         popupWindow.setOnDismissListener {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                view.setRenderEffect(null)
+            ValueAnimator.ofFloat(1f, 0f).apply {
+                duration = 400
+                addUpdateListener { animation ->
+                    val progress = animation.animatedValue as Float
+                    darkOverlay.alpha = progress
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        val blurRadius = progress * 10f
+                        val blurEffect = if (blurRadius == 0f) null
+                        else RenderEffect.createBlurEffect(blurRadius, blurRadius, Shader.TileMode.CLAMP)
+                        view.setRenderEffect(blurEffect)
+                    }
+                }
+                start()
             }
-            darkOverlay.animate().alpha(0f).setDuration(400).start()
         }
 
-        darkOverlay.animate().alpha(1f).setDuration(400).withEndAction {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val blurEffect = RenderEffect.createBlurEffect(10f, 10f, Shader.TileMode.CLAMP)
-                view.setRenderEffect(blurEffect)
-            }
-        }.start()
+        ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 400
+            addUpdateListener { animation ->
+                val progress = animation.animatedValue as Float
+                darkOverlay.alpha = progress
 
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    val blurRadius = if (progress == 0f) 0.1f else progress * 10f
+                    val blurEffect = RenderEffect.createBlurEffect(blurRadius, blurRadius, Shader.TileMode.CLAMP)
+                    view.setRenderEffect(blurEffect)
+                }
+            }
+            start()
+        }
     }
 
     private fun updateConversationsLocal() {
