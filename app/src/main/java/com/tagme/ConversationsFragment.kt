@@ -2,6 +2,9 @@ package com.tagme
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.RenderEffect
+import android.graphics.Shader
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -46,6 +49,7 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
         recyclerView = view.findViewById(R.id.conversations_recycler_view)
         nestedScrollView = view.findViewById(R.id.nested_scroll_view)
         darkOverlay = view.findViewById(R.id.dark_overlay)
+
         var shouldInterceptTouch = false
         val gestureListener = SwipeGestureListener(
             onSwipe = { deltaY ->
@@ -227,12 +231,19 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
 
         // Set dismiss listener to handle cleanup
         popupWindow.setOnDismissListener {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                view.setRenderEffect(null)
+            }
             darkOverlay.animate().alpha(0f).setDuration(400).start()
         }
 
-        darkOverlay.alpha = 0f
-        darkOverlay.visibility = View.VISIBLE
-        darkOverlay.animate().alpha(1f).setDuration(400).start()
+        darkOverlay.animate().alpha(1f).setDuration(400).withEndAction {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val blurEffect = RenderEffect.createBlurEffect(10f, 10f, Shader.TileMode.CLAMP)
+                view.setRenderEffect(blurEffect)
+            }
+        }.start()
+
     }
 
     private fun updateConversationsLocal() {
