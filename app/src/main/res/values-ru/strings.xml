@@ -98,4 +98,10 @@
     <string name="enter_new_username">Введите новое имя пользователя</string>
     <string name="username_changed">Имя пользователя успешно изменено</string>
     <string name="username_taken">Такое имя занято :(</string>
+    <string name="storage_settings">Настройки памяти</string>
+    <string name="storage">Память</string>
+    <string name="kb_format">%d КБ</string>
+    <string name="mb_format">%d КБ</string>
+    <string name="calculating_size">Вычисление...</string>
+    <string name="cached_images">Кэшированные изображения</string>
 </resources>

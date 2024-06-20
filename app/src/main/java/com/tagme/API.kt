@@ -371,6 +371,14 @@ class API private constructor(context: Context){
         }
         return sendRequestToWS(requestData)
     }
+    suspend fun readConversationWS(conversationId: Int): JSONObject? {
+        val requestData = JSONObject().apply {
+            put("action", "read conversation")
+            put("token", myToken)
+            put("conversation_id", conversationId)
+        }
+        return sendRequestToWS(requestData)
+    }
     suspend fun getNewMessagesFromWS(conversationId: Int, lastMsgId: Int): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "get new messages")
@@ -546,13 +554,13 @@ class API private constructor(context: Context){
                         ConversationData(conversationId,
                             UserData(userId, nickname, profilePictureId), mutableListOf(),
                             LastMessageData(lastMessageAuthorId, lastMessageAuthorId, lastMessageText, lastMessagePictureId, parseAndConvertTimestamp(timestampString), read),
-                            false
+                            pinned = false, markedUnread = false
                         )
                     )
                 } else { //Creating a new conversation without a message
                     updatedConversationsData.add(
                         ConversationData(conversationId,
-                        UserData(userId, nickname, profilePictureId), mutableListOf(),null, false)
+                        UserData(userId, nickname, profilePictureId), mutableListOf(),null, pinned = false, markedUnread = false)
                     )
                 }
             } else { //Updating existing conversation
@@ -560,7 +568,7 @@ class API private constructor(context: Context){
                 if (lastMessageId != 0) {
                     val lastMessageData = LastMessageData(lastMessageId, lastMessageAuthorId, lastMessageText, lastMessagePictureId,
                         parseAndConvertTimestamp(timestampString), read)
-                    if (existingConversation.lastMessage?.id != lastMessageId || existingConversation.lastMessage == null) {
+                    if (existingConversation.lastMessage == null || existingConversation.lastMessage?.id != lastMessageId || existingConversation.lastMessage?.read != read) {
                         existingConversation.lastMessage = lastMessageData
                         if  (!read && lastMessageAuthorId != myUserId && messagesNotificationsEnabled) {
                             notificationManager.showNewMessageNotification(nickname, lastMessageText, conversationId)
@@ -808,7 +816,8 @@ class API private constructor(context: Context){
         var userData: UserData,
         var messages: MutableList<MessageData>,
         var lastMessage: LastMessageData?,
-        var pinned: Boolean
+        var pinned: Boolean,
+        var markedUnread: Boolean
     ){
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -817,7 +826,9 @@ class API private constructor(context: Context){
             if (conversationID != other.conversationID) return false
             if (userData != other.userData) return false
             if (lastMessage != other.lastMessage) return false
+            if (lastMessage?.read != other.lastMessage?.read) return false
             if (pinned != other.pinned) return false
+            if (markedUnread != other.markedUnread) return false
 
             return true
         }
@@ -835,6 +846,19 @@ class API private constructor(context: Context){
         conversation?.pinned = conversation?.pinned?.not() ?: false
         conversationsData = updatedConversations
     }
+    fun toggleMarkedUnreadStatus(conversationId: Int) {
+        val updatedConversations = conversationsData.toMutableList()
+        val conversation = updatedConversations.find { it.conversationID == conversationId }
+        conversation?.markedUnread = conversation?.markedUnread?.not() ?: false
+        conversationsData = updatedConversations
+    }
+    fun disableMarkedUnreadStatus(conversationId: Int) {
+        val updatedConversations = conversationsData.toMutableList()
+        val conversation = updatedConversations.find { it.conversationID == conversationId }
+        conversation?.markedUnread = false
+        conversationsData = updatedConversations
+    }
+
     data class MessageData(
         val messageId: Int,
         val authorId: Int,
@@ -949,6 +973,30 @@ class API private constructor(context: Context){
         }
 
         return file.absolutePath
+    }
+    fun getCacheSize(context: Context): String {
+        val cacheDir = context.cacheDir
+        var totalSize = 0L
+
+        cacheDir.listFiles()?.forEach { file ->
+            totalSize += file.length()
+        }
+
+        val sizeInKB = totalSize / 1024
+        val sizeInMB = sizeInKB / 1024
+
+        return if (sizeInMB > 0) {
+            context.getString(R.string.mb_format, sizeInMB)
+        } else {
+            context.getString(R.string.kb_format, sizeInKB)
+        }
+    }
+    fun clearImageCache(context: Context) {
+        val cacheDir = context.cacheDir
+        cacheDir.listFiles()?.forEach { file ->
+            file.delete()
+        }
+        picsData = emptyList()
     }
     private suspend fun sendRequestToWS(request: JSONObject): JSONObject? {
         val action = request.getString("action")

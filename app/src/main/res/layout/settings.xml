@@ -9,7 +9,6 @@
         android:focusable="true"
 >
     <LinearLayout
-
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
@@ -78,7 +77,7 @@
             </LinearLayout>
             <ImageView
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:src="@drawable/separator_big"/>
             <LinearLayout
                     android:id="@+id/messages_notifications_layout"
@@ -110,6 +109,77 @@
                         app:switchMinWidth="55dp"
                 />
             </LinearLayout>
+        </LinearLayout>
+        <LinearLayout
+                android:id="@+id/storage_layout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="20dp"
+        >
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="66dp"
+                    android:orientation="horizontal"
+            >
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="22sp"
+                        android:text="@string/cached_images"
+                        android:fontFamily="@font/my_font"
+                        android:textColor="@color/white"
+                        android:layout_weight="1"
+                        android:textStyle="bold"
+                        android:layout_gravity="center"
+                        android:layout_marginStart="14dp"
+                />
+                <Space
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                />
+                <TextView
+                        android:id="@+id/image_size_format"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="22sp"
+                        android:text="@string/calculating_size"
+                        android:fontFamily="@font/my_font"
+                        android:textColor="@color/white"
+                        android:layout_weight="1"
+                        android:textStyle="bold"
+                        android:layout_gravity="center"
+                        android:layout_marginStart="14dp"
+                        android:gravity="end"
+                        android:maxLines="1"
+                />
+            </LinearLayout>
+            <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/separator_big"
+            />
+            <Space
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+            />
+            <Button
+                    android:id="@+id/clear_cache_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/clear_cache"
+                    android:textSize="20sp"
+                    android:background="@drawable/clear_cache_background"
+                    android:fontFamily="@font/my_font"
+                    android:paddingHorizontal="48dp"
+                    android:paddingVertical="16dp"
+                    android:textColor="@color/white"
+                    android:layout_gravity="center_horizontal"
+            />
         </LinearLayout>
     </LinearLayout>
     <LinearLayout
@@ -157,21 +227,21 @@
         </LinearLayout>
         <ImageView
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:src="@drawable/separator_big"/>
         <LinearLayout
-                android:id="@+id/memory_layout"
+                android:id="@+id/storage_layout_button"
                 android:layout_width="match_parent"
                 android:layout_height="66dp"
                 android:orientation="horizontal"
                 android:clickable="true"
-                android:visibility="gone"
+                android:visibility="visible"
         >
             <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:textSize="24sp"
-                    android:text="@string/memory"
+                    android:text="@string/storage"
                     android:fontFamily="@font/my_font"
                     android:textColor="@color/white"
                     android:layout_weight="1"
@@ -189,7 +259,7 @@
         </LinearLayout>
         <ImageView
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:src="@drawable/separator_big"
                 android:visibility="gone"
         />
@@ -221,7 +291,7 @@
         </LinearLayout>
         <ImageView
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:src="@drawable/separator_big"/>
         <LinearLayout
                 android:id="@+id/exit_layout"
@@ -252,7 +322,7 @@
         </LinearLayout>
         <ImageView
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:src="@drawable/separator_big"
         />
     </LinearLayout>

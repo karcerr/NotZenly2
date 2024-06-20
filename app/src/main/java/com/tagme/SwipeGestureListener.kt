@@ -1,8 +1,15 @@
 package com.tagme
 
+import android.annotation.SuppressLint
+import android.app.Activity
 import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
+import android.view.View
+import android.widget.LinearLayout
+import androidx.fragment.app.Fragment
+import kotlin.math.abs
+import kotlin.math.max
 
 @Suppress("NOTHING_TO_OVERRIDE", "ACCIDENTAL_OVERRIDE")
 class SwipeGestureListener(
@@ -62,5 +69,64 @@ class SwipeGestureListener(
             isScrolling = false
             onSwipeEnd()
         }
+    }
+}
+@SuppressLint("ClickableViewAccessibility")
+fun setupSwipeGesture(
+    fragment: Fragment,
+    nestedScrollView: CustomNestedScrollView,
+    linearLayout: LinearLayout?,
+    view: View,
+    mapActivity: Activity
+) {
+    var shouldInterceptTouch = false
+    val gestureListener = SwipeGestureListener(
+        onSwipe = { deltaY ->
+            if (nestedScrollView.scrollY == 0) {
+                val newTranslationY = view.translationY + deltaY
+                if (shouldInterceptTouch || newTranslationY > 0F) {
+                    shouldInterceptTouch = true
+                    view.translationY = max(newTranslationY, 0F)
+                    nestedScrollView.scrollTo(0, 0)
+                    true
+                } else {
+                    false
+                }
+            } else {
+                false
+            }
+        },
+        onSwipeEnd = {
+            shouldInterceptTouch = false
+            if (abs(view.translationY) > 150) { // swipe threshold
+                fragment.animateFragmentClose(view)
+            } else {
+                fragment.animateFragmentReset(view)
+            }
+        }
+    )
+    val gestureDetector = GestureDetector(mapActivity, gestureListener)
+    nestedScrollView.gestureDetector = gestureDetector
+    nestedScrollView.setOnTouchListener { v, event ->
+        if (gestureDetector.onTouchEvent(event)) {
+            return@setOnTouchListener true
+        }
+        if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
+            gestureListener.onUp(event)
+            shouldInterceptTouch = false
+            v.performClick()
+        }
+        false
+    }
+    linearLayout?.setOnTouchListener { v, event ->
+        if (gestureDetector.onTouchEvent(event)) {
+            return@setOnTouchListener true
+        }
+        if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
+            gestureListener.onUp(event)
+            shouldInterceptTouch = false
+            v.performClick()
+        }
+        false
     }
 }

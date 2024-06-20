@@ -28,10 +28,15 @@ class SettingsFragment : Fragment() {
         val backButton = view.findViewById<ImageButton>(R.id.back_button)
         val exitLayout = view.findViewById<LinearLayout>(R.id.exit_layout)
         val notificationsLayoutButton = view.findViewById<LinearLayout>(R.id.notifications_layout_button)
+        val storageLayoutButton = view.findViewById<LinearLayout>(R.id.storage_layout_button)
+        val storageLayout = view.findViewById<LinearLayout>(R.id.storage_layout)
+        val imageSizeTextView = view.findViewById<TextView>(R.id.image_size_format)
+        val clearCacheButton = view.findViewById<Button>(R.id.clear_cache_button)
+
         val notificationsLayout = view.findViewById<LinearLayout>(R.id.notifications_layout)
+
         val friendRequestSwitch = view.findViewById<SwitchCompat>(R.id.friend_requests_switch)
         val messagesSwitch = view.findViewById<SwitchCompat>(R.id.messages_switch)
-        val memoryLayout = view.findViewById<LinearLayout>(R.id.memory_layout)
         val darkOverlay = view.findViewById<View>(R.id.dark_overlay)
         val areYouSureLayout = view.findViewById<LinearLayout>(R.id.are_you_sure_layout)
         val yesButton = view.findViewById<Button>(R.id.yes_button)
@@ -75,6 +80,25 @@ class SettingsFragment : Fragment() {
                     mapActivity.onBackPressedDispatcher.onBackPressed()
                 }
             }
+        }
+        storageLayoutButton.setOnClickListener {
+            mainLayout.visibility = View.GONE
+            storageLayout.visibility = View.VISIBLE
+            headerTextView.text = getString(R.string.storage_settings)
+            backButton.setOnClickListener{
+                storageLayout.visibility = View.GONE
+                mainLayout.visibility = View.VISIBLE
+                headerTextView.text = getString(R.string.settings)
+                backButton.setOnClickListener{
+                    mapActivity.onBackPressedDispatcher.onBackPressed()
+                }
+            }
+            imageSizeTextView.text = api.getCacheSize(mapActivity)
+        }
+        clearCacheButton.setOnClickListener {
+            imageSizeTextView.text = getString(R.string.calculating_size)
+            api.clearImageCache(mapActivity)
+            imageSizeTextView.text = api.getCacheSize(mapActivity)
         }
         friendRequestSwitch.isChecked = api.friendRequestsNotificationsEnabled
         messagesSwitch.isChecked = api.messagesNotificationsEnabled

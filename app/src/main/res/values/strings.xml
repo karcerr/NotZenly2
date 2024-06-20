@@ -110,4 +110,11 @@
     <string name="enter_new_username">Enter New Username</string>
     <string name="username_changed">Username was successfully changed!</string>
     <string name="username_taken">Username is already taken :(</string>
+    <string name="storage_settings">Storage settings</string>
+    <string name="storage">Storage</string>
+    <string name="cached_images">Cached Images</string>
+    <string name="kb_format">%d KB</string>
+    <string name="mb_format">%d MB</string>
+    <string name="calculating_size">Calculating size...</string>
+    <string name="clear_cache">Clear Cache</string>
 </resources>

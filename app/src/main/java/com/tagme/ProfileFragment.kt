@@ -7,7 +7,9 @@ import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.*
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -17,8 +19,6 @@ import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlin.math.abs
-import kotlin.math.max
 
 class ProfileFragment : Fragment() {
     private lateinit var view: View
@@ -65,45 +65,13 @@ class ProfileFragment : Fragment() {
         val requestStatusText = view.findViewById<TextView>(R.id.status_text)
         val nicknameChangeStatusText = view.findViewById<TextView>(R.id.status_text_2)
         nestedScrollView = view.findViewById(R.id.profile_nested_scroll_view)
-        var shouldInterceptTouch = false
-        val gestureListener = SwipeGestureListener(
-            onSwipe = { deltaY ->
-                if (nestedScrollView.scrollY == 0) {
-                    val newTranslationY = view.translationY + deltaY
-                    if (shouldInterceptTouch || newTranslationY > 0F){
-                        shouldInterceptTouch = true
-                        view.translationY = max(newTranslationY, 0F)
-                        nestedScrollView.scrollTo(0, 0)
-                        true
-                    } else {
-                        false
-                    }
-                } else {
-                    false
-                }
-            },
-            onSwipeEnd = {
-                shouldInterceptTouch = false
-                if (abs(view.translationY) > 150) { //swipe threshold
-                    animateFragmentClose(view)
-                } else {
-                    animateFragmentReset(view)
-                }
-            }
+        setupSwipeGesture(
+            this,
+            nestedScrollView,
+            null,
+            view,
+            mapActivity
         )
-        val gestureDetector = GestureDetector(mapActivity, gestureListener)
-        nestedScrollView.gestureDetector = gestureDetector
-        nestedScrollView.setOnTouchListener { v, event ->
-            if (gestureDetector.onTouchEvent(event)) {
-                return@setOnTouchListener true
-            }
-            if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
-                gestureListener.onUp(event)
-                shouldInterceptTouch = false
-                v.performClick()
-            }
-            false
-        }
 
         imageHandler = ImageHandler(mapActivity, myProfilePic, addPfpPic, compressingStatus, false, 600, 600, 40f)
         imageHandler.initImagePickerLauncher(this)
@@ -152,6 +120,8 @@ class ProfileFragment : Fragment() {
             addFriendWindow.visibility = View.GONE
             changeNicknameWindow.visibility = View.GONE
             darkOverlay.visibility = View.GONE
+            requestStatusText.visibility = View.GONE
+            nicknameChangeStatusText.visibility = View.GONE
             hideKeyboard()
         }
         sendRequestButton.setOnClickListener{

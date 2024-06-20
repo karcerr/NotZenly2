@@ -10,7 +10,10 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import android.view.*
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.*
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -21,8 +24,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.math.abs
-import kotlin.math.max
 
 
 class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickListener {
@@ -50,46 +51,13 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
         recyclerView = view.findViewById(R.id.conversations_recycler_view)
         nestedScrollView = view.findViewById(R.id.nested_scroll_view)
         darkOverlay = view.findViewById(R.id.dark_overlay)
-
-        var shouldInterceptTouch = false
-        val gestureListener = SwipeGestureListener(
-            onSwipe = { deltaY ->
-                if (nestedScrollView.scrollY == 0) {
-                    val newTranslationY = view.translationY + deltaY
-                    if (shouldInterceptTouch || newTranslationY > 0F){
-                        shouldInterceptTouch = true
-                        view.translationY = max(newTranslationY, 0F)
-                        nestedScrollView.scrollTo(0, 0)
-                        true
-                    } else {
-                        false
-                    }
-                } else {
-                    false
-                }
-            },
-            onSwipeEnd = {
-                shouldInterceptTouch = false
-                if (abs(view.translationY) > 150) { //swipe threshold
-                    animateFragmentClose(view)
-                } else {
-                    animateFragmentReset(view)
-                }
-            }
+        setupSwipeGesture(
+            this,
+            nestedScrollView,
+            null,
+            view,
+            mapActivity
         )
-        val gestureDetector = GestureDetector(mapActivity, gestureListener)
-        nestedScrollView.gestureDetector = gestureDetector
-        nestedScrollView.setOnTouchListener { v, event ->
-            if (gestureDetector.onTouchEvent(event)) {
-                return@setOnTouchListener true
-            }
-            if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
-                gestureListener.onUp(event)
-                shouldInterceptTouch = false
-                v.performClick()
-            }
-            false
-        }
         val conversationListSorted = api.getConversationsDataList().map { it.copy() }
             .sortedWith(compareByDescending<API.ConversationData> { it.pinned }
                 .thenByDescending { it.lastMessage?.timestamp })
@@ -148,7 +116,7 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
         val conversation = conversationsAdapter.conversationList[position]
 
         // Inflate the menu view which includes conversation_item layout
-        val menuView = LayoutInflater.from(context).inflate(R.layout.conversation_contextual_menu, null)
+        val menuView = LayoutInflater.from(context).inflate(R.layout.conversation_contextual_menu, view as ViewGroup, false)
 
         // Find views within the inflated layout
         val nameTextView = menuView.findViewById<TextView>(R.id.conversation_name)
@@ -167,11 +135,13 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
             val timestampText = timestampDateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
             lastMessageTimestamp.visibility = View.VISIBLE
             lastMessageTimestamp.text = timestampText
-            if (!conversation.lastMessage!!.read && conversation.lastMessage!!.authorId != api.myUserId){
+            if ((!conversation.lastMessage!!.read && conversation.lastMessage!!.authorId != api.myUserId) || (conversation.markedUnread)){
                 readIcon.visibility = View.VISIBLE
             } else {
                 readIcon.visibility = View.INVISIBLE
             }
+        } else {
+            readIcon.visibility = if (conversation.markedUnread) View.VISIBLE else View.GONE
         }
 
         val originalPictureDrawable = (recyclerView.findViewHolderForAdapterPosition(position) as? ConversationsAdapter.ConversationViewHolder)
@@ -188,7 +158,7 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
         }
 
         // Set up menu item click listeners within the inflated layout
-        val pinButton = menuView.findViewById<ImageView>(R.id.action_pin)
+        val pinButton = menuView.findViewById<ImageButton>(R.id.action_pin)
         if (conversation.pinned) {
             pinIcon.visibility = View.VISIBLE
             pinButton.setImageResource(R.drawable.unpin)
@@ -196,14 +166,14 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
             pinIcon.visibility = View.GONE
             pinButton.setImageResource(R.drawable.pin)
         }
-
-        // Initialize PopupWindow with half of the screen width and WRAP_CONTENT height
         val displayMetrics = mapActivity.resources.displayMetrics
         val screenWidth = displayMetrics.widthPixels
         val horizontalMargin = mapActivity.resources.getDimensionPixelSize(R.dimen.popup_horizontal_margin)
         val effectiveWidth = screenWidth - 2 * horizontalMargin
         val popupWindow = PopupWindow(menuView, effectiveWidth, ViewGroup.LayoutParams.WRAP_CONTENT, true)
         popupWindow.animationStyle = R.style.NoAnimationPopupStyle
+        setupReadUnreadButton(menuView, conversation, api, popupWindow)
+
         pinButton.setOnClickListener {
             api.togglePinnedStatus(conversation.conversationID)
             updateConversationsLocal()
@@ -212,11 +182,6 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
             }.start()
         }
 
-        menuView.findViewById<ImageView>(R.id.action_read).setOnClickListener {
-            popupWindow.contentView.animate().alpha(0f).setDuration(400).withEndAction {
-                popupWindow.dismiss()
-            }.start()
-        }
         menuView.findViewById<ImageView>(R.id.action_delete).setOnClickListener {
             popupWindow.contentView.animate().alpha(0f).setDuration(400).withEndAction {
                 popupWindow.dismiss()
@@ -270,6 +235,34 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
         conversationsAdapter.updateData(conversationList)
         Log.d("Tagme_conversations", conversationList.toString())
     }
+    private fun setupReadUnreadButton(view: View, conversation: API.ConversationData, api: API, popupWindow: PopupWindow) {
+        val readUnreadButton = view.findViewById<ImageButton>(R.id.action_read)
+
+        fun animateAndDismiss() {
+            updateConversationsLocal()
+            popupWindow.contentView.animate().alpha(0f).setDuration(400).withEndAction {
+                popupWindow.dismiss()
+            }.start()
+        }
+
+        if (conversation.lastMessage != null && !conversation.lastMessage!!.read && conversation.lastMessage!!.authorId != api.myUserId) {
+            readUnreadButton.setImageResource(R.drawable.mark_chat_read)
+            readUnreadButton.setOnClickListener {
+                CoroutineScope(Dispatchers.Main).launch {
+                    api.readConversationWS(conversation.conversationID)
+                    animateAndDismiss()
+                }
+            }
+        } else {
+            val markedUnread = conversation.markedUnread
+            readUnreadButton.setImageResource(if (markedUnread) R.drawable.mark_chat_read else R.drawable.mark_chat_unread)
+            readUnreadButton.setOnClickListener {
+                api.toggleMarkedUnreadStatus(conversation.conversationID)
+                animateAndDismiss()
+            }
+        }
+    }
+
 }
 
 class ConversationsAdapter(
@@ -353,11 +346,15 @@ class ConversationsAdapter(
             holder.lastMessageText.text = lastMessage.text
             holder.lastMessageTimestamp.visibility = View.VISIBLE
             holder.lastMessageTimestamp.text = timestampText
-            if (!lastMessage.read && lastMessage.authorId != api.myUserId) {
+            if ((!lastMessage.read && lastMessage.authorId != api.myUserId) || (conversation.markedUnread)){
                 holder.readIcon.visibility = View.VISIBLE
             } else {
                 holder.readIcon.visibility = View.INVISIBLE
             }
+        } else {
+            holder.lastMessageText.text = context.getString(R.string.last_message_placeholder)
+            holder.lastMessageTimestamp.visibility = View.INVISIBLE
+            holder.readIcon.visibility = if(conversation.markedUnread) View.VISIBLE else View.GONE
         }
         val drawablePlaceholder = ContextCompat.getDrawable(context, R.drawable.person_placeholder)
         holder.pictureImageView.setImageDrawable(drawablePlaceholder)
@@ -370,6 +367,7 @@ class ConversationsAdapter(
             }
         }
         holder.conversationLayout.setOnClickListener {
+            api.disableMarkedUnreadStatus(conversationId)
             val conversationFragment = ConversationFragment.newInstance(conversationId, conversation.userData.nickname)
             parentActivity.supportFragmentManager.beginTransaction()
                 .add(R.id.conversations_fragment, conversationFragment)

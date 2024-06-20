@@ -2,7 +2,9 @@ package com.tagme
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.*
 import androidx.activity.OnBackPressedCallback
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -14,8 +16,7 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.math.abs
-import kotlin.math.max
+
 
 class UserProfileFragment : Fragment() {
     private lateinit var view: View
@@ -59,56 +60,13 @@ class UserProfileFragment : Fragment() {
         val nestedScrollView = view.findViewById<CustomNestedScrollView>(R.id.profile_nested_scroll_view)
         val linearLayout = view.findViewById<LinearLayout>(R.id.profile_linear_layout)
         frameLayout = view.findViewById(R.id.profile_frame_layout)
-        var shouldInterceptTouch = false
-        val gestureListener = SwipeGestureListener(
-            onSwipe = { deltaY ->
-                if (nestedScrollView.scrollY == 0) {
-                    val newTranslationY = view.translationY + deltaY
-                    if (shouldInterceptTouch || newTranslationY > 0F){
-                        shouldInterceptTouch = true
-                        view.translationY = max(newTranslationY, 0F)
-                        nestedScrollView.scrollTo(0, 0)
-                        true
-                    } else {
-                        false
-                    }
-                } else {
-                    false
-                }
-            },
-            onSwipeEnd = {
-                shouldInterceptTouch = false
-                if (abs(view.translationY) > 150) { //swipe threshold
-                    animateFragmentClose(view)
-                } else {
-                    animateFragmentReset(view)
-                }
-            }
+        setupSwipeGesture(
+            this,
+            nestedScrollView,
+            linearLayout,
+            view,
+            mapActivity
         )
-        val gestureDetector = GestureDetector(mapActivity, gestureListener)
-        nestedScrollView.gestureDetector = gestureDetector
-        nestedScrollView.setOnTouchListener { v, event ->
-            if (gestureDetector.onTouchEvent(event)) {
-                return@setOnTouchListener true
-            }
-            if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
-                gestureListener.onUp(event)
-                shouldInterceptTouch = false
-                v.performClick()
-            }
-            false
-        }
-        linearLayout.setOnTouchListener { v, event ->
-            if (gestureDetector.onTouchEvent(event)) {
-                return@setOnTouchListener true
-            }
-            if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
-                gestureListener.onUp(event)
-                shouldInterceptTouch = false
-                v.performClick()
-            }
-            false
-        }
 
         var nickname = ""
 

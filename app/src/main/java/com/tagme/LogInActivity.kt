@@ -91,6 +91,9 @@ class LogInActivity : AppCompatActivity() {
                 val token = accessToken.token
                 Log.d("Tagme_VK", "Access Token: $token")
                 CoroutineScope(Dispatchers.Main).launch {
+                    loadingLayout.visibility = View.VISIBLE
+                    loginLayout.visibility = View.GONE
+                    errorText.visibility = View.GONE
                     val answer = api.authVK(token)
                     if (answer != null) {
                         if (answer.getString("status") == "success") {
@@ -100,6 +103,8 @@ class LogInActivity : AppCompatActivity() {
                         } else {
                             loadingLayout.visibility = View.GONE
                             loginLayout.visibility = View.VISIBLE
+                            errorText.visibility = View.VISIBLE
+                            errorText.text = answer.getString("message")
                         }
                     }
                 }
