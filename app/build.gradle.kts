@@ -11,8 +11,8 @@ android {
         applicationId = "com.tagme"
         minSdk = 27
         targetSdk = 34
-        versionCode = 26
-        versionName = "1.20"
+        versionCode = 27
+        versionName = "1.21"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         addManifestPlaceholders(mapOf(
