@@ -127,7 +127,7 @@
                     android:textSize="20sp"
                     android:background="@drawable/send_request_background"
                     android:fontFamily="@font/my_font"
-                    android:paddingHorizontal="50dp"
+                    android:paddingHorizontal="45dp"
                     android:paddingVertical="16dp"
                     android:textColor="@color/white"
             />
@@ -144,7 +144,7 @@
                     android:textSize="20sp"
                     android:background="@drawable/clear_cache_background"
                     android:fontFamily="@font/my_font"
-                    android:paddingHorizontal="50dp"
+                    android:paddingHorizontal="45dp"
                     android:paddingVertical="16dp"
                     android:textColor="@color/white"
             />

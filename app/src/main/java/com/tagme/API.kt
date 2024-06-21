@@ -596,14 +596,15 @@ class API private constructor(context: Context){
     private fun parseMessagesData(jsonString: String) {
         val message = JSONObject(jsonString)
         val result = message.getJSONArray("result")
-        val conversationId = message.getInt("conversation_id")
-        val encounteredMessageIds = mutableListOf<Int>()
         val updatedConversations = conversationsData.toMutableList()
+        val conversationId = message.getInt("conversation_id")
+        val existingConversation = updatedConversations.find { it.conversationID == conversationId }
+        val encounteredMessageIds = mutableListOf<Int>()
+
         for (i in 0 until result.length()) {
             val messageObject = result.getJSONObject(i)
             val messageId = messageObject.getInt("message_id")
             encounteredMessageIds.add(messageId)
-            val existingConversation = updatedConversations.find { it.conversationID == conversationId }
             val existingMessage = existingConversation?.messages?.find{it.messageId == messageId}
             if (existingConversation != null) {
                 val ifRead = messageObject.getBoolean("read")
@@ -630,8 +631,11 @@ class API private constructor(context: Context){
                 }
             }
         }
-        updatedConversations.find {it.conversationID == conversationId }?.messages?.removeIf {
-            !encounteredMessageIds.contains(it.messageId)
+        if (existingConversation != null) {
+            existingConversation.messages.removeIf {
+                !encounteredMessageIds.contains(it.messageId)
+            }
+            addSeparatorIfNeeded(existingConversation.messages)
         }
         conversationsData = updatedConversations
     }

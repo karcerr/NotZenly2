@@ -155,6 +155,7 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
                 lastMessageCheckMark.setImageResource(if(lastMessage.read) R.drawable.double_check_mark else R.drawable.single_check_mark)
             }
         } else {
+            lastMessageCheckMark.visibility = View.GONE
             readIcon.visibility = if (conversation.markedUnread) View.VISIBLE else View.GONE
         }
 
@@ -401,6 +402,7 @@ class ConversationsAdapter(
                 holder.lastMessageCheckMark.setImageResource(if(lastMessage.read) R.drawable.double_check_mark else R.drawable.single_check_mark)
             }
         } else {
+            holder.lastMessageCheckMark.visibility = View.GONE
             holder.lastMessageText.text = context.getString(R.string.last_message_placeholder)
             holder.lastMessageTimestamp.visibility = View.INVISIBLE
             holder.readIcon.visibility = if(conversation.markedUnread) View.VISIBLE else View.GONE
