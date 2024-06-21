@@ -528,7 +528,7 @@ class API private constructor(context: Context){
 
     private fun parseMyData(myData: JSONObject){
         val userId = myData.getInt("user_id")
-        val picId = myData.optInt("picture_id", 0)
+        val picId = myData.optInt("picture_id", 0).takeIf{it != 0}
         val nickname = myData.getString("nickname")
         val tags = myData.getInt("user_score")
 
@@ -536,7 +536,7 @@ class API private constructor(context: Context){
         val computedHash = list.toSha256Hash()
 
         myUserId = userId
-        myPfpId = picId
+        myPfpId = picId ?: 0
         myTags = tags
         myNickname = nickname
     }
@@ -593,13 +593,16 @@ class API private constructor(context: Context){
         updatedConversationsData.removeIf { conversation -> !encounteredConversationIds.contains(conversation.conversationID) }
         conversationsData = updatedConversationsData
     }
-    private fun parseMessagesData(jsonString: String){
-        val result = JSONObject(jsonString).getJSONArray("result")
+    private fun parseMessagesData(jsonString: String) {
+        val message = JSONObject(jsonString)
+        val result = message.getJSONArray("result")
+        val conversationId = message.getInt("conversation_id")
+        val encounteredMessageIds = mutableListOf<Int>()
         val updatedConversations = conversationsData.toMutableList()
         for (i in 0 until result.length()) {
             val messageObject = result.getJSONObject(i)
-            val conversationId = messageObject.getInt("conversation_id")
             val messageId = messageObject.getInt("message_id")
+            encounteredMessageIds.add(messageId)
             val existingConversation = updatedConversations.find { it.conversationID == conversationId }
             val existingMessage = existingConversation?.messages?.find{it.messageId == messageId}
             if (existingConversation != null) {
@@ -626,6 +629,9 @@ class API private constructor(context: Context){
                     existingMessage.read = ifRead
                 }
             }
+        }
+        updatedConversations.find {it.conversationID == conversationId }?.messages?.removeIf {
+            !encounteredMessageIds.contains(it.messageId)
         }
         conversationsData = updatedConversations
     }

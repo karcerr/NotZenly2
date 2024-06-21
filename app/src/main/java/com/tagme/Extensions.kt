@@ -66,7 +66,7 @@ fun Fragment.animateFragmentReset(view: View) {
 fun ImageView.setImageDrawableResource(@DrawableRes resId: Int) {
     setImageResource(resId)
 }
-fun List<Any>.toJsonString(): String {
+fun List<Any?>.toJsonString(): String {
     val jsonString = Gson().toJson(this)
     Log.d("Tagme_JSON_STRING", jsonString)
     return jsonString
@@ -79,7 +79,7 @@ fun String.toSha256Hash(): String {
     return digest.joinToString("") { "%02x".format(it) }
 }
 
-fun List<Any>.toSha256Hash(): String {
+fun List<Any?>.toSha256Hash(): String {
     val hash = this.toJsonString().toSha256Hash()
     Log.d("Tagme_LIST_HASH", hash)
     return hash
