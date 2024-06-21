@@ -34,6 +34,7 @@ class API private constructor(context: Context){
     private val pictureMutex = Mutex()
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
     private val notificationManager = NotificationManager(context)
+    private var myDataHash: String = ""
     init {
         notificationManager.createNotificationChannels()
     }
@@ -351,6 +352,7 @@ class API private constructor(context: Context){
         val requestData = JSONObject().apply {
             put("action", "get my data")
             put("token", myToken)
+            put("hash", myDataHash)
         }
         return sendRequestToWS(requestData)
     }
@@ -532,8 +534,8 @@ class API private constructor(context: Context){
         val nickname = myData.getString("nickname")
         val tags = myData.getInt("user_score")
 
-        val list = listOf(userId, picId, nickname, tags)
-        val computedHash = list.toSha256Hash()
+        //val list = listOf(userId, nickname, picId, tags)
+        //myDataHash = list.toSha256Hash()
 
         myUserId = userId
         myPfpId = picId ?: 0

@@ -34,6 +34,7 @@ class ProfileFragment : Fragment() {
     private lateinit var friendRequestsRecyclerView: RecyclerView
     private lateinit var imageHandler: ImageHandler
     lateinit var nestedScrollView: CustomNestedScrollView
+    lateinit var myTagCounter: TextView
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreateView(
@@ -51,7 +52,7 @@ class ProfileFragment : Fragment() {
         val changeNicknameWindow = view.findViewById<View>(R.id.change_nickname_window)
         val ratingLayout = view.findViewById<LinearLayout>(R.id.rating_layout)
         val nicknameText = view.findViewById<TextView>(R.id.nickname_text)
-        val myTagCounter = view.findViewById<TextView>(R.id.my_tag_counter)
+        myTagCounter = view.findViewById(R.id.my_tag_counter)
         myProfilePic = view.findViewById(R.id.profile_picture)
         addPfpPic = view.findViewById(R.id.add_profile_picture_icon)
         val compressingStatus = view.findViewById<LinearLayout>(R.id.compressing_status)

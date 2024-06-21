@@ -607,6 +607,8 @@ class MapActivity: AppCompatActivity() {
                         api.sendLocationToWS(myLatitude, myLongitude, accuracy, speed)
                         api.getLocationsFromWS()
                         api.getGeoStories()
+                        api.getMyDataFromWS()
+                        profileFragment.myTagCounter.text = getString(R.string.tag_counter_format, api.myTags)
                     } catch (e: Exception) {
                         Log.d("Tagme_exception", e.toString())
                         e.printStackTrace()
