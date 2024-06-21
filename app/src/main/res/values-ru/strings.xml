@@ -81,6 +81,8 @@
     <string name="loading">Загрузка…</string>
     <string name="no_location">Местоположение пользователя не найдено</string>
     <string name="are_you_sure_logout">Вы уверены, что хотите выйти?</string>
+    <string name="are_you_sure_delete_conversation">Вы уверены, что хотите удалить этот диалог?</string>
+    <string name="are_you_sure_delete_conversation_format">Он также будет удален для %s.</string>
     <string name="are_you_sure_block_format">Вы уверены, что хотите заблокировать %s?</string>
     <string name="are_you_sure_unfriend_format">Вы уверены, что хотите удалить %s из друзей?</string>
     <string name="messages">Сообщения</string>
@@ -104,4 +106,7 @@
     <string name="mb_format">%d КБ</string>
     <string name="calculating_size">Вычисление...</string>
     <string name="cached_images">Кэшированные изображения</string>
+    <string name="clear_cache">Очистить Кэш</string>
+    <string name="empty_field">Пустое поле! 😠</string>
+    <string name="message_too_long">Сообщение слишком длинное!</string>
 </resources>

@@ -176,7 +176,7 @@ class API private constructor(context: Context){
                     "get picture" -> when (answer.getString("status")) {
                         "success" -> parsePictureData(context, answer.getString("message"))
                     }
-                    "get messages", "get new messages" -> when (answer.getString("status")) {
+                    "get messages" -> when (answer.getString("status")) {
                         "success" -> parseMessagesData(answer.getString("message"))
                     }
                     "get my data" -> when (answer.getString("status")) {
@@ -362,12 +362,11 @@ class API private constructor(context: Context){
         }
         return sendRequestToWS(requestData)
     }
-    suspend fun getMessagesFromWS(conversationId: Int, lastMsgId: Int): JSONObject? {
+    suspend fun getMessagesFromWS(conversationId: Int): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "get messages")
             put("token", myToken)
             put("conversation_id", conversationId)
-            put("last_message_id", lastMsgId)
         }
         return sendRequestToWS(requestData)
     }
@@ -379,15 +378,23 @@ class API private constructor(context: Context){
         }
         return sendRequestToWS(requestData)
     }
-    suspend fun getNewMessagesFromWS(conversationId: Int, lastMsgId: Int): JSONObject? {
+    suspend fun deleteMessageWS(messageId: Int): JSONObject? {
         val requestData = JSONObject().apply {
-            put("action", "get new messages")
+            put("action", "delete message")
             put("token", myToken)
-            put("conversation_id", conversationId)
-            put("last_message_id", lastMsgId)
+            put("msg_id", messageId)
         }
         return sendRequestToWS(requestData)
     }
+    suspend fun deleteConversationWS(conversationId: Int): JSONObject? {
+        val requestData = JSONObject().apply {
+            put("action", "delete conversation")
+            put("token", myToken)
+            put("conversation_id", conversationId)
+        }
+        return sendRequestToWS(requestData)
+    }
+
 
     suspend fun sendMessageToWS(conversationId: Int, text: String): JSONObject? {
         val requestData = JSONObject().apply {
@@ -523,7 +530,11 @@ class API private constructor(context: Context){
         val userId = myData.getInt("user_id")
         val picId = myData.optInt("picture_id", 0)
         val nickname = myData.getString("nickname")
-        val tags = myData.optInt("user_score", 0)
+        val tags = myData.getInt("user_score")
+
+        val list = listOf(userId, picId, nickname, tags)
+        val computedHash = list.toSha256Hash()
+
         myUserId = userId
         myPfpId = picId
         myTags = tags
@@ -553,7 +564,7 @@ class API private constructor(context: Context){
                     updatedConversationsData.add(
                         ConversationData(conversationId,
                             UserData(userId, nickname, profilePictureId), mutableListOf(),
-                            LastMessageData(lastMessageAuthorId, lastMessageAuthorId, lastMessageText, lastMessagePictureId, parseAndConvertTimestamp(timestampString), read),
+                            MessageData(lastMessageAuthorId, lastMessageAuthorId, lastMessageText, lastMessagePictureId, parseAndConvertTimestamp(timestampString), read),
                             pinned = false, markedUnread = false
                         )
                     )
@@ -566,14 +577,16 @@ class API private constructor(context: Context){
             } else { //Updating existing conversation
                 existingConversation.userData = UserData(userId, nickname, profilePictureId)
                 if (lastMessageId != 0) {
-                    val lastMessageData = LastMessageData(lastMessageId, lastMessageAuthorId, lastMessageText, lastMessagePictureId,
+                    val lastMessageData = MessageData(lastMessageId, lastMessageAuthorId, lastMessageText, lastMessagePictureId,
                         parseAndConvertTimestamp(timestampString), read)
-                    if (existingConversation.lastMessage == null || existingConversation.lastMessage?.id != lastMessageId || existingConversation.lastMessage?.read != read) {
+                    if (existingConversation.lastMessage == null || existingConversation.lastMessage?.messageId != lastMessageId || existingConversation.lastMessage?.read != read) {
                         existingConversation.lastMessage = lastMessageData
                         if  (!read && lastMessageAuthorId != myUserId && messagesNotificationsEnabled) {
                             notificationManager.showNewMessageNotification(nickname, lastMessageText, conversationId)
                         }
                     }
+                } else {
+                    existingConversation.lastMessage = null
                 }
             }
         }
@@ -815,7 +828,7 @@ class API private constructor(context: Context){
         val conversationID: Int,
         var userData: UserData,
         var messages: MutableList<MessageData>,
-        var lastMessage: LastMessageData?,
+        var lastMessage: MessageData?,
         var pinned: Boolean,
         var markedUnread: Boolean
     ){
@@ -866,20 +879,12 @@ class API private constructor(context: Context){
         val imageId: Int?,
         val timestamp: Timestamp,
         var read: Boolean
-    )
-    data class LastMessageData(
-        val id: Int,
-        val authorId: Int,
-        var text: String?,
-        val imageId: Int?,
-        val timestamp: Timestamp,
-        var read: Boolean
     ) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
-            if (other !is LastMessageData) return false
+            if (other !is MessageData) return false
 
-            if (id != other.id) return false
+            if (messageId != other.messageId) return false
             if (authorId != other.authorId) return false
             if (text != other.text) return false
             if (imageId != other.imageId) return false
@@ -890,7 +895,7 @@ class API private constructor(context: Context){
         }
 
         override fun hashCode(): Int {
-            var result = id
+            var result = messageId
             result = 31 * result + authorId
             result = 31 * result + text.hashCode()
             result = if (imageId != null) 31 * result + imageId else result

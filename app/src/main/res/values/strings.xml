@@ -45,6 +45,7 @@
     <string name="find_on_map">Find on map</string>
     <string name="unfriend">Unfriend</string>
     <string name="friends_since_format">Friends since %s</string>
+    <string name="long_message_format" translatable="false">%s…</string>
     <string name="blocked">Blocked</string>
     <string name="unblock">"Unblock"</string>
     <string name="speed_format">%d km/h</string>
@@ -66,6 +67,7 @@
     <string name="geo_story_created">Geo story was created</string>
     <string name="something_went_wrong">Something went wrong!</string>
     <string name="friend_request_sent">Friend request was sent!</string>
+    <string name="empty_field">Empty field! 😠</string>
     <string name="connect_error">Connection to the server was lost</string>
     <string name="user_not_found">User not found</string>
     <string name="pfp_updated">Profile picture was updated!</string>
@@ -85,6 +87,8 @@
     <string name="no_relation">No relation</string>
     <string name="not_yet_implemented">Not yet implemented</string>
     <string name="are_you_sure_logout">Are you sure you want to log out?</string>
+    <string name="are_you_sure_delete_conversation">Are you sure you want to delete this conversation?</string>
+    <string name="are_you_sure_delete_conversation_format">It will also be deleted for %s.</string>
     <string name="are_you_sure_block_format">Are you sure you want to block %s?</string>
     <string name="are_you_sure_unfriend_format">Are you sure you want to unfriend %s?</string>
     <string name="new_message_format">New message from %s</string>
@@ -98,6 +102,7 @@
     <string name="no_location">User location could not be found</string>
     <string name="messages">Messages</string>
     <string name="you_cannot_message">You cannot message this user :(</string>
+    <string name="message_too_long">Message is too long!</string>
     <string name="error_too_short">Password must be at least 8 symbols.</string>
     <string name="error_no_capital">Password must contain at least one capital letter.</string>
     <string name="error_no_digits">Password must contain at least one digit.</string>
@@ -105,8 +110,8 @@
     <string name="error_password_too_long">Password must not exceed 19 symbols.</string>
     <string name="error_user_already_exists">Username is already taken</string>
     <string name="error_incorrect_login_or_pass">Incorrect login or password</string>
-    <string name="change_username">Change username</string>
-    <string name="changing_username">Changing username</string>
+    <string name="change_username">Change Username</string>
+    <string name="changing_username">Changing Username</string>
     <string name="enter_new_username">Enter New Username</string>
     <string name="username_changed">Username was successfully changed!</string>
     <string name="username_taken">Username is already taken :(</string>

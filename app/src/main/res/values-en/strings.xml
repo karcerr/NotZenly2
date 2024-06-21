@@ -82,6 +82,8 @@
     <string name="no_location">User location could not be found</string>
     <string name="are_you_sure_logout">Are you sure you want to log out?</string>
     <string name="are_you_sure_unfriend_format">Are you sure you want to unfriend %s?</string>
+    <string name="are_you_sure_delete_conversation">Are you sure you want to delete this conversation?</string>
+    <string name="are_you_sure_delete_conversation_format">It will also be deleted for %s.</string>
     <string name="are_you_sure_block_format">Are you sure you want to block %s?</string>
     <string name="messages">Messages</string>
     <string name="you_cannot_message">You cannot message this user :(</string>
@@ -93,8 +95,8 @@
     <string name="error_user_already_exists">Username is already taken</string>
     <string name="error_incorrect_login_or_pass">Incorrect login or password</string>
     <string name="thats_you">Thats you!</string>
-    <string name="change_username">Change username</string>
-    <string name="changing_username">Changing username</string>
+    <string name="change_username">Change Username</string>
+    <string name="changing_username">Changing Username</string>
     <string name="enter_new_username">Enter New Username</string>
     <string name="username_changed">Username was successfully changed!</string>
     <string name="username_taken">Username is already taken :(</string>
@@ -104,4 +106,7 @@
     <string name="mb_format">%d MB</string>
     <string name="calculating_size">Calculating size...</string>
     <string name="cached_images">Cached Images</string>
+    <string name="clear_cache">Clear Cache</string>
+    <string name="empty_field">Empty field! 😠</string>
+    <string name="message_too_long">Message is too long!</string>
 </resources>

@@ -101,7 +101,7 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
             recyclerView.smoothScrollToPosition(recyclerView.adapter!!.itemCount - 1)
         }
         CoroutineScope(Dispatchers.Main).launch {
-            api.getMessagesFromWS(conversationId, -1)
+            api.getMessagesFromWS(conversationId)
             val conversation =  api.getConversationData(conversationId)
 
             if (conversation != null) {
@@ -132,31 +132,36 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
         }
         sendMessageButton.setOnClickListener {
             val text = editText.text.toString()
-            if (text.isNotBlank()) {
-                CoroutineScope(Dispatchers.Main).launch {
-                    val answer = api.sendMessageToWS(conversationId, text)
-                    if (answer != null && answer.getString("status") == "success") {
-                        val message = answer.getString("message")
-                        if (message == "success") {
-                            api.getNewMessagesFromWS(conversationId, lastMessageId)
-                            val updatedMessages = api.getConversationData(conversationId)?.messages.orEmpty()
-                            val updatedMessagesDeepCopy = updatedMessages.map { it.copy() }.sortedBy { it.timestamp }
-                            (recyclerView.adapter as? MessageAdapter)?.updateData(updatedMessagesDeepCopy.toMutableList())
-                            if ((recyclerView.adapter as? MessageAdapter)?.bottomSticking == false) {
-                                if (recyclerView.adapter!!.itemCount > 0) {
-                                    recyclerView.smoothScrollToPosition(recyclerView.adapter!!.itemCount - 1)
-                                }
+            if (text.isEmpty())
+                return@setOnClickListener
+            if (text.length > 240) {
+                Toast.makeText(mapActivity, getString(R.string.message_too_long), Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+            CoroutineScope(Dispatchers.Main).launch {
+                val answer = api.sendMessageToWS(conversationId, text)
+                if (answer != null && answer.getString("status") == "success") {
+                    val message = answer.getString("message")
+                    if (message == "success") {
+                        //api.getNewMessagesFromWS(conversationId, lastMessageId)
+                        api.getMessagesFromWS(conversationId)
+                        val updatedMessages = api.getConversationData(conversationId)?.messages.orEmpty()
+                        val updatedMessagesDeepCopy = updatedMessages.map { it.copy() }.sortedBy { it.timestamp }
+                        (recyclerView.adapter as? MessageAdapter)?.updateData(updatedMessagesDeepCopy.toMutableList())
+                        if ((recyclerView.adapter as? MessageAdapter)?.bottomSticking == false) {
+                            if (recyclerView.adapter!!.itemCount > 0) {
+                                recyclerView.smoothScrollToPosition(recyclerView.adapter!!.itemCount - 1)
                             }
-                            editText.text.clear()
-                        } else {
-                            Toast.makeText(mapActivity, getString(R.string.you_cannot_message), Toast.LENGTH_LONG).show()
                         }
+                        editText.text.clear()
                     } else {
-                        val errorText = answer?.getString("message")
-                        Toast.makeText(mapActivity, "Error: $errorText", Toast.LENGTH_LONG).show()
+                        Toast.makeText(mapActivity, getString(R.string.you_cannot_message), Toast.LENGTH_LONG).show()
                     }
-                    api.getConversationsFromWS()
+                } else {
+                    val errorText = answer?.getString("message")
+                    Toast.makeText(mapActivity, "Error: $errorText", Toast.LENGTH_LONG).show()
                 }
+                api.getConversationsFromWS()
             }
         }
         attachButton.setOnClickListener {
@@ -169,7 +174,7 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
         messageUpdateRunnable = Runnable {
             CoroutineScope(Dispatchers.Main).launch {
                 val conversationId = requireArguments().getInt(ARG_CONVERSATION_ID)
-                api.getNewMessagesFromWS(conversationId, lastMessageId)
+                api.getMessagesFromWS(conversationId)
                 val updatedMessages = api.getConversationData(conversationId)?.messages
                 val updatedMessagesDeepCopy = updatedMessages?.map {it.copy()}
                 if (updatedMessagesDeepCopy != null) {
@@ -350,6 +355,7 @@ class MessageAdapter(
             if (itemViewType == OUTGOING_MESSAGE_TYPE) {
                 itemView.findViewById<TextView>(R.id.outgoing_message_text_content).text = message.text
                 itemView.findViewById<TextView>(R.id.outgoing_message_timestamp).text = timestampText
+                itemView.findViewById<ImageView>(R.id.check_mark).setImageResource(if (message.read) R.drawable.double_check_mark_dark else R.drawable.single_check_mark_dark)
             } else {
                 itemView.findViewById<TextView>(R.id.incoming_message_text_content).text = message.text
                 itemView.findViewById<TextView>(R.id.incoming_message_timestamp).text = timestampText

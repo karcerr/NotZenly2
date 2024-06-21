@@ -64,6 +64,9 @@ class ProfileFragment : Fragment() {
         val changeNicknameButton2 = view.findViewById<Button>(R.id.change_nickname_button2)
         val requestStatusText = view.findViewById<TextView>(R.id.status_text)
         val nicknameChangeStatusText = view.findViewById<TextView>(R.id.status_text_2)
+
+        requestStatusText.setTextColor(Color.RED)
+        nicknameChangeStatusText.setTextColor(Color.RED)
         nestedScrollView = view.findViewById(R.id.profile_nested_scroll_view)
         setupSwipeGesture(
             this,
@@ -120,40 +123,52 @@ class ProfileFragment : Fragment() {
             addFriendWindow.visibility = View.GONE
             changeNicknameWindow.visibility = View.GONE
             darkOverlay.visibility = View.GONE
-            requestStatusText.visibility = View.GONE
-            nicknameChangeStatusText.visibility = View.GONE
+            requestStatusText.visibility = View.INVISIBLE
+            nicknameChangeStatusText.visibility = View.INVISIBLE
             hideKeyboard()
         }
         sendRequestButton.setOnClickListener{
             val nickname = requestInput.text.toString()
+            if (nickname.isEmpty()) {
+                requestStatusText.visibility = View.INVISIBLE
+                requestStatusText.text = getString(R.string.empty_field)
+                return@setOnClickListener
+            }
             coroutineScope.launch {
                 val answer = api.sendFriendRequestToWS(nickname)
                 if (answer != null) {
                     val message = answer.getString("message")
                     if (answer.getString("status") == "success") {
-                        requestStatusText.visibility = View.GONE
+                        requestStatusText.visibility = View.INVISIBLE
+                        requestStatusText.text = ""
                         requestInput.setText("")
                         hideKeyboard()
                         darkOverlay.visibility = View.GONE
                         addFriendWindow.visibility = View.GONE
-                        Toast.makeText(mapActivity, getString(R.string.friend_request_sent), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(mapActivity, getString(R.string.friend_request_sent), Toast.LENGTH_SHORT)
+                            .show()
                         api.getFriendRequestsFromWS()
                         val updatedRequests = api.getFriendRequestDataList()
                         friendRequestAdapter.updateData(updatedRequests)
                     } else {
-                        requestStatusText.setTextColor(Color.RED)
+                        requestStatusText.visibility = View.VISIBLE
                         if (message == "no user") {
                             requestStatusText.text = getString(R.string.user_not_found)
                         } else {
                             requestStatusText.text = message
                         }
                     }
-                    requestStatusText.visibility = View.VISIBLE
+
                 }
             }
         }
         changeNicknameButton2.setOnClickListener{
             val nickname = changeNicknameInput.text.toString()
+            if (nickname.isEmpty()) {
+                requestStatusText.visibility = View.INVISIBLE
+                requestStatusText.text = getString(R.string.empty_field)
+                return@setOnClickListener
+            }
             coroutineScope.launch {
                 val answer = api.changeNickname(nickname)
                 if (answer != null) {
@@ -161,21 +176,21 @@ class ProfileFragment : Fragment() {
                     if (answer.getString("status") == "success") {
                         api.getMyDataFromWS()
                         nicknameText.text = api.myNickname
-                        nicknameChangeStatusText.visibility = View.GONE
+                        nicknameChangeStatusText.visibility = View.INVISIBLE
+                        nicknameChangeStatusText.text = ""
                         changeNicknameInput.setText("")
                         hideKeyboard()
                         darkOverlay.visibility = View.GONE
                         changeNicknameWindow.visibility = View.GONE
                         Toast.makeText(mapActivity, getString(R.string.username_changed), Toast.LENGTH_SHORT).show()
                     } else {
-                        nicknameChangeStatusText.setTextColor(Color.RED)
+                        nicknameChangeStatusText.visibility = View.VISIBLE
                         if (message == "username already exists") {
                             nicknameChangeStatusText.text = getString(R.string.username_taken)
                         } else {
                             nicknameChangeStatusText.text = message
                         }
                     }
-                    nicknameChangeStatusText.visibility = View.VISIBLE
                 }
             }
         }

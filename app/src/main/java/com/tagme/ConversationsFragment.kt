@@ -1,5 +1,7 @@
 package com.tagme
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
@@ -17,6 +19,7 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.CoroutineScope
@@ -37,6 +40,7 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
     private var conversationUpdateRunnable: Runnable? = null
     private lateinit var recyclerView: RecyclerView
     private lateinit var darkOverlay: View
+    private lateinit var areYouSureLayout: LinearLayout
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreateView(
@@ -51,6 +55,7 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
         recyclerView = view.findViewById(R.id.conversations_recycler_view)
         nestedScrollView = view.findViewById(R.id.nested_scroll_view)
         darkOverlay = view.findViewById(R.id.dark_overlay)
+        areYouSureLayout = view.findViewById(R.id.are_you_sure_layout)
         setupSwipeGesture(
             this,
             nestedScrollView,
@@ -115,30 +120,39 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
     private fun showContextualMenu(position: Int) {
         val conversation = conversationsAdapter.conversationList[position]
 
-        // Inflate the menu view which includes conversation_item layout
         val menuView = LayoutInflater.from(context).inflate(R.layout.conversation_contextual_menu, view as ViewGroup, false)
 
-        // Find views within the inflated layout
+        val relativeLayout = view.findViewById<RelativeLayout>(R.id.relative_layout)
         val nameTextView = menuView.findViewById<TextView>(R.id.conversation_name)
         val lastMessageText = menuView.findViewById<TextView>(R.id.last_message_text)
         val lastMessageTimestamp = menuView.findViewById<TextView>(R.id.last_message_timestamp)
+        val lastMessageCheckMark = menuView.findViewById<ImageView>(R.id.check_mark)
         val readIcon = menuView.findViewById<ImageView>(R.id.read_icon)
         val pinIcon = menuView.findViewById<ImageView>(R.id.pin_icon)
         val pictureImageView = menuView.findViewById<ImageView>(R.id.conversation_picture)
 
         // Set data from the selected conversation item to the views
         nameTextView.text = conversation.userData.nickname
-
-        if (conversation.lastMessage != null) {
-            lastMessageText.text = conversation.lastMessage?.text ?: ""
-            val timestampDateTime = LocalDateTime.parse(conversation.lastMessage!!.timestamp.toString(), dateFormatter)
+        val lastMessage = conversation.lastMessage
+        if (lastMessage != null) {
+            val lastMessageString = lastMessage.text
+            if (lastMessageString != null && lastMessageString.length > 25) {
+                lastMessageText.text = mapActivity.getString(R.string.long_message_format, lastMessageString.substring(0, 25))
+            } else {
+                lastMessageText.text = lastMessageString
+            }
+            val timestampDateTime = LocalDateTime.parse(lastMessage.timestamp.toString(), dateFormatter)
             val timestampText = timestampDateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
             lastMessageTimestamp.visibility = View.VISIBLE
             lastMessageTimestamp.text = timestampText
-            if ((!conversation.lastMessage!!.read && conversation.lastMessage!!.authorId != api.myUserId) || (conversation.markedUnread)){
+            if ((!lastMessage.read && lastMessage.authorId != api.myUserId) || (conversation.markedUnread)){
                 readIcon.visibility = View.VISIBLE
             } else {
                 readIcon.visibility = View.INVISIBLE
+            }
+            if (lastMessage.authorId == api.myUserId) {
+                lastMessageCheckMark.visibility = View.VISIBLE
+                lastMessageCheckMark.setImageResource(if(lastMessage.read) R.drawable.double_check_mark else R.drawable.single_check_mark)
             }
         } else {
             readIcon.visibility = if (conversation.markedUnread) View.VISIBLE else View.GONE
@@ -177,15 +191,35 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
         pinButton.setOnClickListener {
             api.togglePinnedStatus(conversation.conversationID)
             updateConversationsLocal()
-            popupWindow.contentView.animate().alpha(0f).setDuration(400).withEndAction {
+            popupWindow.contentView.animate().alpha(0f).setDuration(300).withStartAction {
                 popupWindow.dismiss()
             }.start()
         }
 
         menuView.findViewById<ImageView>(R.id.action_delete).setOnClickListener {
-            popupWindow.contentView.animate().alpha(0f).setDuration(400).withEndAction {
-                popupWindow.dismiss()
-            }.start()
+            view.findViewById<TextView>(R.id.are_you_sure_text_format).text = mapActivity.getString(R.string.are_you_sure_delete_conversation_format, conversation.userData.nickname)
+            val closeListener = View.OnClickListener {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    relativeLayout.setRenderEffect(null)
+                }
+                darkOverlay.alpha = 0f
+                darkOverlay.isClickable = false
+                darkOverlay.isFocusable = false
+                darkOverlay.setOnClickListener(null)
+                darkOverlay.visibility = View.GONE
+                areYouSureLayout.visibility = View.GONE
+            }
+            darkOverlay.setOnClickListener(closeListener)
+            view.findViewById<Button>(R.id.no_button).setOnClickListener(closeListener)
+            view.findViewById<Button>(R.id.yes_button).setOnClickListener{
+                mapActivity.lifecycleScope.launch {
+                    api.deleteConversationWS(conversation.conversationID)
+                    closeListener.onClick(it)
+                }
+            }
+            areYouSureLayout.visibility = View.VISIBLE
+            popupWindow.setOnDismissListener(null)
+            popupWindow.dismiss()
         }
         val location = IntArray(2)
         popupWindow.contentView.alpha = 0f
@@ -193,12 +227,12 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
         val x = location[0]
         val y = location[1]
         popupWindow.showAtLocation(menuView, Gravity.NO_GRAVITY, x, y)
-        popupWindow.contentView.animate().alpha(1f).setDuration(400).start()
+        popupWindow.contentView.animate().alpha(1f).setDuration(300).start()
 
         // Set dismiss listener to handle cleanup
         popupWindow.setOnDismissListener {
             ValueAnimator.ofFloat(1f, 0f).apply {
-                duration = 400
+                duration = 300
                 addUpdateListener { animation ->
                     val progress = animation.animatedValue as Float
                     darkOverlay.alpha = progress
@@ -207,15 +241,21 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
                         val blurRadius = progress * 10f
                         val blurEffect = if (blurRadius == 0f) null
                         else RenderEffect.createBlurEffect(blurRadius, blurRadius, Shader.TileMode.CLAMP)
-                        view.setRenderEffect(blurEffect)
+                        relativeLayout.setRenderEffect(blurEffect)
                     }
                 }
+                addListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        darkOverlay.visibility = View.GONE
+                    }
+                })
                 start()
             }
         }
 
         ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 400
+            duration = 300
+            darkOverlay.visibility = View.VISIBLE
             addUpdateListener { animation ->
                 val progress = animation.animatedValue as Float
                 darkOverlay.alpha = progress
@@ -223,7 +263,7 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     val blurRadius = if (progress == 0f) 0.1f else progress * 10f
                     val blurEffect = RenderEffect.createBlurEffect(blurRadius, blurRadius, Shader.TileMode.CLAMP)
-                    view.setRenderEffect(blurEffect)
+                    relativeLayout.setRenderEffect(blurEffect)
                 }
             }
             start()
@@ -240,7 +280,7 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
 
         fun animateAndDismiss() {
             updateConversationsLocal()
-            popupWindow.contentView.animate().alpha(0f).setDuration(400).withEndAction {
+            popupWindow.contentView.animate().alpha(0f).setDuration(300).withStartAction {
                 popupWindow.dismiss()
             }.start()
         }
@@ -262,7 +302,6 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
             }
         }
     }
-
 }
 
 class ConversationsAdapter(
@@ -280,6 +319,7 @@ class ConversationsAdapter(
         val nameTextView: TextView = itemView.findViewById(R.id.conversation_name)
         val lastMessageText: TextView = itemView.findViewById(R.id.last_message_text)
         val lastMessageTimestamp: TextView = itemView.findViewById(R.id.last_message_timestamp)
+        val lastMessageCheckMark: ImageView = itemView.findViewById(R.id.check_mark)
         val readIcon: ImageView = itemView.findViewById(R.id.read_icon)
         val pinIcon: ImageView = itemView.findViewById(R.id.pin_icon)
         val pictureImageView: ImageView = itemView.findViewById(R.id.conversation_picture)
@@ -343,13 +383,22 @@ class ConversationsAdapter(
         if (lastMessage != null) {
             val timestampDateTime = LocalDateTime.parse(lastMessage.timestamp.toString(), dateFormatter)
             val timestampText = timestampDateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
-            holder.lastMessageText.text = lastMessage.text
+            val lastMessageText = lastMessage.text
+            if (lastMessageText != null && lastMessageText.length > 25) {
+                holder.lastMessageText.text = context.getString(R.string.long_message_format, lastMessageText.substring(0, 25))
+            } else {
+                holder.lastMessageText.text = lastMessageText
+            }
             holder.lastMessageTimestamp.visibility = View.VISIBLE
             holder.lastMessageTimestamp.text = timestampText
             if ((!lastMessage.read && lastMessage.authorId != api.myUserId) || (conversation.markedUnread)){
                 holder.readIcon.visibility = View.VISIBLE
             } else {
                 holder.readIcon.visibility = View.INVISIBLE
+            }
+            if (lastMessage.authorId == api.myUserId) {
+                holder.lastMessageCheckMark.visibility = View.VISIBLE
+                holder.lastMessageCheckMark.setImageResource(if(lastMessage.read) R.drawable.double_check_mark else R.drawable.single_check_mark)
             }
         } else {
             holder.lastMessageText.text = context.getString(R.string.last_message_placeholder)
