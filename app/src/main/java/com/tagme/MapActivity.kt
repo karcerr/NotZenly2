@@ -116,6 +116,9 @@ class MapActivity: AppCompatActivity() {
 
     lateinit var api: API
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private var selfLocationUpdateRunnable: Runnable? = null
+    private var selfLocationUpdateHandler: Handler? = null
+
     //these are for storing friends and drawing overlays:
     lateinit var friendOverlays: MutableMap<Int, CustomIconOverlay>
     lateinit var geoStoryOverlays: MutableMap<Int, CustomIconOverlay>
@@ -263,6 +266,26 @@ class MapActivity: AppCompatActivity() {
                 }
             }
         }
+        selfLocationUpdateRunnable = Runnable {
+            CoroutineScope(Dispatchers.Main).launch {
+                val location = getCurrentLocation()
+
+                location?.let {
+                    myLatitude = it.latitude.toString()
+                    myLongitude = it.longitude.toString()
+                    val accuracy = it.accuracy.toString()
+                    val speed = it.speed.toString()
+                    try {
+                        api.sendLocationToWS(myLatitude, myLongitude, accuracy, speed)
+                    } catch (e: Exception) {
+                        Log.d("Tagme_exception_location_update", e.toString())
+                        e.printStackTrace()
+                    }
+                }
+                selfLocationUpdateHandler?.postDelayed(selfLocationUpdateRunnable!!, 2000L)
+            }
+        }
+        startPassiveUpdates()
         onBackPressedDispatcher.addCallback(this) {
             if (isSearchLayoutVisible) {
                 hideSearchLayout()
@@ -585,35 +608,26 @@ class MapActivity: AppCompatActivity() {
      override fun onResume() {
          super.onResume()
          map.onResume() //needed for compass, my location overlays, v6.0.0 and up
-         startSendingLocationUpdates()
+        startActiveUpdates()
      }
 
      override fun onPause() {
          super.onPause()
          map.onPause()  //needed for compass, my location overlays, v6.0.0 and up
-         stopSendingLocationUpdates()
+         stopActiveUpdates()
      }
-    private fun startSendingLocationUpdates() {
+    private fun startActiveUpdates() {
         coroutineScope.launch {
             while (isActive) {
-                val location = getCurrentLocation()
-
-                location?.let {
-                    myLatitude = it.latitude.toString()
-                    myLongitude = it.longitude.toString()
-                    val accuracy = it.accuracy.toString()
-                    val speed = it.speed.toString()
-                    try {
-                        api.sendLocationToWS(myLatitude, myLongitude, accuracy, speed)
-                        api.getLocationsFromWS()
-                        api.getGeoStoriesWS()
-                        api.getMyDataFromWS()
-                        profileFragment.myTagCounter.text = getString(R.string.tag_counter_format, api.myTags)
-                    } catch (e: Exception) {
-                        api.requestMap.clear()
-                        Log.d("Tagme_exception", e.toString())
-                        e.printStackTrace()
-                    }
+                try {
+                    api.getLocationsFromWS()
+                    api.getGeoStoriesWS()
+                    api.getMyDataFromWS()
+                    profileFragment.myTagCounter.text = getString(R.string.tag_counter_format, api.myTags)
+                } catch (e: Exception) {
+                    api.requestMap.clear()
+                    Log.d("Tagme_exception", e.toString())
+                    e.printStackTrace()
                 }
                 delay(3000)
                 val friendsData = api.getFriendsData()
@@ -623,8 +637,14 @@ class MapActivity: AppCompatActivity() {
             }
         }
     }
+    private fun startPassiveUpdates(){
+        selfLocationUpdateHandler = Handler(Looper.getMainLooper())
+        selfLocationUpdateRunnable?.let { selfLocationUpdateHandler?.postDelayed(it,
+            2000L
+        ) }
+    }
 
-    private fun stopSendingLocationUpdates() {
+    private fun stopActiveUpdates() {
         coroutineScope.coroutineContext.cancelChildren()
     }
 
@@ -752,8 +772,9 @@ class MapActivity: AppCompatActivity() {
         profileFragment.friendRequestUpdateHandler?.removeCallbacksAndMessages(null)
         profileFragment.friendRequestUpdateHandler = null
         conversationsFragment.conversationUpdateHandler?.removeCallbacksAndMessages(null)
-        profileFragment.friendRequestUpdateHandler = null
-
+        conversationsFragment.conversationUpdateHandler = null
+        selfLocationUpdateHandler?.removeCallbacksAndMessages(null)
+        selfLocationUpdateHandler = null
         coroutineScope.cancel()
     }
 }
