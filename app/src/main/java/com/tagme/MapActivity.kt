@@ -124,6 +124,8 @@ class MapActivity: AppCompatActivity() {
     lateinit var geoStoryOverlays: MutableMap<Int, CustomIconOverlay>
     lateinit var fragmentManager : FragmentManager
     private val handler = Handler(Looper.getMainLooper())
+    private var lastBackPressedTime: Long = 0
+    private val exitHandler = Handler(Looper.getMainLooper())
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         api = API.getInstance(applicationContext)
@@ -293,8 +295,14 @@ class MapActivity: AppCompatActivity() {
                 if (supportFragmentManager.backStackEntryCount > 0) {
                     supportFragmentManager.popBackStack()
                 } else {
-                    finish() //todo: Add the "are you sure" thingy
-                    // Also this finishes the activity, resulting in messages/friend requests updating end :(
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastBackPressedTime < 2000) {
+                        moveTaskToBack(true)
+                    } else {
+                        Toast.makeText(this@MapActivity, "Press back again to exit", Toast.LENGTH_SHORT).show()
+                        lastBackPressedTime = currentTime
+                        exitHandler.postDelayed({ lastBackPressedTime = 0 }, 2000)
+                    }
                 }
             }
         }
