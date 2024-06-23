@@ -109,4 +109,5 @@
     <string name="clear_cache">Очистить Кэш</string>
     <string name="empty_field">Пустое поле! 😠</string>
     <string name="message_too_long">Сообщение слишком длинное!</string>
+    <string name="press_back_again">Нажмите «Назад» еще раз, чтобы выйти</string>
 </resources>

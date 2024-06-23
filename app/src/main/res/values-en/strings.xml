@@ -109,4 +109,5 @@
     <string name="clear_cache">Clear Cache</string>
     <string name="empty_field">Empty field! 😠</string>
     <string name="message_too_long">Message is too long!</string>
+    <string name="press_back_again">Press \"Back\" again to exit</string>
 </resources>

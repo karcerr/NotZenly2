@@ -296,12 +296,12 @@ class MapActivity: AppCompatActivity() {
                     supportFragmentManager.popBackStack()
                 } else {
                     val currentTime = System.currentTimeMillis()
-                    if (currentTime - lastBackPressedTime < 2000) {
+                    if (currentTime - lastBackPressedTime < 3000) {
                         moveTaskToBack(true)
                     } else {
-                        Toast.makeText(this@MapActivity, "Press back again to exit", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MapActivity, getString(R.string.press_back_again), Toast.LENGTH_SHORT).show()
                         lastBackPressedTime = currentTime
-                        exitHandler.postDelayed({ lastBackPressedTime = 0 }, 2000)
+                        exitHandler.postDelayed({ lastBackPressedTime = 0 }, 3000)
                     }
                 }
             }
