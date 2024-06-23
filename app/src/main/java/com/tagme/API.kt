@@ -30,7 +30,7 @@ class API private constructor(context: Context){
     private var webSocket: WebSocket? = null
     private var lastInsertedPictureDataString = ""
     private val requestIdCounter = AtomicInteger(0)
-    private val requestMap = Collections.synchronizedMap(mutableMapOf<Int, Pair<CompletableFuture<JSONObject?>, String>>())
+    val requestMap = Collections.synchronizedMap(mutableMapOf<Int, Pair<CompletableFuture<JSONObject?>, String>>())
     private val pictureMutex = Mutex()
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
     private val notificationManager = NotificationManager(context)
@@ -430,7 +430,7 @@ class API private constructor(context: Context){
         }
         return sendRequestToWS(requestData)
     }
-    suspend fun getGeoStories(): JSONObject? {
+    suspend fun getGeoStoriesWS(): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "get geo stories")
             put("token", myToken)

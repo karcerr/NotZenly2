@@ -1,7 +1,6 @@
 package com.tagme
 
 import android.animation.ValueAnimator
-import android.content.Context
 import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
@@ -22,7 +21,7 @@ import kotlin.math.pow
 import kotlin.math.sqrt
 
 class CustomIconOverlay(
-    private val context: Context,
+    private val context: MapActivity,
     private var location: GeoPoint,
     private var speed: Float?,
     private var drawable: Drawable,
@@ -34,7 +33,7 @@ class CustomIconOverlay(
 ) : Overlay() {
     private var intersectedOverlays: MutableSet<Pair<Int, Int>> = mutableSetOf()
     private var closestVisibleOverlay : CustomIconOverlay? = null
-    private var size = 100 //0 for invisible, 100 for normal, 120 for focused on
+    private var size = 100 //0 for invisible, 100 for normal, 150 for focused on
     private var targetSize = 100
     private var overlayScale = calculateScaleFactor(drawable)
     private var currentAnimator: ValueAnimator? = null
@@ -50,7 +49,7 @@ class CustomIconOverlay(
             if (_visible != value) {
                 _visible = value
                 if (_visible) {
-                    animateSizeChange(if ((context as MapActivity).centeredOverlay == this) 150 else 100)
+                    animateSizeChange(if (context.centeredOverlay == this) 150 else 100)
                 } else {
                     animateSizeChange(0)
                 }
@@ -128,7 +127,11 @@ class CustomIconOverlay(
             var closestVisibleOverlayTemp: CustomIconOverlay? = null
 
             mapView.overlays?.forEach { overlay ->
-                if (overlay is CustomIconOverlay && overlay.visible && doOverlaysIntersect(this, overlay, currentPoint)) {
+                if (overlay is CustomIconOverlay
+                    && overlay.visible
+                    && doOverlaysIntersect(this, overlay, currentPoint)
+                    && context.centeredOverlay != this
+                    ) {
                     val overlayPoint = projection.toPixels(overlay.location, null)
                     val distance = sqrt(
                         (currentPoint.x - overlayPoint.x).toDouble().pow(2.0) +
@@ -349,8 +352,8 @@ class CustomIconOverlay(
                 (currentPoint.x - otherPoint.x).toDouble().pow(2.0) +
                         (currentPoint.y - otherPoint.y).toDouble().pow(2.0)
             )
-            val hitboxRadius = dpToPx(HITBOX_RADIUS.toFloat()) / 2.0
-            return distance <= hitboxRadius * 2
+            val hitboxRadius = dpToPx(HITBOX_RADIUS.toFloat())
+            return distance <= hitboxRadius
         }
         return false
     }
