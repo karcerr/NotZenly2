@@ -110,4 +110,7 @@
     <string name="empty_field">Пустое поле! 😠</string>
     <string name="message_too_long">Сообщение слишком длинное!</string>
     <string name="press_back_again">Нажмите «Назад» еще раз, чтобы выйти</string>
+    <string name="loading_server_connect">Подключение к серверу…</string>
+    <string name="loading_server_reconnect">Попытка переподключиться к серверу…</string>
+    <string name="loading_map">Загрузка ресурсов карты…</string>
 </resources>

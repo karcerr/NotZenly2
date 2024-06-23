@@ -1,5 +1,6 @@
 package com.tagme
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -149,6 +150,11 @@ class API private constructor(context: Context){
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                 Log.d("Tagme_WS", "onFailure trigger: $response")
                 future.complete(false)
+                if (context is MapActivity) {
+                    val intent = Intent(context, LogInActivity::class.java)
+                    context.startActivity(intent)
+                    context.finish()
+                }
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
@@ -1086,6 +1092,7 @@ class API private constructor(context: Context){
         return requestIdCounter.getAndIncrement()
     }
     fun closeWebSocket() {
+        Log.d("Tagme_WS", "Closing WebSocket")
         webSocket?.close(1000, "Closing")
         webSocket = null
     }

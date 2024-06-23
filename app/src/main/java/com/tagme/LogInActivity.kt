@@ -22,6 +22,7 @@ import androidx.core.content.ContextCompat
 import com.vk.id.onetap.xml.OneTap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 
@@ -43,6 +44,7 @@ class LogInActivity : AppCompatActivity() {
     private lateinit var loginLayout : LinearLayout
     private lateinit var loadingLayout : LinearLayout
     private lateinit var enableGpsLayout : LinearLayout
+    private lateinit var loadingState : TextView
     companion object{
         private const val REQUEST_PERMISSIONS_REQUEST_CODE = 1
     }
@@ -58,34 +60,13 @@ class LogInActivity : AppCompatActivity() {
         registerBtn = findViewById(R.id.register_btn)
         vkidButton = findViewById(R.id.vkidButton)
         errorText = findViewById(R.id.error_message)
+        loadingState = findViewById(R.id.current_loading_state)
 
         val api = API.getInstance(applicationContext)
         CoroutineScope(Dispatchers.Main).launch {
-            val future = api.connectToServer(applicationContext)
-            val connected = future.await()
-            if (connected) {
-                val myToken = api.myToken
-                if (myToken != null) {
-                    val answer = api.loginToken()
-                    if (answer != null) {
-                        if (answer.getString("status") == "success") {
-                            api.getMyDataFromWS()
-                            hideLoginShowGpsOverlay()
-                            isAuthorized = true
-                        }
-                        else {
-                            loadingLayout.visibility = View.GONE
-                            loginLayout.visibility = View.VISIBLE
-                        }
-                    }
-                } else {
-                    loadingLayout.visibility = View.GONE
-                    loginLayout.visibility = View.VISIBLE
-                }
-            } else {
-                Log.d("Tagme_", "Failed to connect to the server")
-            }
+            connectToServer(api)
         }
+
         vkidButton.setCallbacks(
             onAuth = { accessToken ->
                 val token = accessToken.token
@@ -145,7 +126,7 @@ class LogInActivity : AppCompatActivity() {
             val username = usernameInput.text.toString()
             val password = passwordInput.text.toString()
             if (username == "" || password == "") {
-                errorText.text = "Введите логин и пароль"
+                errorText.text = getString(R.string.empty_login_password)
                 errorText.visibility = View.VISIBLE
                 if (password == "") {
                     passwordInput.setHintTextColor(Color.RED)
@@ -220,6 +201,7 @@ class LogInActivity : AppCompatActivity() {
         }
     }
     private fun hideLoginShowGpsOverlay(){
+        loadingState.text = getString(R.string.loading_map)
         requestPermissionsIfNecessary(permissions)
 
         if (!isLocationEnabled() or !hasPermission) {
@@ -255,6 +237,39 @@ class LogInActivity : AppCompatActivity() {
         super.onResume()
         if (isAuthorized) {
             checkForPermAndLocation()
+        }
+    }
+    private suspend fun connectToServer(api: API) {
+        while (true) {
+            loadingState.text = getString(R.string.loading_server_connect)
+            val future = api.connectToServer(applicationContext)
+            val connected = future.await()
+            if (connected) {
+                val myToken = api.myToken
+                if (myToken != null) {
+                    val answer = api.loginToken()
+                    if (answer != null) {
+                        if (answer.getString("status") == "success") {
+                            api.getMyDataFromWS()
+                            hideLoginShowGpsOverlay()
+                            isAuthorized = true
+                            break
+                        } else {
+                            loadingLayout.visibility = View.GONE
+                            loginLayout.visibility = View.VISIBLE
+                            break
+                        }
+                    }
+                } else {
+                    loadingLayout.visibility = View.GONE
+                    loginLayout.visibility = View.VISIBLE
+                    break
+                }
+            } else {
+                loadingState.text = getString(R.string.loading_server_reconnect)
+                Log.d("Tagme_", "Failed to connect to the server")
+                delay(5000)
+            }
         }
     }
 }

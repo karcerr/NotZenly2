@@ -110,4 +110,7 @@
     <string name="empty_field">Empty field! 😠</string>
     <string name="message_too_long">Message is too long!</string>
     <string name="press_back_again">Press \"Back\" again to exit</string>
+    <string name="loading_server_connect">Connecting to the server…</string>
+    <string name="loading_server_reconnect">Trying to reconnect to server…</string>
+    <string name="loading_map">Loading map resources…</string>
 </resources>

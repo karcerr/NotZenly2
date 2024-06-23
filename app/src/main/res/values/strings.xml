@@ -103,6 +103,9 @@
     <string name="no_location">User location could not be found</string>
     <string name="messages">Messages</string>
     <string name="you_cannot_message">You cannot message this user :(</string>
+    <string name="loading_server_connect">Connecting to the server…</string>
+    <string name="loading_server_reconnect">Trying to reconnect to server…</string>
+    <string name="loading_map">Loading map resources…</string>
     <string name="message_too_long">Message is too long!</string>
     <string name="error_too_short">Password must be at least 8 symbols.</string>
     <string name="error_no_capital">Password must contain at least one capital letter.</string>

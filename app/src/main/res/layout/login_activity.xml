@@ -45,6 +45,18 @@
                 android:indeterminateTintMode="src_atop"
                 android:indeterminateTint="@color/white"
         />
+        <TextView
+                android:id="@+id/current_loading_state"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/loading_server_connect"
+                android:textColor="@color/grey2"
+                android:layout_gravity="center"
+                android:textSize="20sp"
+                android:textAlignment="center"
+                android:textStyle="bold"
+                android:layout_marginTop="10dp"
+        />
     </LinearLayout>
     <LinearLayout android:layout_width="match_parent"
                   android:layout_height="wrap_content"
