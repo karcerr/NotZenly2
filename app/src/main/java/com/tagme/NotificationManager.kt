@@ -13,9 +13,10 @@ import android.app.NotificationManager as SystemNotificationManager
 
 class NotificationManager(private val context: Context) {
     fun showNewMessageNotification(nickname: String, message: String, conversationId: Int) {
-        val intent = Intent(context, LogInActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-          //  putExtra("conversationId", conversationId)
+        val intent = Intent(context, MapActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("started_from_notification", true)
+            putExtra("conversationId", conversationId)
         }
 
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
@@ -41,9 +42,10 @@ class NotificationManager(private val context: Context) {
         notificationManager.notify(conversationId, notificationBuilder.build())
     }
     fun showNewFriendRequestNotification(nickname: String, requestId: Int) {
-        val intent = Intent(context, LogInActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-           // putExtra("requestId", requestId)
+        val intent = Intent(context, MapActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("started_from_notification", true)
+            putExtra("requestId", requestId)
         }
 
         val pendingIntent: PendingIntent = PendingIntent.getActivity(

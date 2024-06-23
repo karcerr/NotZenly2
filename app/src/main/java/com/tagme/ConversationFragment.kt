@@ -119,6 +119,7 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
                     pfp.setImageBitmap(bitmap)
                 }
                 pfp.setOnClickListener {
+                    hideKeyboard()
                     val userProfileFragment = UserProfileFragment.newInstance(conversation.userData.userId)
                     mapActivity.fragmentManager.beginTransaction()
                         .replace(R.id.profile_fragment, userProfileFragment)

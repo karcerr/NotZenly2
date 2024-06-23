@@ -1,6 +1,7 @@
 package com.tagme
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.RenderEffect
 import android.graphics.Shader
@@ -306,18 +307,12 @@ class MapActivity: AppCompatActivity() {
                 }
             }
         }
+        handleIntent(intent)
         centralizeButtonFrame.setOnClickListener{
             customOverlaySelf?.let { centralizeMapAnimated(customOverlaySelf!!, api.myUserId, isCenterTargetUser = true, withZoom = true) }
         }
         profileButtonFrame.setOnClickListener {
-            coroutineScope.launch {
-                api.getFriendRequestsFromWS()
-                api.getFriendsFromWS()
-                val updatedRequests = api.getFriendRequestDataList()
-                val updatedFriends = api.getFriendsData()
-                profileFragment.friendRequestAdapter.updateData(updatedRequests)
-                profileFragment.friendAdapter.updateData(updatedFriends)
-            }
+            updateFriendRequestsAndFriends()
 
             toggleFragmentVisibility(profileFragment)
             profileFragment.nestedScrollView.scrollTo(0, 0)
@@ -431,6 +426,47 @@ class MapActivity: AppCompatActivity() {
     private fun updateFriendsListView(friends: List<API.FriendData>) {
         searchAdapter.updateData(friends)
     }
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent)
+    }
+    private fun handleIntent(intent: Intent){
+        val startedFromNotification = intent.getBooleanExtra("started_from_notification", false)
+        if (startedFromNotification) {
+            val conversationId = intent.getIntExtra("conversationId", -1)
+            if (conversationId != -1) {
+                val conversation = api.getConversationsDataList().find {it.conversationID == conversationId}
+                if (conversation != null) {
+                    val conversationFragment =
+                        ConversationFragment.newInstance(conversation.conversationID, conversation.userData.nickname)
+                    fragmentManager.beginTransaction()
+                        .add(R.id.conversations_fragment, conversationFragment)
+                        .addToBackStack(null)
+                        .commit()
+                }
+            } else {
+                val requestId = intent.getIntExtra("requestId", -1)
+                if (requestId != -1) {
+                    updateFriendRequestsAndFriends()
+
+                    toggleFragmentVisibility(profileFragment)
+                    profileFragment.nestedScrollView.fullScroll(View.FOCUS_DOWN)
+                }
+            }
+        }
+    }
+    private fun updateFriendRequestsAndFriends() {
+        coroutineScope.launch {
+            api.getFriendRequestsFromWS()
+            api.getFriendsFromWS()
+            val updatedRequests = api.getFriendRequestDataList()
+            val updatedFriends = api.getFriendsData()
+            profileFragment.friendRequestAdapter.updateData(updatedRequests)
+            profileFragment.friendAdapter.updateData(updatedFriends)
+        }
+    }
+
 
     /* Пытался сделать зум по свайпу, не вышло
     override fun onTouchEvent(event: MotionEvent): Boolean {

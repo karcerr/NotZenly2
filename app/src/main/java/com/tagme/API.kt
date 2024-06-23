@@ -149,12 +149,12 @@ class API private constructor(context: Context){
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                 Log.d("Tagme_WS", "onFailure trigger: $response")
-                future.complete(false)
                 if (context is MapActivity) {
                     val intent = Intent(context, LogInActivity::class.java)
                     context.startActivity(intent)
                     context.finish()
                 }
+                future.complete(false)
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
