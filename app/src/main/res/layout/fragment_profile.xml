@@ -237,21 +237,25 @@
                     android:textSize="20sp"
                     android:fontFamily="@font/my_font"
             />
-            <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/separator_big"
-                    android:layout_marginVertical="15dp"
-                    android:layout_gravity="center"
-                    android:importantForAccessibility="no"/>
             <LinearLayout
+                    android:id="@+id/friend_requests_header"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
+                    android:orientation="vertical"
                     android:layout_marginHorizontal="15dp"
-                    android:layout_marginBottom="5dp">
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="15dp"
+            >
+                <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/separator_big"
+                        android:layout_gravity="center"
+                        android:importantForAccessibility="no"
+                        android:layout_marginBottom="15dp"
+                />
                 <TextView
-                        android:layout_width="0dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/friend_requests"
                         android:textAppearance="?android:textAppearanceMedium"

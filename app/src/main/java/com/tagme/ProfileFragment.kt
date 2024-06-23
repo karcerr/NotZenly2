@@ -33,6 +33,7 @@ class ProfileFragment : Fragment() {
     private val friendRequestInterval = 2000L
     private lateinit var friendRequestsRecyclerView: RecyclerView
     private lateinit var imageHandler: ImageHandler
+    lateinit var friendRequestsHeader: LinearLayout
     lateinit var nestedScrollView: CustomNestedScrollView
     lateinit var myTagCounter: TextView
 
@@ -51,6 +52,7 @@ class ProfileFragment : Fragment() {
         val addFriendWindow = view.findViewById<View>(R.id.add_friend_window)
         val changeNicknameWindow = view.findViewById<View>(R.id.change_nickname_window)
         val ratingLayout = view.findViewById<LinearLayout>(R.id.rating_layout)
+        friendRequestsHeader = view.findViewById<LinearLayout>(R.id.friend_requests_header)
         val nicknameText = view.findViewById<TextView>(R.id.nickname_text)
         myTagCounter = view.findViewById(R.id.my_tag_counter)
         myProfilePic = view.findViewById(R.id.profile_picture)
@@ -414,11 +416,13 @@ class FriendRequestAdapter(
 
         val hasUIncomingRequests = requestList.any { it.relation == "request_incoming" }
         mapActivity.newRequestIcon.visibility = if (hasUIncomingRequests) View.VISIBLE else { View.INVISIBLE }
+        mapActivity.profileFragment.friendRequestsHeader.visibility = if (requestList.isEmpty()) View.GONE else View.VISIBLE
     }
     private fun removeItem(position: Int) {
         requestList.removeAt(position)
         notifyItemRemoved(position)
         notifyItemRangeChanged(position, requestList.size)
+        mapActivity.profileFragment.friendRequestsHeader.visibility = if (requestList.isEmpty()) View.GONE else View.VISIBLE
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
