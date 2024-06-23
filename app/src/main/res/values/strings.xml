@@ -124,6 +124,6 @@
     <string name="cached_images">Cached Images</string>
     <string name="kb_format">%d KB</string>
     <string name="mb_format">%d MB</string>
-    <string name="calculating_size">Calculating size...</string>
+    <string name="calculating_size">Calculating size…</string>
     <string name="clear_cache">Clear Cache</string>
 </resources>
