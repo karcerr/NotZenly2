@@ -23,8 +23,10 @@
                     android:id="@+id/back_arrow_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/arrow_back"
                     android:background="@null"
+                    android:src="@drawable/arrow_back_down"
+                    android:paddingBottom="10dp"
+                    android:paddingHorizontal="10dp"
                     android:contentDescription="@string/go_back_button"
             />
             <TextView
