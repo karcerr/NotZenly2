@@ -595,7 +595,14 @@ class API private constructor(context: Context){
                     if (existingConversation.lastMessage == null || existingConversation.lastMessage?.messageId != lastMessageId || existingConversation.lastMessage?.read != read) {
                         existingConversation.lastMessage = lastMessageData
                         if  (!read && lastMessageAuthorId != myUserId && messagesNotificationsEnabled) {
-                            notificationManager.showNewMessageNotification(nickname, lastMessageText, conversationId, timestamp)
+                            notificationManager.showNewMessageNotification(
+                                nickname,
+                                lastMessageText,
+                                conversationId,
+                                timestamp,
+                                this,
+                                existingConversation.userData.profilePictureId
+                            )
                         }
                     }
                 } else {
@@ -783,6 +790,8 @@ class API private constructor(context: Context){
     }
 
     suspend fun getPictureData(pictureId: Int): Bitmap? {
+        if (pictureId == 0)
+            return null
         var picture = picsData.find { it.pictureId == pictureId }
         if (picture?.imagePath == null) {
             getPictureFromWS(pictureId)
