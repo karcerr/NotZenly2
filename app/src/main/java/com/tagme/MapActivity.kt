@@ -819,7 +819,6 @@ class MapActivity: AppCompatActivity() {
         conversationsFragment.conversationUpdateHandler = null
         selfLocationUpdateHandler?.removeCallbacksAndMessages(null)
         selfLocationUpdateHandler = null
-        api.closeWebSocket()
         coroutineScope.cancel()
     }
 }
