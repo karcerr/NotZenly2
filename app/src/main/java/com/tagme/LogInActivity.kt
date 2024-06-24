@@ -268,7 +268,7 @@ class LogInActivity : AppCompatActivity() {
             } else {
                 loadingState.text = getString(R.string.loading_server_reconnect)
                 Log.d("Tagme_", "Failed to connect to the server")
-                delay(5000)
+                delay(2000)
             }
         }
     }

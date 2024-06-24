@@ -30,7 +30,8 @@ class API private constructor(context: Context){
     private var webSocket: WebSocket? = null
     private var lastInsertedPictureDataString = ""
     private val requestIdCounter = AtomicInteger(0)
-    val requestMap = Collections.synchronizedMap(mutableMapOf<Int, Pair<CompletableFuture<JSONObject?>, String>>())
+    val requestMap: MutableMap<Int, Pair<CompletableFuture<JSONObject?>, String>> = Collections.synchronizedMap(mutableMapOf<Int, Pair<CompletableFuture<JSONObject?>, String>>())
+    var leaderBoardList: List<LeaderBoardData>? = null
     private val pictureMutex = Mutex()
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
     private val notificationManager = NotificationManager(context)
@@ -70,6 +71,11 @@ class API private constructor(context: Context){
         get() = sharedPreferences.getInt("PfpId", 0)
         set(value) {
             sharedPreferences.edit().putInt("PfpId", value).apply()
+        }
+    var myPlace: Int
+        get() = sharedPreferences.getInt("place", 999)
+        set(value) {
+            sharedPreferences.edit().putInt("place", value).apply()
         }
     var myNickname: String?
         get() = sharedPreferences.getString("NICKNAME", null)
@@ -194,6 +200,9 @@ class API private constructor(context: Context){
                     "get geo stories" -> when (answer.getString("status")) {
                         "success" -> parseGeoStoriesNearby(answer.getString("message"))
                     }
+                    "get leaderboard" -> when (answer.getString("status")) {
+                        "success" -> parseLeaderBoard(answer.getString("message"))
+                    }
                 }
                 val futureAnswer = requestMap[requestId]?.first
                 futureAnswer?.complete(answer)
@@ -268,6 +277,13 @@ class API private constructor(context: Context){
     suspend fun getFriendsFromWS(): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "get friends")
+            put("token", myToken)
+        }
+        return sendRequestToWS(requestData)
+    }
+    suspend fun getLeaderBoardFromWS(): JSONObject? {
+        val requestData = JSONObject().apply {
+            put("action", "get leaderboard")
             put("token", myToken)
         }
         return sendRequestToWS(requestData)
@@ -700,6 +716,28 @@ class API private constructor(context: Context){
         updatedGeoStoriesData.removeIf { geoStory -> !encounteredGeoStoryIds.contains(geoStory.geoStoryId) }
         geoStoriesData = updatedGeoStoriesData
     }
+    private fun parseLeaderBoard(jsonString: String) {
+        val message = JSONObject(jsonString)
+        val result = message.getJSONArray("result")
+        val leaderBoard = mutableListOf<LeaderBoardData>()
+        myPlace = message.getInt("my_place")
+        for (i in 0 until result.length()) {
+            val leaderBoardObject = result.getJSONObject(i)
+            val userId = leaderBoardObject.getInt("id")
+            val nickname = leaderBoardObject.getString("nickname")
+            val picId = leaderBoardObject.optInt("picture_id", 0)
+            val place = leaderBoardObject.getInt("place")
+            val tags = leaderBoardObject.getInt("tags")
+            leaderBoard.add(
+                LeaderBoardData(
+                    UserData(userId, nickname, picId),
+                    place,
+                    tags
+                )
+            )
+        }
+        leaderBoardList = leaderBoard
+    }
 
     private fun addSeparatorIfNeeded(messages: MutableList<MessageData>) {
         if (messages.isEmpty()) return
@@ -788,6 +826,9 @@ class API private constructor(context: Context){
     fun getConversationData(id: Int): ConversationData? {
         return conversationsData.find{it.conversationID == id}
     }
+    fun getLeaderBoardData(): List<LeaderBoardData>? {
+        return leaderBoardList
+    }
 
     suspend fun getPictureData(pictureId: Int): Bitmap? {
         if (pictureId == 0)
@@ -857,6 +898,11 @@ class API private constructor(context: Context){
     data class FriendRequestData(
         val userData: UserData,
         var relation: String
+    )
+    data class LeaderBoardData(
+        val userData: UserData,
+        val place: Int,
+        val tags: Int
     )
     data class ConversationData(
         val conversationID: Int,

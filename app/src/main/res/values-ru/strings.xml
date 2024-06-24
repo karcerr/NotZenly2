@@ -113,4 +113,5 @@
     <string name="loading_server_connect">Подключение к серверу…</string>
     <string name="loading_server_reconnect">Попытка переподключиться к серверу…</string>
     <string name="loading_map">Загрузка ресурсов карты…</string>
+    <string name="rating">Рейтинг</string>
 </resources>

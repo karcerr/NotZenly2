@@ -126,4 +126,5 @@
     <string name="mb_format">%d MB</string>
     <string name="calculating_size">Calculating size…</string>
     <string name="clear_cache">Clear Cache</string>
+    <string name="rating">Rating</string>
 </resources>
