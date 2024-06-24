@@ -52,6 +52,7 @@ import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.IMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+import java.lang.ref.WeakReference
 import java.sql.Timestamp
 import kotlin.coroutines.resume
 
@@ -128,20 +129,22 @@ class MapActivity: AppCompatActivity() {
     private var lastBackPressedTime: Long = 0
     private val exitHandler = Handler(Looper.getMainLooper())
     companion object {
-        private var currentInstance: MapActivity? = null
+        private var currentInstance: WeakReference<MapActivity?> = WeakReference(null)
 
         fun registerInstance(instance: MapActivity) {
-            currentInstance = instance
+            currentInstance = WeakReference(instance)
         }
 
         fun unregisterInstance(instance: MapActivity) {
-            if (currentInstance == instance) {
-                currentInstance = null
+            currentInstance.get()?.let {
+                if (it == instance) {
+                    currentInstance.clear()
+                }
             }
         }
 
         fun finishCurrentInstance() {
-            currentInstance?.let {
+            currentInstance.get()?.let {
                 val intent = Intent(it, LogInActivity::class.java)
                 it.startActivity(intent)
                 it.finish()
