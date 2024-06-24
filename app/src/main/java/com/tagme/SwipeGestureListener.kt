@@ -2,7 +2,6 @@ package com.tagme
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -20,7 +19,6 @@ class SwipeGestureListener(
     private var isScrolling = false
     override fun onDown(e: MotionEvent?): Boolean {
         startY = e?.y ?: 0f
-        Log.d("Tagme_gest", "onDown $startY")
         return false
     }
 
@@ -41,13 +39,11 @@ class SwipeGestureListener(
     }
 
     override fun onSingleTapUp(e: MotionEvent): Boolean {
-        Log.d("Tagme_gest", "onSingleTapUp")
         startY = 0f
         onSwipeEnd()
         return super.onSingleTapUp(e)
     }
     override fun onLongPress(e: MotionEvent) {
-        Log.d("Tagme_gest", "onLongPress")
         startY = 0f
         onSwipeEnd()
         super.onLongPress(e)
@@ -58,13 +54,11 @@ class SwipeGestureListener(
         velocityX: Float,
         velocityY: Float
     ): Boolean {
-        Log.d("Tagme_gest", "onFling")
         isScrolling = false
         onSwipeEnd()
         return false
     }
     fun onUp(e: MotionEvent?) {
-        Log.d("Tagme_gest", "onUp")
         if (isScrolling) {
             isScrolling = false
             onSwipeEnd()

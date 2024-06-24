@@ -7,7 +7,6 @@ import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -224,15 +223,11 @@ class ProfileFragment : Fragment() {
                 .commit()
         }
         ratingLayout.setOnClickListener {
-            coroutineScope.launch {
-                api.getLeaderBoardFromWS()
-                val leaderBoardFragment = LeaderboardFragment.newInstance()
-                mapActivity.fragmentManager.beginTransaction()
-                    .add(R.id.profile_fragment, leaderBoardFragment)
-                    .addToBackStack(null)
-                    .commit()
-                Log.d("Tagme_LeaderBoard", api.getLeaderBoardData().toString())
-            }
+            val leaderBoardFragment = LeaderboardFragment.newInstance()
+            mapActivity.fragmentManager.beginTransaction()
+                .add(R.id.profile_fragment, leaderBoardFragment)
+                .addToBackStack(null)
+                .commit()
         }
         backButton.setOnClickListener{
             mapActivity.onBackPressedDispatcher.onBackPressed()

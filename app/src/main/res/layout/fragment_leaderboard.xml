@@ -72,7 +72,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@drawable/background_for_user"
-            android:visibility="gone"
+            android:visibility="visible"
     >
         <TextView
                 android:id="@+id/loading_text"

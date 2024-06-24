@@ -113,7 +113,6 @@ class LogInActivity : AppCompatActivity() {
                             hideLoginShowGpsOverlay()
                             isAuthorized = true
                         } else {
-
                             errorText.visibility = View.VISIBLE
                             errorText.text = getString(R.string.error_incorrect_login_or_pass)
                         }
