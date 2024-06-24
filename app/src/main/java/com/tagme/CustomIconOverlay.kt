@@ -302,12 +302,13 @@ class CustomIconOverlay(
                     (it.y - scaledHeight - 15).toFloat(),
                     textPaintBlack
                 )
-                if (speed != null && speed!!.toInt() != 0) {
-                    val speedText = context.getString(R.string.speed_format, (speed!! * 3.6).toInt())
+                val currentSpeed = speed
+                if (currentSpeed != null && currentSpeed.toInt() != 0) {
+                    val speedText = context.getString(R.string.speed_format, (currentSpeed * 3.6).toInt())
                     canvas.drawText(
                         speedText,
                         it.x.toFloat(),
-                        (it.y + scaledHeight / 2 + 65).toFloat(),
+                        (it.y + scaledHeight / 4).toFloat(),
                         textPaintBlack
                     )
                 }
