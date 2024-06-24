@@ -127,10 +127,32 @@ class MapActivity: AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private var lastBackPressedTime: Long = 0
     private val exitHandler = Handler(Looper.getMainLooper())
+    companion object {
+        private var currentInstance: MapActivity? = null
+
+        fun registerInstance(instance: MapActivity) {
+            currentInstance = instance
+        }
+
+        fun unregisterInstance(instance: MapActivity) {
+            if (currentInstance == instance) {
+                currentInstance = null
+            }
+        }
+
+        fun finishCurrentInstance() {
+            currentInstance?.let {
+                val intent = Intent(it, LogInActivity::class.java)
+                it.startActivity(intent)
+                it.finish()
+            }
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         api = API.getInstance(applicationContext)
         coroutineScope = CoroutineScope(Dispatchers.Main)
+        registerInstance(this)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         getInstance().load(this, getDefaultSharedPreferences(this))
         binding = MapActivityBinding.inflate(layoutInflater)
@@ -812,6 +834,7 @@ class MapActivity: AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        unregisterInstance(this)
         friendOverlays.clear()
         profileFragment.friendRequestUpdateHandler?.removeCallbacksAndMessages(null)
         profileFragment.friendRequestUpdateHandler = null

@@ -149,11 +149,7 @@ class API private constructor(context: Context){
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                 Log.d("Tagme_WS", "onFailure trigger: $response")
-                if (context is MapActivity) {
-                    val intent = Intent(context, LogInActivity::class.java)
-                    context.startActivity(intent)
-                    context.finish()
-                }
+                finishMapActivity()
                 future.complete(false)
             }
 
@@ -161,6 +157,10 @@ class API private constructor(context: Context){
                 Log.d("Tagme_WS", "onMessage trigger: $text")
                 val answer = JSONObject(text)
                 val requestId = answer.getInt("request_id")
+                if (answer.getString("message") == "invalid token") {
+                    finishMapActivity()
+                    future.complete(false)
+                }
                 when (answer.getString("action")) {
                     "login", "register", "auth vk" -> when (answer.getString("status")) {
                         "success" -> {
@@ -203,6 +203,11 @@ class API private constructor(context: Context){
         client.newWebSocket(request, listener)
         return future
     }
+    private fun finishMapActivity() {
+        MapActivity.finishCurrentInstance()
+    }
+
+
 
     suspend fun registerUser(username: String, password: String): JSONObject? {
         val requestData = JSONObject().apply {
