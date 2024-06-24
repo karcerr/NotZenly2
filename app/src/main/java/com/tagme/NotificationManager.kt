@@ -9,10 +9,13 @@ import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.app.Person
+import java.sql.Timestamp
 import android.app.NotificationManager as SystemNotificationManager
 
 class NotificationManager(private val context: Context) {
-    fun showNewMessageNotification(nickname: String, message: String, conversationId: Int) {
+    private val messagesMap = HashMap<Int, MutableList<NotificationCompat.MessagingStyle.Message>>()
+    fun showNewMessageNotification(nickname: String, message: String, conversationId: Int, timestamp: Timestamp) {
         val intent = Intent(context, MapActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra("started_from_notification", true)
@@ -23,13 +26,7 @@ class NotificationManager(private val context: Context) {
             context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notificationBuilder = NotificationCompat.Builder(context, MESSAGE_CHANNEL_ID)
-            .setSmallIcon(R.drawable.tagme_logo)
-            .setContentTitle(context.getString(R.string.new_message_format, nickname))
-            .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .setContentIntent(pendingIntent)
+
 
         val notificationManager = NotificationManagerCompat.from(context)
         if (ActivityCompat.checkSelfPermission(
@@ -39,7 +36,31 @@ class NotificationManager(private val context: Context) {
         ) {
             return
         }
+        val sender = Person.Builder()
+            .setName(nickname)
+            .build()
+        val timestampMillis = timestamp.time
+        val messagingStyleMessage = NotificationCompat.MessagingStyle.Message(
+            message,
+            timestampMillis,
+            sender
+        )
+        val messages = messagesMap.getOrPut(conversationId) { mutableListOf() }
+        messages.add(messagingStyleMessage)
+
+        val messagingStyle = NotificationCompat.MessagingStyle(sender)
+        messages.forEach { messagingStyle.addMessage(it) }
+        val notificationBuilder = NotificationCompat.Builder(context, MESSAGE_CHANNEL_ID)
+            .setSmallIcon(R.drawable.tagme_logo)
+            .setStyle(messagingStyle)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+
         notificationManager.notify(conversationId, notificationBuilder.build())
+    }
+    fun clearMessages(conversationId: Int) {
+        messagesMap.remove(conversationId)
     }
     fun showNewFriendRequestNotification(nickname: String, requestId: Int) {
         val intent = Intent(context, MapActivity::class.java).apply {

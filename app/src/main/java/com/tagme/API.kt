@@ -1,6 +1,5 @@
 package com.tagme
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -590,12 +589,13 @@ class API private constructor(context: Context){
             } else { //Updating existing conversation
                 existingConversation.userData = UserData(userId, nickname, profilePictureId)
                 if (lastMessageId != 0) {
-                    val lastMessageData = MessageData(lastMessageId, lastMessageAuthorId, lastMessageText, lastMessagePictureId,
-                        parseAndConvertTimestamp(timestampString), read)
+                    val timestamp = parseAndConvertTimestamp(timestampString)
+                    val lastMessageData = MessageData(lastMessageId, lastMessageAuthorId, lastMessageText,
+                        lastMessagePictureId, timestamp, read)
                     if (existingConversation.lastMessage == null || existingConversation.lastMessage?.messageId != lastMessageId || existingConversation.lastMessage?.read != read) {
                         existingConversation.lastMessage = lastMessageData
                         if  (!read && lastMessageAuthorId != myUserId && messagesNotificationsEnabled) {
-                            notificationManager.showNewMessageNotification(nickname, lastMessageText, conversationId)
+                            notificationManager.showNewMessageNotification(nickname, lastMessageText, conversationId, timestamp)
                         }
                     }
                 } else {
@@ -762,7 +762,9 @@ class API private constructor(context: Context){
         updatedFriendRequestsData.removeIf { friendRequest -> !encounteredUserIds.contains(friendRequest.userData.userId)}
         friendRequestsData = updatedFriendRequestsData
     }
-
+    fun clearNotificationsForConversation(conversationId: Int) {
+        notificationManager.clearMessages(conversationId)
+    }
 
     fun getFriendsData(): MutableList<FriendData> {
         return friendsData

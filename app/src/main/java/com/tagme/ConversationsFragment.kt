@@ -419,6 +419,7 @@ class ConversationsAdapter(
         }
         holder.conversationLayout.setOnClickListener {
             api.disableMarkedUnreadStatus(conversationId)
+            api.clearNotificationsForConversation(conversationId)
             val conversationFragment = ConversationFragment.newInstance(conversationId, conversation.userData.nickname)
             parentActivity.supportFragmentManager.beginTransaction()
                 .add(R.id.conversations_fragment, conversationFragment)

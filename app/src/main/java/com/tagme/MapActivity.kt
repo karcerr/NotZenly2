@@ -470,6 +470,7 @@ class MapActivity: AppCompatActivity() {
                         .addToBackStack(null)
                         .commit()
                 }
+                api.clearNotificationsForConversation(conversationId)
             } else {
                 val requestId = intent.getIntExtra("requestId", -1)
                 if (requestId != -1) {
