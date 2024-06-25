@@ -93,12 +93,12 @@ class SettingsFragment : Fragment() {
                     mapActivity.onBackPressedDispatcher.onBackPressed()
                 }
             }
-            imageSizeTextView.text = api.getCacheSize(mapActivity)
+            imageSizeTextView.text = api.getInternalStorageSize(requireContext().applicationContext)
         }
         clearCacheButton.setOnClickListener {
             imageSizeTextView.text = getString(R.string.calculating_size)
-            api.clearImageCache(mapActivity)
-            imageSizeTextView.text = api.getCacheSize(mapActivity)
+            api.clearImageInternalStorage(mapActivity.applicationContext)
+            imageSizeTextView.text = api.getInternalStorageSize(requireContext().applicationContext)
         }
         friendRequestSwitch.isChecked = api.friendRequestsNotificationsEnabled
         messagesSwitch.isChecked = api.messagesNotificationsEnabled

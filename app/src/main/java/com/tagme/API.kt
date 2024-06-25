@@ -503,7 +503,7 @@ class API private constructor(context: Context){
             if (existingPicture == null) {
                 val pictureDataString = picObject.getString("picture")
                 val pictureData: ByteArray = Base64.getDecoder().decode(pictureDataString)
-                val imagePath = saveImageToCache(context, pictureId.toString(), pictureData)
+                val imagePath = saveImageToInternalStorage(context.applicationContext, pictureId.toString(), pictureData)
                 val newPictureData = PictureData(pictureId, imagePath)
                 val updatedPicturesData = picsData.toMutableList().apply {
                     add(newPictureData)
@@ -545,7 +545,7 @@ class API private constructor(context: Context){
         if (existingPicture == null) {
             val pictureData: ByteArray = Base64.getDecoder().decode(lastInsertedPictureDataString)
             lastInsertedPictureDataString = ""
-            val imagePath = saveImageToCache(context , lastInsertedPicId.toString(), pictureData)
+            val imagePath = saveImageToInternalStorage(context.applicationContext, lastInsertedPicId.toString(), pictureData)
             val newPictureData = PictureData(lastInsertedPicId, imagePath)
             val updatedPicturesData = picsData.toMutableList().apply {
                 add(newPictureData)
@@ -843,6 +843,7 @@ class API private constructor(context: Context){
         } else null
     }
 
+
     data class LocationData(
         var latitude: Double,
         var longitude: Double,
@@ -1049,21 +1050,21 @@ class API private constructor(context: Context){
         return gson.fromJson(jsonString, type)
     }
 
-    private fun saveImageToCache(context: Context, fileName: String, imageBytes: ByteArray): String {
-        val cacheDir = context.cacheDir
-        val file = File(cacheDir, fileName)
-
+    private fun saveImageToInternalStorage(context: Context, fileName: String, imageBytes: ByteArray): String {
+        val file = File(context.filesDir, fileName)
         FileOutputStream(file).use { outputStream ->
             outputStream.write(imageBytes)
         }
-
-        return file.absolutePath
+        val absolutePath = file.absolutePath
+        Log.d("Tagme_ImageStorage", "Image saved to internal storage at path: $absolutePath")
+        return absolutePath
     }
-    fun getCacheSize(context: Context): String {
-        val cacheDir = context.cacheDir
+
+    fun getInternalStorageSize(context: Context): String {
+        val filesDir = context.filesDir
         var totalSize = 0L
 
-        cacheDir.listFiles()?.forEach { file ->
+        filesDir.listFiles()?.forEach { file ->
             totalSize += file.length()
         }
 
@@ -1076,13 +1077,15 @@ class API private constructor(context: Context){
             context.getString(R.string.kb_format, sizeInKB)
         }
     }
-    fun clearImageCache(context: Context) {
-        val cacheDir = context.cacheDir
-        cacheDir.listFiles()?.forEach { file ->
+
+    fun clearImageInternalStorage(context: Context) {
+        val filesDir = context.filesDir
+        filesDir.listFiles()?.forEach { file ->
             file.delete()
         }
         picsData = emptyList()
     }
+
     private suspend fun sendRequestToWS(request: JSONObject): JSONObject? {
         val action = request.getString("action")
         val requestId = generateRequestId()
