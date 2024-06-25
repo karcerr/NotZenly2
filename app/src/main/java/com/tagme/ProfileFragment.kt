@@ -52,7 +52,7 @@ class ProfileFragment : Fragment() {
         val addFriendWindow = view.findViewById<View>(R.id.add_friend_window)
         val changeNicknameWindow = view.findViewById<View>(R.id.change_nickname_window)
         val ratingLayout = view.findViewById<LinearLayout>(R.id.rating_layout)
-        friendRequestsHeader = view.findViewById<LinearLayout>(R.id.friend_requests_header)
+        friendRequestsHeader = view.findViewById(R.id.friend_requests_header)
         val nicknameText = view.findViewById<TextView>(R.id.nickname_text)
         myTagCounter = view.findViewById(R.id.my_tag_counter)
         myProfilePic = view.findViewById(R.id.profile_picture)
