@@ -41,8 +41,7 @@
                     android:fontFamily="@font/my_font"
                     android:textColor="@color/white"
                     android:layout_gravity="center_vertical"
-                    android:layout_centerInParent="true"
-            />
+                    android:layout_centerInParent="true"/>
         </RelativeLayout>
         <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/picture_image_view"
@@ -88,9 +87,12 @@
         />
 
     </LinearLayout>
-    <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:src="@drawable/separator_big"
+    <View
+            android:id="@+id/separator"
+            android:layout_width="380dp"
+            android:layout_height="2dp"
+            android:background="@drawable/separator_big"
+            android:layerType="software"
+            android:layout_gravity="center"
     />
 </LinearLayout>

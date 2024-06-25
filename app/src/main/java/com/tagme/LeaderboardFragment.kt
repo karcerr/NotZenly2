@@ -30,6 +30,7 @@ class LeaderboardFragment : Fragment() {
     private lateinit var mapActivity: MapActivity
     private lateinit var recyclerView: RecyclerView
     private lateinit var progressLayout: ConstraintLayout
+    var isSelfLayoutVisible = false
     companion object {
         fun newInstance(): LeaderboardFragment {
             val fragment = LeaderboardFragment()
@@ -50,6 +51,7 @@ class LeaderboardFragment : Fragment() {
         api = mapActivity.api
         recyclerView = view.findViewById(R.id.leaderboard_recycler_view)
         nestedScrollView = view.findViewById(R.id.leaderboard_nested_scroll_view)
+        val yourPlaceLayout = view.findViewById<LinearLayout>(R.id.your_place_layout)
         setupSwipeGesture(
             this,
             nestedScrollView,
@@ -60,14 +62,39 @@ class LeaderboardFragment : Fragment() {
         progressLayout.visibility = View.VISIBLE
         CoroutineScope(Dispatchers.Main).launch {
             api.getLeaderBoardFromWS()
-            val conversationListSorted = api.getLeaderBoardData()?.sortedBy { it.place }?.toMutableList() ?: mutableListOf()
+            val leaderboardListSorted = api.getLeaderBoardData()?.sortedBy { it.place }?.toMutableList() ?: mutableListOf()
+
+            if (leaderboardListSorted.none { it.userData.userId == api.myUserId }) {
+                isSelfLayoutVisible = true
+                yourPlaceLayout.visibility = View.VISIBLE
+                val myNameTextView: TextView = view.findViewById(R.id.your_nickname_text)
+                val myPlaceTextView: TextView = view.findViewById(R.id.your_place_text)
+                val myTagsTextView: TextView = view.findViewById(R.id.your_tags_counter_text)
+                val myPictureImageView: ShapeableImageView = view.findViewById(R.id.your_picture_image_view)
+
+                myNameTextView.text = api.myNickname
+                myPlaceTextView.text = api.myPlace.toString()
+                myTagsTextView.text = api.myTags.toString()
+                if (api.myPfpId != 0) {
+                    val bitmap = api.getPictureData(api.myPfpId)
+                    if (bitmap != null) {
+                        myPictureImageView.setImageBitmap(bitmap)
+                    }
+                }
+            } else {
+                isSelfLayoutVisible = false
+                yourPlaceLayout.visibility = View.GONE
+            }
             leaderboardAdapter = LeaderboardAdapter(
                 requireContext(),
-                conversationListSorted,
-                api
+                leaderboardListSorted,
+                api,
+                isSelfLayoutVisible
             )
             recyclerView.adapter = leaderboardAdapter
             recyclerView.layoutManager = MyLinearLayoutManager(requireContext())
+
+
             progressLayout.visibility = View.GONE
         }
 
@@ -77,18 +104,13 @@ class LeaderboardFragment : Fragment() {
 
         return view
     }
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-    }
-    override fun onDestroyView() {
-        super.onDestroyView()
-    }
 }
 
 class LeaderboardAdapter(
     private val context: Context,
     private var leaderboardList: MutableList<API.LeaderBoardData>,
     private val api: API,
+    private val isSelfLayoutVisible: Boolean
 ) : RecyclerView.Adapter<LeaderboardAdapter.LeaderboardViewHolder>() {
     inner class LeaderboardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val leaderboardLinearLayout: LinearLayout = itemView.findViewById(R.id.leaderboard_linear_layout)
@@ -131,6 +153,10 @@ class LeaderboardAdapter(
 
     override fun onBindViewHolder(holder: LeaderboardViewHolder, position: Int) {
         val leaderboardItem = leaderboardList[position]
+        if (position == 9 && isSelfLayoutVisible) {
+            val separator = holder.itemView.findViewById<View>(R.id.separator)
+            separator.setBackgroundResource(R.drawable.separator_big_dashed)
+        }
         val userId = leaderboardItem.userData.userId
         if (userId == api.myUserId) {
             holder.leaderboardLinearLayout.setBackgroundResource(R.drawable.leaderboard_highlight)
