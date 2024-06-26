@@ -72,6 +72,7 @@ class LogInActivity : AppCompatActivity() {
                 val token = accessToken.token
                 Log.d("Tagme_VK", "Access Token: $token")
                 CoroutineScope(Dispatchers.Main).launch {
+                    loadingState.text = getString(R.string.loading_vk)
                     loadingLayout.visibility = View.VISIBLE
                     loginLayout.visibility = View.GONE
                     errorText.visibility = View.GONE

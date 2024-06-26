@@ -5,9 +5,8 @@
         android:layout_height="wrap_content"
         android:id="@+id/friend_layout"
         android:orientation="horizontal"
-        android:layout_marginBottom="10dp"
-        android:layout_marginRight="5dp"
-        android:layout_marginLeft="5dp"
+        android:layout_marginBottom="5dp"
+        android:layout_marginHorizontal="5dp"
 >
     <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/friend_picture"

@@ -119,4 +119,5 @@
     <string name="find_people_nearby">Найти людей рядом</string>
     <string name="people_nearby">Люди Рядом</string>
     <string name="distance_format_m_less_than">&lt;100 м</string>
+    <string name="loading_vk">Ожидание ответа VK ID…</string>
 </resources>
