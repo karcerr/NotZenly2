@@ -37,7 +37,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/rating"
+                    android:text="@string/people_nearby"
                     android:textAppearance="?android:textAppearanceMedium"
                     android:fontFamily="@font/my_font"
                     android:textSize="35sp"
@@ -68,73 +68,6 @@
                         android:textSize="20sp"
                         android:fontFamily="@font/my_font"
                 />
-                <LinearLayout
-                        android:id="@+id/your_place_layout"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="10dp"
-                        android:background="@drawable/leaderboard_highlight"
-                        android:layout_marginHorizontal="5dp"
-                >
-                    <TextView
-                            android:id="@+id/your_place_text"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="123"
-                            android:textSize="22sp"
-                            android:textStyle="bold"
-                            android:fontFamily="@font/my_font"
-                            android:textColor="@color/white"
-                            android:layout_gravity="center_vertical"
-                            android:layout_marginStart="10dp"
-                            android:minWidth="32dp"
-                            android:gravity="center"
-                    />
-
-                    <com.google.android.material.imageview.ShapeableImageView
-                            android:id="@+id/your_picture_image_view"
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:src="@drawable/person_placeholder"
-                            app:shapeAppearanceOverlay="@style/roundImageView"
-                            app:strokeWidth="2dp"
-                            android:padding="1dp"
-                            android:layout_margin="8dp"
-                            app:strokeColor="@color/white"
-                            android:layout_gravity="center"
-                            android:scaleType="centerCrop"
-                    />
-
-                    <TextView
-                            android:id="@+id/your_nickname_text"
-                            android:text="Your nickname"
-                            android:layout_width="0dp"
-                            android:layout_weight="1"
-                            android:layout_height="wrap_content"
-                            android:textSize="24sp"
-                            android:textStyle="bold"
-                            android:fontFamily="@font/my_font"
-                            android:textColor="@color/white"
-                            android:layout_gravity="center_vertical"
-                            android:layout_marginEnd="10dp"
-                            android:autoSizeTextType="uniform"
-                            android:maxLines="2"
-                            android:autoSizeMinTextSize="12sp"
-                    />
-                    <TextView
-                            android:id="@+id/your_tags_counter_text"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="123"
-                            android:textSize="20sp"
-                            android:textStyle="bold"
-                            android:fontFamily="@font/my_font"
-                            android:textColor="@color/white"
-                            android:layout_marginEnd="20dp"
-                            android:layout_gravity="end|center_vertical"
-                    />
-                </LinearLayout>
             </LinearLayout>
         </com.tagme.CustomNestedScrollView>
         </RelativeLayout>

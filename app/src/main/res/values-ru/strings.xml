@@ -116,4 +116,6 @@
     <string name="rating">Рейтинг</string>
     <string name="people_nearby_setting">Включить «Люди рядом»</string>
     <string name="distance_format_m">%s м</string>
+    <string name="find_people_nearby">Найти людей рядом</string>
+    <string name="people_nearby">Люди Рядом</string>
 </resources>

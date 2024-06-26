@@ -57,9 +57,9 @@
         />
         <ImageButton
                 android:id="@+id/add_friend_button"
-                android:layout_width="wrap_content"
+                android:layout_width="42dp"
                 android:layout_height="wrap_content"
-                android:src="@drawable/single_check_mark"
+                android:src="@drawable/add_friend"
                 android:textSize="20sp"
                 android:background="@color/transparent"
                 android:layout_marginEnd="10dp"

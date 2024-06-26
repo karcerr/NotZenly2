@@ -93,6 +93,7 @@ class MapActivity: AppCompatActivity() {
     private lateinit var searchEditText: EditText
     private lateinit var searchedFriendsListView: RecyclerView
     private lateinit var searchDarkOverlay: View
+    private lateinit var findPeopleNearbyButton: Button
     private var _centeredOverlay: CustomIconOverlay? = null
     var centeredOverlay: CustomIconOverlay?
         get() = _centeredOverlay
@@ -184,6 +185,7 @@ class MapActivity: AppCompatActivity() {
         searchEditText = findViewById(R.id.search_edit_text)
         searchedFriendsListView = findViewById(R.id.friends_list_view)
         searchDarkOverlay = findViewById(R.id.dark_overlay)
+        findPeopleNearbyButton = findViewById(R.id.find_people_nearby_button)
         clickedFriendNicknameTextView = findViewById(R.id.nickname_text)
         clickedFriendDistanceTextView = findViewById(R.id.distance_text)
         clickedFriendSpeedTextView = findViewById(R.id.speed_text)
@@ -361,6 +363,14 @@ class MapActivity: AppCompatActivity() {
         searchDarkOverlay.setOnClickListener {
             hideSearchLayout()
         }
+        findPeopleNearbyButton.setOnClickListener {
+            hideSearchLayout()
+            val peopleNearbyFragment = PeopleNearbyFragment.newInstance()
+            fragmentManager.beginTransaction()
+                .add(R.id.profile_fragment, peopleNearbyFragment)
+                .addToBackStack(null)
+                .commit()
+        }
 
         map.addMapListener(object : MapListener {
             override fun onScroll(event: ScrollEvent?): Boolean {
@@ -407,6 +417,7 @@ class MapActivity: AppCompatActivity() {
         bottomButtonsOverlay.visibility = View.GONE
         copyrightOSV.visibility = View.GONE
         searchEditText.setText("")
+        findPeopleNearbyButton.visibility = if (api.privacyNearbyEnabled) View.VISIBLE else View.GONE
         searchWindow.visibility = View.VISIBLE
         searchWindow.alpha = 0f
         searchWindow.animate()
@@ -692,7 +703,7 @@ class MapActivity: AppCompatActivity() {
                 try {
                     api.getLocationsFromWS()
                     api.getGeoStoriesWS()
-                    api.getMyDataFromWS()
+                    api.updateMyDataWS()
                     profileFragment.myTagCounter.text = getString(R.string.tag_counter_format, api.myTags)
                 } catch (e: Exception) {
                     api.requestMap.clear()

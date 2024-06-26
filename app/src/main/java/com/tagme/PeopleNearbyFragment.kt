@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -85,6 +86,7 @@ class PeopleNearbyAdapter(
     private val api: API
 ) : RecyclerView.Adapter<PeopleNearbyAdapter.PeopleNearbyViewHolder>() {
     inner class PeopleNearbyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val userNearbyLayout: LinearLayout = itemView.findViewById(R.id.user_nearby_linear_layout)
         val nameTextView: TextView = itemView.findViewById(R.id.nickname_text)
         val distanceTextView: TextView = itemView.findViewById(R.id.distance_text)
         val addFriendButton: ImageButton = itemView.findViewById(R.id.add_friend_button)
@@ -125,12 +127,16 @@ class PeopleNearbyAdapter(
         val userNearbyItem = userNearbyList[position]
 
         val userId = userNearbyItem.userData.userId
+        if (api.getFriendRequestDataList().any {it.userData.userId == userId && it.relation == "request_outgoing"}) {
+            holder.addFriendButton.setImageResource(R.drawable.single_check_mark)
+        }
         holder.nameTextView.text = userNearbyItem.userData.nickname
         val distance = userNearbyItem.distance
-        val (format, value) = if (distance >= 1000)
-            R.string.distance_format_km to distance / 1000f
-        else
-            R.string.distance_format_m to distance
+        val (format, value) = if (distance >= 1000) {
+            R.string.distance_format_km to String.format("%.1f", distance / 1000f)
+        } else {
+            R.string.distance_format_m to distance.toString()
+        }
 
         holder.distanceTextView.text = context.getString(format, value)
 
@@ -160,6 +166,13 @@ class PeopleNearbyAdapter(
                     }
                 }
             }
+        }
+        holder.userNearbyLayout.setOnClickListener {
+            val userProfileFragment = UserProfileFragment.newInstance(userId)
+            (context as MapActivity).fragmentManager.beginTransaction()
+                .add(R.id.profile_fragment, userProfileFragment)
+                .addToBackStack(null)
+                .commit()
         }
     }
 

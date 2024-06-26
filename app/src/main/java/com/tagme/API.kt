@@ -595,19 +595,20 @@ class API private constructor(context: Context){
         val picId = myData.optInt("picture_id", 0)
         val nickname = myData.getString("nickname")
         val tags = myData.getInt("user_score")
-        //val privacyNearby = myData.getBoolean("privacy_nearby")
+        val privacyNearby = myData.getBoolean("show_nearby")
 
         myUserId = userId
         myPfpId = picId
         myTags = tags
         myNickname = nickname
-        //privacyNearbyEnabled = privacyNearby
+        privacyNearbyEnabled = privacyNearby
     }
 
     private fun parseMyUpdatedData(myData: JSONObject){
         val tags = myData.getInt("user_score")
         myTags = tags
     }
+
     private fun parseConversationsData(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
         val encounteredConversationIds = mutableListOf<Int>()
@@ -784,14 +785,14 @@ class API private constructor(context: Context){
         val peopleNearby = mutableListOf<UserNearbyData>()
         for (i in 0 until result.length()) {
             val userNearbyObject = result.getJSONObject(i)
-            val userId = userNearbyObject.getInt("id")
+            val userId = userNearbyObject.getInt("user_id")
             val nickname = userNearbyObject.getString("nickname")
             val picId = userNearbyObject.optInt("picture_id", 0)
-            val distance = userNearbyObject.getInt("distance")
+            val distance = userNearbyObject.getDouble("distance_meters")
             peopleNearby.add(
                 UserNearbyData(
                     UserData(userId, nickname, picId),
-                    distance
+                    distance.toInt()
                 )
             )
         }
