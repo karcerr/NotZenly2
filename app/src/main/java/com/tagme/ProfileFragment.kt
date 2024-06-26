@@ -534,4 +534,3 @@ class FriendRequestAdapter(
         private const val VIEW_TYPE_OUTGOING = 1
     }
 }
-
