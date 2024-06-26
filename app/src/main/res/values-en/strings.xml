@@ -43,7 +43,7 @@
     <string name="blocked">"Blocked "</string>
     <string name="unblock">"Unblock "</string>
     <string name="speed_format">%d km/h</string>
-    <string name="distance_format">%s km</string>
+    <string name="distance_format_km">%s km</string>
     <string name="empty_login_password">Enter login and password</string>
     <string name="conversation">Conversation</string>
     <string name="notifications">Notifications</string>
@@ -115,4 +115,5 @@
     <string name="loading_map">Loading map resources…</string>
     <string name="rating">Rating</string>
     <string name="people_nearby_setting">Enable \"People Nearby\"</string>
+    <string name="distance_format_m">%s m</string>
 </resources>

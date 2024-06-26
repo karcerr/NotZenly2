@@ -888,6 +888,9 @@ class API private constructor(context: Context){
     fun getLeaderBoardData(): List<LeaderBoardData>? {
         return leaderBoardList
     }
+    fun getNearbyPeopleData(): List<UserNearbyData>? {
+        return peopleNearbyList
+    }
 
     suspend fun getPictureData(pictureId: Int): Bitmap? {
         if (pictureId == 0)

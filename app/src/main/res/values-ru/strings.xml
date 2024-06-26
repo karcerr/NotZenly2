@@ -43,7 +43,7 @@
     <string name="blocked">Заблокирован</string>
     <string name="unblock">"Разблокировать "</string>
     <string name="speed_format">%d км/ч</string>
-    <string name="distance_format">%s км</string>
+    <string name="distance_format_km">%s км</string>
     <string name="empty_login_password">Введите логин и пароль</string>
     <string name="conversation">Диалог</string>
     <string name="notifications">Уведомления</string>
@@ -115,4 +115,5 @@
     <string name="loading_map">Загрузка ресурсов карты…</string>
     <string name="rating">Рейтинг</string>
     <string name="people_nearby_setting">Включить «Люди рядом»</string>
+    <string name="distance_format_m">%s м</string>
 </resources>

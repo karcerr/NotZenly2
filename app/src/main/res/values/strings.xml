@@ -49,7 +49,8 @@
     <string name="blocked">Blocked</string>
     <string name="unblock">"Unblock"</string>
     <string name="speed_format">%d km/h</string>
-    <string name="distance_format">%s km</string>
+    <string name="distance_format_km">%s km</string>
+    <string name="distance_format_m">%s m</string>
     <string name="seconds_ago_format">%d seconds ago</string>
     <string name="minutes_ago_format">%d minutes ago</string>
     <string name="hours_ago_format">%d hours ago</string>

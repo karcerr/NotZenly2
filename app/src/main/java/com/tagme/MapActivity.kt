@@ -584,7 +584,7 @@ class MapActivity: AppCompatActivity() {
                             results
                         )
                         val distanceInKm = String.format("%.1f", results[0] / 1000)
-                        clickedFriendDistanceTextView.text = getString(R.string.distance_format, distanceInKm)
+                        clickedFriendDistanceTextView.text = getString(R.string.distance_format_km, distanceInKm)
                     }
                     clickedFriendProfileFrame.visibility = View.VISIBLE
                     clickedFriendProfileFrame.setOnClickListener {
