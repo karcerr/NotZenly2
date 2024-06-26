@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">TagMe</string>
+    <string name="app_name" translatable="false">TagMe!</string>
     <string name="errorMessage">Some error</string>
     <string name="enter_nickname">Enter Nickname</string>
     <string name="send_request">Send Request</string>
