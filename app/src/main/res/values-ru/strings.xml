@@ -120,4 +120,5 @@
     <string name="people_nearby">Люди Рядом</string>
     <string name="distance_format_m_less_than">&lt;100 м</string>
     <string name="loading_vk">Ожидание ответа VK ID…</string>
+    <string name="vk_error">Что-то пошло не так, попробуйте еще раз 😔</string>
 </resources>

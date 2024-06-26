@@ -12,10 +12,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -88,6 +85,10 @@ class LogInActivity : AppCompatActivity() {
                             errorText.visibility = View.VISIBLE
                             errorText.text = answer.getString("message")
                         }
+                    } else {
+                        Toast.makeText(this@LogInActivity, getString(R.string.vk_error), Toast.LENGTH_LONG).show()
+                        loadingLayout.visibility = View.GONE
+                        loginLayout.visibility = View.VISIBLE
                     }
                 }
             }
