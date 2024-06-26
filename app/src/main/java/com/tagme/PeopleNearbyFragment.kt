@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.TextView
+import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -86,6 +87,7 @@ class PeopleNearbyAdapter(
     inner class PeopleNearbyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTextView: TextView = itemView.findViewById(R.id.nickname_text)
         val distanceTextView: TextView = itemView.findViewById(R.id.distance_text)
+        val addFriendButton: ImageButton = itemView.findViewById(R.id.add_friend_button)
         val pictureImageView: ShapeableImageView = itemView.findViewById(R.id.picture_image_view)
         val coroutineScope = CoroutineScope(Dispatchers.Main)
     }
@@ -140,6 +142,22 @@ class PeopleNearbyAdapter(
                 val bitmap = api.getPictureData(userNearbyItem.userData.profilePictureId)
                 if (bitmap != null) {
                     holder.pictureImageView.setImageBitmap(bitmap)
+                }
+            }
+        }
+        holder.addFriendButton.setOnClickListener {
+            holder.coroutineScope.launch {
+                val answer = api.sendFriendRequestToWS(userNearbyItem.userData.nickname)
+                if (answer != null) {
+                    if (answer.getString("status") == "success") {
+                        Toast.makeText(context, context.getString(R.string.friend_request_sent), Toast.LENGTH_SHORT)
+                            .show()
+                        holder.addFriendButton.setImageResource(R.drawable.single_check_mark)
+                        holder.addFriendButton.isClickable = false
+                        api.getFriendRequestsFromWS()
+                        val updatedRequests = api.getFriendRequestDataList()
+                        (context as MapActivity).profileFragment.friendRequestAdapter.updateData(updatedRequests)
+                    }
                 }
             }
         }
