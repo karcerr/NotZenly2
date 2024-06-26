@@ -32,10 +32,10 @@ class API private constructor(context: Context){
     private val requestIdCounter = AtomicInteger(0)
     val requestMap: MutableMap<Int, Pair<CompletableFuture<JSONObject?>, String>> = Collections.synchronizedMap(mutableMapOf<Int, Pair<CompletableFuture<JSONObject?>, String>>())
     var leaderBoardList: List<LeaderBoardData>? = null
+    var peopleNearbyList: List<UserNearbyData>? = null
     private val pictureMutex = Mutex()
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
     private val notificationManager = NotificationManager(context)
-    private var myDataHash: String = ""
     init {
         notificationManager.createNotificationChannels()
     }
@@ -55,6 +55,11 @@ class API private constructor(context: Context){
         get() = sharedPreferences.getBoolean("MESSAGES_NOTIFICATIONS", true)
         set(value) {
             sharedPreferences.edit().putBoolean("MESSAGES_NOTIFICATIONS", value).apply()
+        }
+    var privacyNearbyEnabled: Boolean
+        get() = sharedPreferences.getBoolean("PRIVACY_NEARBY", true)
+        set(value) {
+            sharedPreferences.edit().putBoolean("PRIVACY_NEARBY", value).apply()
         }
 
     var myUserId: Int
@@ -194,6 +199,9 @@ class API private constructor(context: Context){
                     "get my data" -> when (answer.getString("status")) {
                         "success" -> parseMyData(JSONObject(answer.getString("message")))
                     }
+                    "update my data" -> when (answer.getString("status")) {
+                        "success" -> parseMyUpdatedData(JSONObject(answer.getString("message")))
+                    }
                     "insert picture" -> when (answer.getString("status")) {
                         "success" -> parseInsertedPictureId(context, answer.getString("message"))
                     }
@@ -202,6 +210,12 @@ class API private constructor(context: Context){
                     }
                     "get leaderboard" -> when (answer.getString("status")) {
                         "success" -> parseLeaderBoard(answer.getString("message"))
+                    }
+                    "get nearby people" -> when (answer.getString("status")) {
+                        "success" -> parseNearbyPeople(answer.getString("message"))
+                    }
+                    "update privacy nearby" -> when (answer.getString("status")) {
+                        "success" -> privacyNearbyEnabled = !privacyNearbyEnabled
                     }
                 }
                 val futureAnswer = requestMap[requestId]?.first
@@ -285,6 +299,21 @@ class API private constructor(context: Context){
         val requestData = JSONObject().apply {
             put("action", "get leaderboard")
             put("token", myToken)
+        }
+        return sendRequestToWS(requestData)
+    }
+    suspend fun getNearbyPeople(): JSONObject? {
+        val requestData = JSONObject().apply {
+            put("action", "get nearby people")
+            put("token", myToken)
+        }
+        return sendRequestToWS(requestData)
+    }
+    suspend fun updatePrivacyNearby(enabled: Boolean): JSONObject? {
+        val requestData = JSONObject().apply {
+            put("action", "update privacy nearby")
+            put("token", myToken)
+            put("enable", enabled)
         }
         return sendRequestToWS(requestData)
     }
@@ -378,10 +407,17 @@ class API private constructor(context: Context){
         val requestData = JSONObject().apply {
             put("action", "get my data")
             put("token", myToken)
-            put("hash", myDataHash)
         }
         return sendRequestToWS(requestData)
     }
+    suspend fun updateMyDataWS(): JSONObject? {
+        val requestData = JSONObject().apply {
+            put("action", "update my data")
+            put("token", myToken)
+        }
+        return sendRequestToWS(requestData)
+    }
+
     suspend fun setProfilePictureWS(picId: Int): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "set profile picture")
@@ -556,17 +592,21 @@ class API private constructor(context: Context){
 
     private fun parseMyData(myData: JSONObject){
         val userId = myData.getInt("user_id")
-        val picId = myData.optInt("picture_id", 0).takeIf{it != 0}
+        val picId = myData.optInt("picture_id", 0)
         val nickname = myData.getString("nickname")
         val tags = myData.getInt("user_score")
-
-        //val list = listOf(userId, nickname, picId, tags)
-        //myDataHash = list.toSha256Hash()
+        //val privacyNearby = myData.getBoolean("privacy_nearby")
 
         myUserId = userId
-        myPfpId = picId ?: 0
+        myPfpId = picId
         myTags = tags
         myNickname = nickname
+        //privacyNearbyEnabled = privacyNearby
+    }
+
+    private fun parseMyUpdatedData(myData: JSONObject){
+        val tags = myData.getInt("user_score")
+        myTags = tags
     }
     private fun parseConversationsData(jsonString: String){
         val result = JSONObject(jsonString).getJSONArray("result")
@@ -738,6 +778,25 @@ class API private constructor(context: Context){
         }
         leaderBoardList = leaderBoard
     }
+    private fun parseNearbyPeople(jsonString: String) {
+        val message = JSONObject(jsonString)
+        val result = message.getJSONArray("result")
+        val peopleNearby = mutableListOf<UserNearbyData>()
+        for (i in 0 until result.length()) {
+            val userNearbyObject = result.getJSONObject(i)
+            val userId = userNearbyObject.getInt("id")
+            val nickname = userNearbyObject.getString("nickname")
+            val picId = userNearbyObject.optInt("picture_id", 0)
+            val distance = userNearbyObject.getInt("distance")
+            peopleNearby.add(
+                UserNearbyData(
+                    UserData(userId, nickname, picId),
+                    distance
+                )
+            )
+        }
+        peopleNearbyList = peopleNearby
+    }
 
     private fun addSeparatorIfNeeded(messages: MutableList<MessageData>) {
         if (messages.isEmpty()) return
@@ -894,6 +953,10 @@ class API private constructor(context: Context){
     data class FriendData(
         val userData: UserData,
         var location: LocationData?,
+    )
+    data class UserNearbyData(
+        val userData: UserData,
+        var distance: Int
     )
 
     data class FriendRequestData(

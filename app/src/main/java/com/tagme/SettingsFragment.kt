@@ -11,6 +11,9 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.Fragment
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class SettingsFragment : Fragment() {
     private lateinit var api: API
@@ -28,15 +31,18 @@ class SettingsFragment : Fragment() {
         val backButton = view.findViewById<ImageButton>(R.id.back_button)
         val exitLayout = view.findViewById<LinearLayout>(R.id.exit_layout)
         val notificationsLayoutButton = view.findViewById<LinearLayout>(R.id.notifications_layout_button)
+        val privacyLayoutButton = view.findViewById<LinearLayout>(R.id.privacy_layout_button)
         val storageLayoutButton = view.findViewById<LinearLayout>(R.id.storage_layout_button)
         val storageLayout = view.findViewById<LinearLayout>(R.id.storage_layout)
         val imageSizeTextView = view.findViewById<TextView>(R.id.image_size_format)
         val clearCacheButton = view.findViewById<Button>(R.id.clear_cache_button)
 
         val notificationsLayout = view.findViewById<LinearLayout>(R.id.notifications_layout)
+        val privacyLayout = view.findViewById<LinearLayout>(R.id.privacy_layout)
 
         val friendRequestSwitch = view.findViewById<SwitchCompat>(R.id.friend_requests_switch)
         val messagesSwitch = view.findViewById<SwitchCompat>(R.id.messages_switch)
+        val privacyNearbySwitch = view.findViewById<SwitchCompat>(R.id.privacy_nearby_requests_switch)
         val darkOverlay = view.findViewById<View>(R.id.dark_overlay)
         val areYouSureLayout = view.findViewById<LinearLayout>(R.id.are_you_sure_layout)
         val yesButton = view.findViewById<Button>(R.id.yes_button)
@@ -81,6 +87,20 @@ class SettingsFragment : Fragment() {
                 }
             }
         }
+        privacyLayoutButton.setOnClickListener {
+            mainLayout.visibility = View.GONE
+            privacyLayout.visibility = View.VISIBLE
+            headerTextView.text = getString(R.string.privacy)
+            backButton.setOnClickListener{
+                privacyLayout.visibility = View.GONE
+                mainLayout.visibility = View.VISIBLE
+                headerTextView.text = getString(R.string.settings)
+                backButton.setOnClickListener{
+                    mapActivity.onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        }
+
         storageLayoutButton.setOnClickListener {
             mainLayout.visibility = View.GONE
             storageLayout.visibility = View.VISIBLE
@@ -102,11 +122,17 @@ class SettingsFragment : Fragment() {
         }
         friendRequestSwitch.isChecked = api.friendRequestsNotificationsEnabled
         messagesSwitch.isChecked = api.messagesNotificationsEnabled
+        privacyNearbySwitch.isChecked = api.privacyNearbyEnabled
         friendRequestSwitch.setOnCheckedChangeListener { _, isChecked ->
             api.friendRequestsNotificationsEnabled = isChecked
         }
         messagesSwitch.setOnCheckedChangeListener { _, isChecked ->
             api.messagesNotificationsEnabled = isChecked
+        }
+        privacyNearbySwitch.setOnCheckedChangeListener { _, isChecked ->
+            CoroutineScope(Dispatchers.Main).launch {
+                api.updatePrivacyNearby(isChecked)
+            }
         }
 
         return view

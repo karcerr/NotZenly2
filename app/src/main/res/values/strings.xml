@@ -127,4 +127,5 @@
     <string name="calculating_size">Calculating size…</string>
     <string name="clear_cache">Clear Cache</string>
     <string name="rating">Rating</string>
+    <string name="people_nearby_setting">Enable \"People Nearby\"</string>
 </resources>

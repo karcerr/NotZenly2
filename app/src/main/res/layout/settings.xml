@@ -111,6 +111,38 @@
             </LinearLayout>
         </LinearLayout>
         <LinearLayout
+                android:id="@+id/privacy_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:visibility="gone"
+                android:layout_marginTop="20dp"
+        >
+
+            <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="24sp"
+                    android:text="@string/people_nearby_setting"
+                    android:fontFamily="@font/my_font"
+                    android:textColor="@color/white"
+                    android:layout_weight="1"
+                    android:textStyle="bold"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="14dp"
+            />
+            <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/privacy_nearby_requests_switch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginEnd="25dp"
+                    android:thumb="@drawable/switch_thumb"
+                    app:track="@drawable/switch_track"
+                    app:switchMinWidth="55dp"
+            />
+        </LinearLayout>
+        <LinearLayout
                 android:id="@+id/storage_layout"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -228,7 +260,41 @@
         <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:src="@drawable/separator_big"/>
+                android:src="@drawable/separator_big"
+        />
+        <LinearLayout
+                android:id="@+id/privacy_layout_button"
+                android:layout_width="match_parent"
+                android:layout_height="66dp"
+                android:orientation="horizontal"
+                android:clickable="true"
+        >
+            <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="24sp"
+                    android:text="@string/privacy"
+                    android:fontFamily="@font/my_font"
+                    android:textColor="@color/white"
+                    android:layout_weight="1"
+                    android:textStyle="bold"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="14dp"
+            />
+            <ImageView
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center_vertical"
+                    android:src="@drawable/arrow_right"
+                    android:layout_marginEnd="25dp"
+            />
+        </LinearLayout>
+        <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:src="@drawable/separator_big"
+        />
+
         <LinearLayout
                 android:id="@+id/storage_layout_button"
                 android:layout_width="match_parent"
