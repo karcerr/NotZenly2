@@ -135,7 +135,12 @@ class PeopleNearbyAdapter(
         val (format, value) = if (distance >= 1000) {
             R.string.distance_format_km to String.format("%.1f", distance / 1000f)
         } else {
-            R.string.distance_format_m to distance.toString()
+            val roundedDistance = (distance / 50) * 50
+            if (roundedDistance < 100) {
+                R.string.distance_format_m_less_than to roundedDistance
+            } else {
+                R.string.distance_format_m to roundedDistance
+            }
         }
 
         holder.distanceTextView.text = context.getString(format, value)

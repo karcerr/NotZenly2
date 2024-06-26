@@ -118,4 +118,5 @@
     <string name="distance_format_m">%s m</string>
     <string name="find_people_nearby">Find People Nearby</string>
     <string name="people_nearby">People Nearby</string>
+    <string name="distance_format_m_less_than">&lt;100 m</string>
 </resources>
