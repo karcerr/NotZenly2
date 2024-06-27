@@ -106,6 +106,7 @@
     <string name="messages">Messages</string>
     <string name="you_cannot_message">You cannot message this user :(</string>
     <string name="loading_server_connect">Connecting to the server…</string>
+    <string name="loading_server_await">Awaiting for the server answer…</string>
     <string name="loading_vk">Waiting for VK response…</string>
     <string name="loading_server_reconnect">Trying to reconnect to server…</string>
     <string name="loading_map">Loading map resources…</string>

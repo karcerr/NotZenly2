@@ -60,6 +60,7 @@ class LogInActivity : AppCompatActivity() {
         loadingState = findViewById(R.id.current_loading_state)
 
         val api = API.getInstance(applicationContext)
+        checkForPermissions(permissions)
         CoroutineScope(Dispatchers.Main).launch {
             connectToServer(api)
         }
@@ -107,6 +108,10 @@ class LogInActivity : AppCompatActivity() {
                     usernameInput.setHintTextColor(Color.RED)
                 }
             } else {
+                loadingState.text = getString(R.string.loading_server_await)
+                loginLayout.visibility = View.GONE
+                loadingLayout.visibility = View.VISIBLE
+
                 CoroutineScope(Dispatchers.Main).launch {
                     val answer = api.loginUser(username, password)
                     if (answer != null) {
@@ -115,10 +120,14 @@ class LogInActivity : AppCompatActivity() {
                             hideLoginShowGpsOverlay()
                             isAuthorized = true
                         } else {
+                            loadingLayout.visibility = View.GONE
+                            loginLayout.visibility = View.VISIBLE
                             errorText.visibility = View.VISIBLE
                             errorText.text = getString(R.string.error_incorrect_login_or_pass)
                         }
-
+                    } else {
+                        loadingLayout.visibility = View.GONE
+                        loginLayout.visibility = View.VISIBLE
                     }
                 }
             }
@@ -136,6 +145,10 @@ class LogInActivity : AppCompatActivity() {
                     usernameInput.setHintTextColor(Color.RED)
                 }
             } else {
+                loadingState.text = getString(R.string.loading_server_await)
+                loginLayout.visibility = View.GONE
+                loadingLayout.visibility = View.VISIBLE
+
                 CoroutineScope(Dispatchers.Main).launch {
                     val answer = api.registerUser(username, password)
                     if (answer != null) {
@@ -144,12 +157,17 @@ class LogInActivity : AppCompatActivity() {
                             hideLoginShowGpsOverlay()
                             isAuthorized = true
                         } else {
+                            loadingLayout.visibility = View.GONE
                             errorText.visibility = View.VISIBLE
+                            loginLayout.visibility = View.VISIBLE
                             val errorMessages = getLocalizedErrorMessages(answer.getString("message"))
                             Log.d("Tagme_login", errorMessages.toString())
                             val combinedErrorMessage = errorMessages.joinToString("\n")
                             errorText.text = combinedErrorMessage
                         }
+                    } else {
+                        loadingLayout.visibility = View.GONE
+                        loginLayout.visibility = View.VISIBLE
                     }
                 }
             }
@@ -201,10 +219,18 @@ class LogInActivity : AppCompatActivity() {
             hasPermission = true
         }
     }
-    private fun hideLoginShowGpsOverlay(){
-        loadingState.text = getString(R.string.loading_map)
-        requestPermissionsIfNecessary(permissions)
+    private fun checkForPermissions(permissions: Array<String>) {
+        val permissionsToRequest = ArrayList<String>()
+        permissions.forEach { permission ->
+            if (ContextCompat.checkSelfPermission(this, permission)
+                != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(permission)
+            }
+        }
+        hasPermission = permissionsToRequest.isEmpty()
+    }
 
+    private fun hideLoginShowGpsOverlay(){
         if (!isLocationEnabled() or !hasPermission) {
             loginLayout.visibility = View.GONE
             loadingLayout.visibility = View.GONE
@@ -213,6 +239,8 @@ class LogInActivity : AppCompatActivity() {
                 requestLocation()
             }
         } else {
+            loadingLayout.visibility = View.VISIBLE
+            loadingState.text = getString(R.string.loading_map)
             startActivity(Intent(this, MapActivity::class.java))
             finish()
         }
