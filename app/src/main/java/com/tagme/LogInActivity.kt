@@ -231,8 +231,8 @@ class LogInActivity : AppCompatActivity() {
     }
 
     private fun hideLoginShowGpsOverlay(){
+        loadingLayout.visibility = View.GONE
         if (!isLocationEnabled() or !hasPermission) {
-            loginLayout.visibility = View.GONE
             loadingLayout.visibility = View.GONE
             enableGpsLayout.visibility = View.VISIBLE
             findViewById<Button>(R.id.EnableLocationbtn).setOnClickListener {

@@ -93,24 +93,23 @@ class CustomIconOverlay(
 
     override fun onSingleTapConfirmed(e: MotionEvent?, mapView: MapView?): Boolean {
         if (!visible) return super.onSingleTapConfirmed(e, mapView)
-        val projection = mapView?.projection
-        val point = projection?.toPixels(location, null)
+        val projection = mapView?.projection ?: return super.onSingleTapConfirmed(e, mapView)
+        val point = projection.toPixels(location, null) ?: return super.onSingleTapConfirmed(e, mapView)
 
-        point?.let {
-            val x = e?.x ?: 0f
-            val y = e?.y ?: 0f
+        val x = e?.x ?: 0f
+        val y = e?.y ?: 0f
 
-            val distance = sqrt((x - it.x).toDouble().pow(2.0) + (y - it.y).toDouble().pow(2.0))
-
-            if (distance <= HITBOX_RADIUS) {
-                Log.d("Tagme_icons", intersectedOverlays.toString())
-                clickListener?.invoke(this)
-                return true
-            }
+        val dx = x - point.x
+        val dy = y - point.y + (drawable.intrinsicHeight * overlayScale / 2)
+        val distanceSquared = dx * dx + dy * dy
+        if (distanceSquared <= 20000) {
+            clickListener?.invoke(this)
+            return true
         }
 
         return super.onSingleTapConfirmed(e, mapView)
     }
+
 
 
     override fun draw(canvas: Canvas, mapView: MapView?, shadow: Boolean) {
