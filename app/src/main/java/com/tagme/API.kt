@@ -801,25 +801,24 @@ class API private constructor(context: Context){
 
     private fun addSeparatorIfNeeded(messages: MutableList<MessageData>) {
         if (messages.isEmpty()) return
-        val currentMessage = messages.map{it.copy()}.last()
-        if (messages.size < 2) {
-            val separator = createSeparator(currentMessage)
-            messages.removeLast()
-            messages.add(separator)
-            messages.add(currentMessage)
-            return
+
+        val updatedMessages = mutableListOf<MessageData>()
+        var previousDate: String? = null
+
+        for (message in messages) {
+            val currentMessageDate = getDateString(message.timestamp)
+
+            if (previousDate == null || previousDate != currentMessageDate) {
+                val separator = createSeparator(message)
+                updatedMessages.add(separator)
+            }
+
+            updatedMessages.add(message)
+            previousDate = currentMessageDate
         }
 
-        val lastMessage = messages[messages.size - 2].copy()
-        val lastMessageDate = getDateString(lastMessage.timestamp)
-        val currentMessageDate = getDateString(currentMessage.timestamp)
-
-        if (lastMessageDate != currentMessageDate) {
-            val separator = createSeparator(currentMessage)
-            messages.removeLast()
-            messages.add(separator)
-            messages.add(currentMessage)
-        }
+        messages.clear()
+        messages.addAll(updatedMessages)
     }
 
     private fun createSeparator(referenceMessage: MessageData): MessageData {
@@ -832,7 +831,6 @@ class API private constructor(context: Context){
             true
         )
     }
-
     private fun getDateString(timestamp: Timestamp): String {
         val calendar = Calendar.getInstance()
         calendar.time = timestamp
