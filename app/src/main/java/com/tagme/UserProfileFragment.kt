@@ -101,6 +101,7 @@ class UserProfileFragment : Fragment() {
                 coroutineScope.launch {
                     api.blockUserWS(userId)
                     updateFriends(coroutineScope, context as MapActivity)
+                    (context as MapActivity).setCenteredFalse()
                     reattachSelf()
                 }
             }
@@ -141,6 +142,7 @@ class UserProfileFragment : Fragment() {
                                 coroutineScope.launch {
                                     api.deleteFriendWS(userId)
                                     updateFriends(coroutineScope, context as MapActivity)
+                                    (context as MapActivity).setCenteredFalse()
                                     reattachSelf()
                                 }
                             }

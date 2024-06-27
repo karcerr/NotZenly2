@@ -646,7 +646,7 @@ class MapActivity: AppCompatActivity() {
         }
     }
 
-    private fun setCenteredFalse() {
+    fun setCenteredFalse() {
         centeredOverlay = null
         centeredTargetId = -1
         isCenteredUser = false

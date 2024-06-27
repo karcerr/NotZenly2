@@ -178,6 +178,9 @@ class LogInActivity : AppCompatActivity() {
         requestPermissionsIfNecessary(permissions)
         if (hasPermission) {
             if (isLocationEnabled()) {
+                enableGpsLayout.visibility = View.GONE
+                loadingState.text = getString(R.string.loading_map)
+                loadingLayout.visibility = View.VISIBLE
                 startActivity(Intent(this, MapActivity::class.java))
                 finish()
             } else {
