@@ -139,6 +139,7 @@ class UserProfileFragment : Fragment() {
                             yesButton.setOnClickListener {
                                 coroutineScope.launch {
                                     api.deleteFriendWS(userId)
+                                    updateFriends(coroutineScope, context as MapActivity)
                                     reattachSelf()
                                 }
                             }
