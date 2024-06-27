@@ -100,6 +100,7 @@ class UserProfileFragment : Fragment() {
             yesButton.setOnClickListener {
                 coroutineScope.launch {
                     api.blockUserWS(userId)
+                    updateFriends(coroutineScope, context as MapActivity)
                     reattachSelf()
                 }
             }
