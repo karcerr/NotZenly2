@@ -570,10 +570,12 @@ class MapActivity: AppCompatActivity() {
         isCenteredUser = isCenteredOnUser
         if (!isUiHidden) {
             isUiHidden = true
-            slideView(profileButtonFrame, true)
-            slideView(messagesButtonFrame, true)
-            slideView(centralizeButtonFrame, true)
-            slideView(onCLickedOverlays, false)
+            slideView(profileButtonFrame, hide = true, animateDown = true)
+            slideView(messagesButtonFrame, hide = true, animateDown = true)
+            slideView(centralizeButtonFrame, hide = true, animateDown = true)
+            slideView(createGeoStoryFrame, hide = true, animateDown = false)
+            slideView(searchFrame, hide = true, animateDown = false)
+            slideView(onCLickedOverlays, hide = false, animateDown = true)
         }
         if (isCenteredOnUser) {
             clickedViewsAndTimeLayout.visibility = View.GONE
@@ -650,20 +652,30 @@ class MapActivity: AppCompatActivity() {
         isCenteredUser = false
         if (isUiHidden) {
             isUiHidden = false
-            slideView(profileButtonFrame, false)
-            slideView(messagesButtonFrame, false)
-            slideView(centralizeButtonFrame, false)
-            slideView(onCLickedOverlays, true)
+            slideView(profileButtonFrame, hide = false, animateDown = true)
+            slideView(messagesButtonFrame, hide = false, animateDown = true)
+            slideView(centralizeButtonFrame, hide = false, animateDown = true)
+            slideView(searchFrame, hide = false, animateDown = false)
+            slideView(createGeoStoryFrame, hide = false, animateDown = false)
+            slideView(onCLickedOverlays, hide = true, animateDown = true)
         }
     }
 
-    private fun slideView(view: View, hide: Boolean) {
+    private fun slideView(view: View, hide: Boolean, animateDown: Boolean) {
         view.visibility = View.VISIBLE
         val parentHeight = 1000f
         val animate = if (!hide) {
-            TranslateAnimation(0f, 0f, parentHeight, 0f)
+            if (animateDown) {
+                TranslateAnimation(0f, 0f, parentHeight, 0f)  // Slide in from bottom
+            } else {
+                TranslateAnimation(0f, 0f, -parentHeight, 0f)  // Slide in from top
+            }
         } else {
-            TranslateAnimation(0f, 0f, 0f, parentHeight)
+            if (animateDown) {
+                TranslateAnimation(0f, 0f, 0f, parentHeight)  // Slide out to bottom
+            } else {
+                TranslateAnimation(0f, 0f, 0f, -parentHeight)  // Slide out to top
+            }
         }
 
         animate.duration = 500

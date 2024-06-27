@@ -13,7 +13,6 @@ import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.imageview.ShapeableImageView
 import kotlinx.coroutines.CoroutineScope
@@ -93,31 +92,7 @@ class PeopleNearbyAdapter(
         val pictureImageView: ShapeableImageView = itemView.findViewById(R.id.picture_image_view)
         val coroutineScope = CoroutineScope(Dispatchers.Main)
     }
-    fun updateData(newPeopleNearbyList: List<API.UserNearbyData>) {
-        val newPeopleNearbySorted = newPeopleNearbyList.sortedBy { it.distance }
-        val diffResult = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
-            override fun getOldListSize(): Int {
-                return userNearbyList.size
-            }
 
-            override fun getNewListSize(): Int {
-                return newPeopleNearbySorted.size
-            }
-
-            override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-                return userNearbyList[oldItemPosition].userData.userId == newPeopleNearbySorted[newItemPosition].userData.userId
-            }
-
-            override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-                val oldItem = userNearbyList[oldItemPosition]
-                val newItem = newPeopleNearbySorted[newItemPosition]
-                return oldItem == newItem
-            }
-        })
-        userNearbyList.clear()
-        userNearbyList.addAll(newPeopleNearbySorted)
-        diffResult.dispatchUpdatesTo(this)
-    }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PeopleNearbyViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.user_nearby_item, parent, false)
         return PeopleNearbyViewHolder(view)
@@ -129,6 +104,7 @@ class PeopleNearbyAdapter(
         val userId = userNearbyItem.userData.userId
         if (api.getFriendRequestDataList().any {it.userData.userId == userId && it.relation == "request_outgoing"}) {
             holder.addFriendButton.setImageResource(R.drawable.single_check_mark)
+            holder.addFriendButton.isClickable = false
         }
         holder.nameTextView.text = userNearbyItem.userData.nickname
         val distance = userNearbyItem.distance
