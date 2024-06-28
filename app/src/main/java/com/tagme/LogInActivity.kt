@@ -16,6 +16,7 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import com.vk.id.onetap.xml.OneTap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -69,11 +70,12 @@ class LogInActivity : AppCompatActivity() {
             onAuth = { accessToken ->
                 val token = accessToken.token
                 Log.d("Tagme_VK", "Access Token: $token")
-                CoroutineScope(Dispatchers.Main).launch {
+                lifecycleScope.launch {
                     loadingState.text = getString(R.string.loading_vk)
                     loadingLayout.visibility = View.VISIBLE
                     loginLayout.visibility = View.GONE
                     errorText.visibility = View.GONE
+                    delay(500)
                     val answer = api.authVK(token)
                     if (answer != null) {
                         if (answer.getString("status") == "success") {
