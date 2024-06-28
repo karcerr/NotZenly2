@@ -79,7 +79,7 @@
                     android:layout_marginStart="5dp"
                     android:src="@drawable/double_check_mark"
                     android:layout_gravity="bottom"
-                    android:visibility="invisible"
+                    android:visibility="gone"
             />
         </LinearLayout>
 

@@ -400,6 +400,8 @@ class ConversationsAdapter(
             if (lastMessage.authorId == api.myUserId) {
                 holder.lastMessageCheckMark.visibility = View.VISIBLE
                 holder.lastMessageCheckMark.setImageResource(if(lastMessage.read) R.drawable.double_check_mark else R.drawable.single_check_mark)
+            } else {
+                holder.lastMessageCheckMark.visibility = View.GONE
             }
         } else {
             holder.lastMessageCheckMark.visibility = View.GONE
