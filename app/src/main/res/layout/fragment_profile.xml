@@ -9,7 +9,7 @@
         android:clickable="true"
         android:focusable="true"
 >
-    <com.tagme.CustomNestedScrollView
+    <com.tagme.presentation.views.CustomNestedScrollView
             android:id="@+id/profile_nested_scroll_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -274,7 +274,7 @@
             />
 
         </LinearLayout>
-    </com.tagme.CustomNestedScrollView>
+    </com.tagme.presentation.views.CustomNestedScrollView>
     <View
             android:id="@+id/dark_overlay"
             android:layout_width="match_parent"

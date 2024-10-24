@@ -471,7 +471,7 @@
     <!-- Messages Fragment Overlay -->
     <androidx.fragment.app.FragmentContainerView
             android:id="@+id/conversations_fragment"
-            android:name="com.tagme.ConversationsFragment"
+            android:name="com.tagme.presentation.views.fragments.ConversationsFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_constraintBottom_toTopOf="@id/bottom_buttons_overlay"
@@ -482,21 +482,21 @@
     <!-- Geo Story Creation Fragment Overlay -->
     <androidx.fragment.app.FragmentContainerView
             android:id="@+id/geo_story_creation_fragment"
-            android:name="com.tagme.GeoStoryCreationFragment"
+            android:name="com.tagme.presentation.views.fragments.GeoStoryCreationFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
     />
     <!-- Geo Story View Fragment Overlay -->
     <androidx.fragment.app.FragmentContainerView
             android:id="@+id/geo_story_view_fragment"
-            android:name="com.tagme.GeoStoryViewFragment"
+            android:name="com.tagme.presentation.views.fragments.GeoStoryViewFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
     />
     <!-- Profile Fragment Overlay -->
     <androidx.fragment.app.FragmentContainerView
             android:id="@+id/profile_fragment"
-            android:name="com.tagme.ProfileFragment"
+            android:name="com.tagme.presentation.views.fragments.ProfileFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_constraintBottom_toTopOf="@id/bottom_buttons_overlay"

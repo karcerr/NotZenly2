@@ -14,7 +14,7 @@
             android:clickable="true"
             android:focusable="true"
     >
-    <com.tagme.CustomNestedScrollView
+    <com.tagme.presentation.views.CustomNestedScrollView
             android:id="@+id/profile_nested_scroll_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -474,7 +474,7 @@
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
-        </com.tagme.CustomNestedScrollView>
+        </com.tagme.presentation.views.CustomNestedScrollView>
         <Space android:layout_width="wrap_content" android:layout_height="0dp" android:layout_weight="1"/>
         <TextView
                 android:id="@+id/friends_since"
@@ -490,7 +490,7 @@
                 android:visibility="gone"
         />
     </LinearLayout>
-        <View
+    <View
                 android:id="@+id/dark_overlay"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -498,7 +498,7 @@
                 android:visibility="gone"
         />
 
-        <LinearLayout
+    <LinearLayout
                 android:id="@+id/are_you_sure_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
