@@ -92,11 +92,9 @@ class LeaderboardFragment : Fragment() {
                 yourPlaceLayout.visibility = View.VISIBLE
                 val myPictureImageView: ShapeableImageView = view.findViewById(R.id.your_picture_image_view)
 
-                if (viewModel.getMyPfpId() != 0) {
-                    val bitmap = viewModel.getPictureData(viewModel.getMyPfpId())
-                    if (bitmap != null) {
-                        myPictureImageView.setImageBitmap(bitmap)
-                    }
+                val bitmap = viewModel.getPictureData(viewModel.myUserId)
+                if (bitmap != null) {
+                    myPictureImageView.setImageBitmap(bitmap)
                 }
             } else {
                 isSelfLayoutVisible = false

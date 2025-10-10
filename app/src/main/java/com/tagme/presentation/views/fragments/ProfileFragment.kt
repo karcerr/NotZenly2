@@ -93,13 +93,11 @@ class ProfileFragment : Fragment() {
             nicknameText.text = nickname
         }
         myTagCounter.text = getString(R.string.tag_counter_format, viewModel.tagCounter.value)
-        if (viewModel.getMyPfpId() != 0) {
-            coroutineScope.launch {
-                val bitmap = viewModel.getPictureData(viewModel.getMyPfpId())
-                if (bitmap != null) {
-                    myProfilePic.setImageBitmap(bitmap)
-                    addPfpPic.visibility = View.GONE
-                }
+        coroutineScope.launch {
+            val bitmap = viewModel.getPictureData(viewModel.myUserId)
+            if (bitmap != null) {
+                myProfilePic.setImageBitmap(bitmap)
+                addPfpPic.visibility = View.GONE
             }
         }
 

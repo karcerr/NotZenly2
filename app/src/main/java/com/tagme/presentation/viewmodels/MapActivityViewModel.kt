@@ -33,7 +33,6 @@ import org.json.JSONObject
 import org.osmdroid.util.GeoPoint
 import java.sql.Timestamp
 import javax.inject.Inject
-import kotlin.collections.set
 import kotlin.coroutines.resume
 
 @HiltViewModel
@@ -49,7 +48,8 @@ class MapActivityViewModel @Inject constructor(
     lateinit var myLongitude: String
     private var selfLocationUpdateRunnable: Runnable? = null
     private var selfLocationUpdateHandler: Handler? = null
-    private var fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(application)
+    private var fusedLocationClient: FusedLocationProviderClient =
+        LocationServices.getFusedLocationProviderClient(application)
 
     private val _tagCounter = MutableLiveData<Int>()
     val tagCounter: LiveData<Int> get() = _tagCounter
@@ -129,6 +129,7 @@ class MapActivityViewModel @Inject constructor(
             }
         }
     }
+
     fun updateFriendRequestsAndFriendsWS() {
         viewModelScope.launch {
             api.getFriendRequestsFromWS()
@@ -141,12 +142,14 @@ class MapActivityViewModel @Inject constructor(
             _friendsData.postValue(updatedFriends)
         }
     }
+
     fun updateMyTagsWS() {
         viewModelScope.launch {
             api.updateMyDataWS()
             _tagCounter.postValue(api.myTags)
         }
     }
+
     fun getMyDataWS() {
         viewModelScope.launch {
             api.getMyDataFromWS()
@@ -180,30 +183,39 @@ class MapActivityViewModel @Inject constructor(
             }
         }
     }
+
     fun resetMyToken() {
         api.myToken = null
     }
+
     fun getInternalStorageSize(): String {
         return api.getInternalStorageSize(application)
     }
+
     fun clearImageInternalStorage() {
         api.clearImageInternalStorage(application)
     }
+
     fun getFriendRequestsNotificationsEnabled(): Boolean {
         return api.friendRequestsNotificationsEnabled
     }
+
     fun setFriendRequestsNotificationsEnabled(value: Boolean) {
         api.friendRequestsNotificationsEnabled = value
     }
+
     fun getMessagesNotificationsEnabled(): Boolean {
         return api.messagesNotificationsEnabled
     }
+
     fun setMessagesNotificationsEnabled(value: Boolean) {
         api.messagesNotificationsEnabled = value
     }
+
     fun getPrivacyNearbyEnabled(): Boolean {
         return api.privacyNearbyEnabled
     }
+
     suspend fun setPrivacyNearbyEnabled(value: Boolean) {
         api.updatePrivacyNearby(value)
     }
@@ -218,15 +230,19 @@ class MapActivityViewModel @Inject constructor(
     fun getLeaderBoardData(): List<LeaderBoardData>? {
         return api.getLeaderBoardData()
     }
+
     fun getConversationsDataList(): List<ConversationData> {
         return api.getConversationsDataList()
     }
+
     fun getFriendRequestDataList(): List<FriendRequestData> {
         return api.getFriendRequestDataList()
     }
+
     fun getFriendDataList(): List<FriendData> {
         return api.getFriendsData()
     }
+
     suspend fun postGeoStory(imageHandler: ImageHandler, privacy: String): JSONObject? {
         if (!imageHandler.isImageCompressed())
             return null
@@ -243,13 +259,13 @@ class MapActivityViewModel @Inject constructor(
         )
         return result
     }
+
     suspend fun updatePfpPic(imageHandler: ImageHandler): Boolean {
         api.insertPictureIntoWS(imageHandler.getOutputStream())
         if (api.lastInsertedPicId != 0) {
             val message = api.setProfilePictureWS(api.lastInsertedPicId)?.getString("message")
             if (message == "success") {
-                api.myPfpId = api.lastInsertedPicId
-                customOverlaySelf!!.updateDrawable(BitmapDrawable(resources, api.getPictureData(api.myPfpId)))
+                customOverlaySelf!!.updateDrawable(BitmapDrawable(resources, api.getPictureData(api.myUserId)))
                 return true
             }
         }
@@ -259,24 +275,31 @@ class MapActivityViewModel @Inject constructor(
     suspend fun sendFriendRequestToWS(nickname: String): JSONObject? {
         return api.sendFriendRequestToWS(nickname)
     }
+
     suspend fun denyFriendRequest(userId: Int): JSONObject? {
         return api.denyFriendRequest(userId)
     }
+
     suspend fun cancelFriendRequestWS(userId: Int): JSONObject? {
         return api.cancelFriendRequest(userId)
     }
+
     suspend fun blockUserWS(userId: Int): JSONObject? {
         return api.blockUserWS(userId)
     }
+
     suspend fun unblockUserWS(userId: Int): JSONObject? {
         return api.unblockUserWS(userId)
     }
+
     suspend fun deleteFriendWS(userId: Int): JSONObject? {
         return api.deleteFriendWS(userId)
     }
+
     suspend fun cancelFriendRequest(userId: Int): JSONObject? {
         return api.cancelFriendRequest(userId)
     }
+
     suspend fun acceptFriendRequest(userId: Int): JSONObject? {
         return api.acceptFriendRequest(userId)
     }
@@ -284,55 +307,72 @@ class MapActivityViewModel @Inject constructor(
     suspend fun loadProfileFromWS(userId: Int): JSONObject? {
         return api.loadProfileFromWS(userId)
     }
+
     suspend fun sendMessageToWS(conversationId: Int, text: String): JSONObject? {
         return api.sendMessageToWS(conversationId, text)
     }
+
     suspend fun getMessagesFromWS(conversationId: Int): ConversationData? {
         api.getMessagesFromWS(conversationId)
         return api.getConversationData(conversationId)
     }
+
     suspend fun getConversationsFromWS(): List<ConversationData> {
         api.getConversationsFromWS()
         return api.getConversationsDataList()
     }
+
     suspend fun readConversationWS(conversationId: Int) {
         api.readConversationWS(conversationId)
 
     }
+
     suspend fun deleteConversationWS(conversationId: Int) {
         api.deleteConversationWS(conversationId)
     }
+
     suspend fun changeNickname(newNickname: String): JSONObject? {
         return api.changeNickname(newNickname)
     }
+
     suspend fun getLeaderBoardFromWS() {
         api.getLeaderBoardFromWS()
     }
+
     suspend fun getNearbyPeople() {
         api.getNearbyPeople()
     }
+
     fun getNearbyPeopleData(): List<UserNearbyData>? {
         return api.getNearbyPeopleData()
     }
+
     fun togglePinnedStatus(conversationId: Int) {
         api.togglePinnedStatus(conversationId)
     }
+
     fun toggleMarkedUnreadStatus(conversationId: Int) {
         api.toggleMarkedUnreadStatus(conversationId)
     }
+
     fun disableMarkedUnreadStatus(conversationId: Int) {
         api.disableMarkedUnreadStatus(conversationId)
     }
+
     fun clearNotificationsForConversation(conversationId: Int) {
         api.clearNotificationsForConversation(conversationId)
     }
 
-    fun startPassiveUpdates(){
+    fun startPassiveUpdates() {
         selfLocationUpdateHandler = Handler(Looper.getMainLooper())
-        selfLocationUpdateRunnable?.let { selfLocationUpdateHandler?.postDelayed(it,
-            2000L
-        ) }
+        selfLocationUpdateRunnable?.let {
+            selfLocationUpdateHandler?.postDelayed(
+                it,
+                2000L
+            )
+        }
     }
+
     init {
         myUserId = api.myUserId
         selfLocationUpdateRunnable = Runnable {
@@ -355,6 +395,7 @@ class MapActivityViewModel @Inject constructor(
             }
         }
     }
+
     fun stopActiveUpdates() {
         isActive = false
         activeUpdatesJob?.cancel()
@@ -375,21 +416,27 @@ class MapActivityViewModel @Inject constructor(
             true,
 
             clickListener = { selfOverlay ->
-                _centerMapAnimatedEvent.postValue(CustomIconOverlayEvent(selfOverlay, api.myUserId, isCenterTargetUser = true, withZoom = false))
+                _centerMapAnimatedEvent.postValue(
+                    CustomIconOverlayEvent(
+                        selfOverlay,
+                        api.myUserId,
+                        isCenterTargetUser = true,
+                        withZoom = false
+                    )
+                )
             }
         )
         customOverlaySelf?.let {
             _addOverlayEvent.postValue(it)
         }
         viewModelScope.launch(Dispatchers.Main) {
-            if (api.myPfpId != 0) {
-                val bitmap = api.getPictureData(api.myPfpId)
-                if (bitmap != null) {
-                    customOverlaySelf!!.updateDrawable(BitmapDrawable(resources, bitmap))
-                }
+            val bitmap = api.getPictureData(api.myUserId)
+            if (bitmap != null) {
+                customOverlaySelf!!.updateDrawable(BitmapDrawable(resources, bitmap))
             }
         }
     }
+
     private fun updateFriendOverlays(friendsData: List<FriendData>) {
         val outdatedIds = friendOverlays.keys - friendsData.map { it.userData.userId }.toSet()
         outdatedIds.forEach { id ->
@@ -406,7 +453,14 @@ class MapActivityViewModel @Inject constructor(
                     overlay.setLocation(GeoPoint(location.latitude, location.longitude))
                     overlay.setSpeed(location.speed)
                     if (centeredTargetId == overlay.getUserId() && isCenteredUser) {
-                        _centerMapAnimatedEvent.postValue(CustomIconOverlayEvent(overlay, friend.userData.userId, isCenterTargetUser = true, withZoom = false))
+                        _centerMapAnimatedEvent.postValue(
+                            CustomIconOverlayEvent(
+                                overlay,
+                                friend.userData.userId,
+                                isCenterTargetUser = true,
+                                withZoom = false
+                            )
+                        )
                     }
                 } else {
                     val friendLocation = GeoPoint(friend.location!!.latitude, friend.location!!.longitude)
@@ -421,7 +475,14 @@ class MapActivityViewModel @Inject constructor(
                         myFont,
                         isFocusedOn = false,
                         clickListener = { friendOverlay ->
-                            _centerMapAnimatedEvent.postValue(CustomIconOverlayEvent(friendOverlay, friend.userData.userId, isCenterTargetUser = true, withZoom = false))
+                            _centerMapAnimatedEvent.postValue(
+                                CustomIconOverlayEvent(
+                                    friendOverlay,
+                                    friend.userData.userId,
+                                    isCenterTargetUser = true,
+                                    withZoom = false
+                                )
+                            )
                         }
                     )
                     friendOverlays[friend.userData.userId] = newOverlay
@@ -441,6 +502,7 @@ class MapActivityViewModel @Inject constructor(
 
         _addOverlaysEvent.postValue(overlaysToAdd)
     }
+
     private fun updateGeoStoryOverlays(geoStoryData: List<GeoStoryData>) {
         val outdatedIds = geoStoryOverlays.keys - geoStoryData.map { it.geoStoryId }.toSet()
         outdatedIds.forEach { id ->
@@ -467,7 +529,14 @@ class MapActivityViewModel @Inject constructor(
                     myFont,
                     false,
                     clickListener = { geoStoryOverlay ->
-                        _centerMapAnimatedEvent.postValue(CustomIconOverlayEvent(geoStoryOverlay, geoStory.geoStoryId, isCenterTargetUser = false, withZoom = false))
+                        _centerMapAnimatedEvent.postValue(
+                            CustomIconOverlayEvent(
+                                geoStoryOverlay,
+                                geoStory.geoStoryId,
+                                isCenterTargetUser = false,
+                                withZoom = false
+                            )
+                        )
                     }
                 )
 
@@ -488,8 +557,9 @@ class MapActivityViewModel @Inject constructor(
     }
 
     fun getGeoStoryData(geoStoryId: Int): GeoStoryData? {
-        return api.getGeoStoriesDataList().find {it.geoStoryId == geoStoryId}
+        return api.getGeoStoriesDataList().find { it.geoStoryId == geoStoryId }
     }
+
     fun openGeoStory(geoStoryData: GeoStoryData, geoStoryViewFragment: GeoStoryViewFragment, context: Context) {
         viewModelScope.launch {
             api.markGeoStoryViewed(geoStoryData.geoStoryId)
@@ -504,9 +574,12 @@ class MapActivityViewModel @Inject constructor(
             if (bitmapPfp != null) {
                 geoStoryViewFragment.userPicture.setImageBitmap(bitmapPfp)
             } else {
-                geoStoryViewFragment.userPicture.setImageDrawable(ContextCompat.getDrawable(context,
-                    R.drawable.person_placeholder
-                ))
+                geoStoryViewFragment.userPicture.setImageDrawable(
+                    ContextCompat.getDrawable(
+                        context,
+                        R.drawable.person_placeholder
+                    )
+                )
             }
 
             val bitmapGeo = api.getPictureData(geoStoryData.pictureId)
@@ -517,12 +590,15 @@ class MapActivityViewModel @Inject constructor(
             geoStoryActionListener.onGeoStoryOpened(geoStoryViewFragment)
         }
     }
+
     suspend fun getPictureData(userId: Int): Bitmap? {
         return api.getPictureData(userId)
     }
+
     fun setGeoStoryActionListener(listener: GeoStoryActionListener) {
         geoStoryActionListener = listener
     }
+
     interface GeoStoryActionListener {
         fun onGeoStoryOpened(geoStoryViewFragment: GeoStoryViewFragment)
     }
@@ -536,12 +612,11 @@ class MapActivityViewModel @Inject constructor(
             else -> "${duration.toHours()} hours ago"
         }
     }
+
     fun getMyId(): Int {
         return api.myUserId
     }
-    fun getMyPfpId(): Int {
-        return api.myPfpId
-    }
+
     fun isPrivacyNearbyEnabled(): Boolean {
         return api.privacyNearbyEnabled
     }
@@ -576,6 +651,7 @@ class MapActivityViewModel @Inject constructor(
             }
         }
     }
+
     fun parseAndConvertTimestamp(timeStampString: String): Timestamp {
         return api.parseAndConvertTimestamp(timeStampString)
     }

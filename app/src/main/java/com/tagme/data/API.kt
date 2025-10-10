@@ -102,11 +102,6 @@ class API @Inject constructor(
         set(value) {
             sharedPreferences.edit().putInt("TAGS", value).apply()
         }
-    var myPfpId: Int
-        get() = sharedPreferences.getInt("PfpId", 0)
-        set(value) {
-            sharedPreferences.edit().putInt("PfpId", value).apply()
-        }
     var myPlace: Int
         get() = sharedPreferences.getInt("place", 999)
         set(value) {
@@ -473,6 +468,7 @@ class API @Inject constructor(
     }
 
     suspend fun setProfilePictureWS(picId: Int): JSONObject? {
+        if (isFakeMode) return JSONObject("success")
         val requestData = JSONObject().apply {
             put("action", "set profile picture")
             put("token", myToken)
@@ -635,14 +631,14 @@ class API @Inject constructor(
                 val timestamp = parseAndConvertTimestamp(timestampString)
 
                 if (existingFriend != null)
-                friendDao.upsertFriend(
-                    friend = FriendEntity(
-                        id = id,
-                        nickname = existingFriend.userData.nickname,
-                        latitude = latitude,
-                        longitude = longitude,
+                    friendDao.upsertFriend(
+                        friend = FriendEntity(
+                            id = id,
+                            nickname = existingFriend.userData.nickname,
+                            latitude = latitude,
+                            longitude = longitude,
+                        )
                     )
-                )
             }
         }
     }
@@ -666,13 +662,11 @@ class API @Inject constructor(
 
     private fun parseMyData(myData: JSONObject) {
         val userId = myData.getInt("user_id")
-        val picId = myData.optInt("picture_id", 0)
         val nickname = myData.getString("nickname")
         val tags = myData.getInt("user_score")
         val privacyNearby = myData.getBoolean("show_nearby")
 
         myUserId = userId
-        myPfpId = picId
         myTags = tags
         myNickname = nickname
         privacyNearbyEnabled = privacyNearby
@@ -994,9 +988,7 @@ class API @Inject constructor(
     }
 
     suspend fun getPictureData(userId: Int): Bitmap? {
-        if (userId == 0) return null
-
-        val picEntity = imageDao.getImagesForUser(userId)
+        val picEntity = imageDao.getImagesForUser(if (userId == 0) myUserId else userId)
             .firstOrNull() ?: return null
 
         return BitmapFactory.decodeFile(picEntity.uri)
@@ -1178,6 +1170,10 @@ class API @Inject constructor(
                 parseInsertedPictureId(context, newId.toString())
             }
 
+            "get my data" -> {
+                simulateMyInfoResponse()
+            }
+
             "get picture" -> {
                 val picturesJson = simulateGetPicturesResponse()
                 response.put("message", picturesJson.toString())
@@ -1214,8 +1210,8 @@ class API @Inject constructor(
 
     private fun simulateGetFriendsResponse(): JSONObject {
         val friendsJsonArray = JSONArray().apply {
-            put(JSONObject().apply { put("user_id", 1); put("nickname", "Friend")})
-            put(JSONObject().apply { put("user_id", 2); put("nickname", "Enemy")})
+            put(JSONObject().apply { put("user_id", 1); put("nickname", "Friend") })
+            put(JSONObject().apply { put("user_id", 2); put("nickname", "Enemy") })
             put(JSONObject().apply { put("user_id", 3); put("nickname", "Enemy 2") })
             put(JSONObject().apply { put("user_id", 4); put("nickname", "Dimitriy") })
         }
@@ -1306,6 +1302,17 @@ class API @Inject constructor(
         }
 
         parseFriendLocationsData(locationsJson.toString())
+    }
+
+    private fun simulateMyInfoResponse() {
+        val myData = JSONObject().apply {
+            put("user_id", 0)
+            put("nickname", "Ромчик, ИПО-4")
+            put("user_score", 1)
+            put("show_nearby", true)
+        }
+
+        parseMyData(myData)
     }
 
     suspend fun addFriend(friend: FriendData) {
