@@ -40,7 +40,7 @@ class SearchedFriendsAdapter(
     fun updateData(newFriends: List<FriendData>) {
         val diffCallback = FriendsDiffCallback(friends, newFriends)
         val diffResult = DiffUtil.calculateDiff(diffCallback)
-        friends = newFriends.map {it.copy()}.toMutableList()
+        friends = newFriends.map { it.copy() }.toMutableList()
         diffResult.dispatchUpdatesTo(this)
     }
 
@@ -52,12 +52,11 @@ class SearchedFriendsAdapter(
         private val friendLayout: LinearLayout = itemView.findViewById(R.id.friend_layout)
         fun bind(friend: FriendData) {
             nicknameTextView.text = friend.userData.nickname
-            if (friend.userData.profilePictureId != 0) {
-                viewModel.viewModelScope.launch {
-                    val bitmap = viewModel.getPictureData(friend.userData.profilePictureId)
-                    if (bitmap != null) {
-                        imageView.setImageBitmap(bitmap)
-                    }
+
+            viewModel.viewModelScope.launch {
+                val bitmap = viewModel.getPictureData(friend.userData.userId)
+                if (bitmap != null) {
+                    imageView.setImageBitmap(bitmap)
                 }
             }
             friendLayout.setOnClickListener {
@@ -83,7 +82,8 @@ class SearchedFriendsAdapter(
                 }
             }
             textFriendButton.setOnClickListener {
-                val conversation = viewModel.conversationsData.value?.find { it.userData.userId == friend.userData.userId }
+                val conversation =
+                    viewModel.conversationsData.value?.find { it.userData.userId == friend.userData.userId }
                 if (conversation != null) {
                     val conversationFragment =
                         ConversationFragment.newInstance(conversation.conversationID, conversation.userData.nickname)

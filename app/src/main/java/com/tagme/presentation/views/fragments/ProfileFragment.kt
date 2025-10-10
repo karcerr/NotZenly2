@@ -89,7 +89,7 @@ class ProfileFragment : Fragment() {
 
         imageHandler = ImageHandler(mapActivity, myProfilePic, addPfpPic, compressingStatus, false, 600, 600, 40f)
         imageHandler.initImagePickerLauncher(this)
-        viewModel.myNickname.observe(viewLifecycleOwner) {nickname ->
+        viewModel.myNickname.observe(viewLifecycleOwner) { nickname ->
             nicknameText.text = nickname
         }
         myTagCounter.text = getString(R.string.tag_counter_format, viewModel.tagCounter.value)
@@ -119,7 +119,8 @@ class ProfileFragment : Fragment() {
             viewModel.getFriendRequestDataList().toMutableList(),
             viewModel,
             friendAdapter,
-            mapActivity)
+            mapActivity
+        )
         friendRequestsRecyclerView.adapter = friendRequestAdapter
         friendRequestsRecyclerView.layoutManager = MyLinearLayoutManager(mapActivity)
         addFriendButton.setOnClickListener {
@@ -140,7 +141,7 @@ class ProfileFragment : Fragment() {
             nicknameChangeStatusText.visibility = View.INVISIBLE
             hideKeyboard()
         }
-        sendRequestButton.setOnClickListener{
+        sendRequestButton.setOnClickListener {
             val nickname = requestInput.text.toString()
             if (nickname.isEmpty()) {
                 requestStatusText.visibility = View.INVISIBLE
@@ -175,7 +176,7 @@ class ProfileFragment : Fragment() {
                 }
             }
         }
-        changeNicknameButton2.setOnClickListener{
+        changeNicknameButton2.setOnClickListener {
             val nickname = changeNicknameInput.text.toString()
             if (nickname.isEmpty()) {
                 requestStatusText.visibility = View.INVISIBLE
@@ -232,11 +233,12 @@ class ProfileFragment : Fragment() {
                 .addToBackStack(null)
                 .commit()
         }
-        backButton.setOnClickListener{
+        backButton.setOnClickListener {
             mapActivity.onBackPressedDispatcher.onBackPressed()
         }
         return view
     }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         friendRequestUpdateRunnable = Runnable {
@@ -249,11 +251,15 @@ class ProfileFragment : Fragment() {
         }
         startFriendRequestsUpdates()
     }
+
     private fun startFriendRequestsUpdates() {
         friendRequestUpdateHandler = Handler(Looper.getMainLooper())
-        friendRequestUpdateRunnable?.let { friendRequestUpdateHandler?.postDelayed(it,
-            friendRequestInterval
-        ) }
+        friendRequestUpdateRunnable?.let {
+            friendRequestUpdateHandler?.postDelayed(
+                it,
+                friendRequestInterval
+            )
+        }
     }
 }
 
@@ -262,9 +268,10 @@ class MyLinearLayoutManager(context: Context) : LinearLayoutManager(context) {
         return false
     }
 }
+
 class FriendAdapter(
     private val context: Context,
-    private var friendList: MutableList<FriendData>,
+    private var friendList: List<FriendData>,
     private val viewModel: MapActivityViewModel,
     private val mapActivity: MapActivity,
 ) : RecyclerView.Adapter<FriendAdapter.FriendViewHolder>() {
@@ -276,6 +283,7 @@ class FriendAdapter(
         val messageButton: ImageButton = itemView.findViewById(R.id.text_friend_button)
         val coroutineScope = CoroutineScope(Dispatchers.Main)
     }
+
     fun updateData(newFriendList: List<FriendData>) {
         val diffResult = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
             override fun getOldListSize(): Int {
@@ -297,9 +305,10 @@ class FriendAdapter(
                 return didChange
             }
         })
-        friendList = newFriendList.map {it.copy()}.toMutableList()
+        friendList = newFriendList.map { it.copy() }.toMutableList()
         diffResult.dispatchUpdatesTo(this)
     }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FriendViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.friend_item, parent, false)
         return FriendViewHolder(view)
@@ -312,14 +321,13 @@ class FriendAdapter(
         val drawablePlaceholder = ContextCompat.getDrawable(context, R.drawable.person_placeholder)
         holder.pictureImageView.setImageDrawable(drawablePlaceholder)
 
-        if (friend.userData.profilePictureId != 0) {
-            holder.coroutineScope.launch {
-                val bitmap = viewModel.getPictureData(friend.userData.profilePictureId)
-                if (bitmap != null) {
-                    holder.pictureImageView.setImageBitmap(bitmap)
-                }
+        holder.coroutineScope.launch {
+            val bitmap = viewModel.getPictureData(friend.userData.userId)
+            if (bitmap != null) {
+                holder.pictureImageView.setImageBitmap(bitmap)
             }
         }
+
 
         holder.friendLayout.setOnClickListener {
             val userProfileFragment = UserProfileFragment.newInstance(friend.userData.userId)
@@ -338,13 +346,14 @@ class FriendAdapter(
                     isCenterTargetUser = true,
                     withZoom = true
                 )
-            mapActivity.onBackPressedDispatcher.onBackPressed()
+                mapActivity.onBackPressedDispatcher.onBackPressed()
             } else {
                 Toast.makeText(context, context.getString(R.string.no_location), Toast.LENGTH_LONG).show()
             }
         }
         holder.messageButton.setOnClickListener {
-            val conversation = viewModel.getConversationsDataList().find { it.userData.userId == friend.userData.userId }
+            val conversation =
+                viewModel.getConversationsDataList().find { it.userData.userId == friend.userData.userId }
             if (conversation != null) {
                 val conversationFragment =
                     ConversationFragment.newInstance(conversation.conversationID, conversation.userData.nickname)
@@ -360,6 +369,7 @@ class FriendAdapter(
         return friendList.size
     }
 }
+
 class FriendRequestAdapter(
     private val context: Context,
     private var requestList: MutableList<FriendRequestData>,
@@ -387,16 +397,21 @@ class FriendRequestAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
             VIEW_TYPE_INCOMING -> {
-                val view = LayoutInflater.from(parent.context).inflate(R.layout.incoming_friend_request_item, parent, false)
+                val view =
+                    LayoutInflater.from(parent.context).inflate(R.layout.incoming_friend_request_item, parent, false)
                 IncomingFriendRequestViewHolder(view)
             }
+
             VIEW_TYPE_OUTGOING -> {
-                val view = LayoutInflater.from(parent.context).inflate(R.layout.outgoing_friend_request_item, parent, false)
+                val view =
+                    LayoutInflater.from(parent.context).inflate(R.layout.outgoing_friend_request_item, parent, false)
                 OutgoingFriendRequestViewHolder(view)
             }
+
             else -> throw IllegalArgumentException("Invalid view type")
         }
     }
+
     fun updateData(newRequestList: List<FriendRequestData>) {
         val diffResult = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
             override fun getOldListSize(): Int {
@@ -418,18 +433,23 @@ class FriendRequestAdapter(
                 return didChange
             }
         })
-        requestList = newRequestList.map {it.copy()}.toMutableList()
+        requestList = newRequestList.map { it.copy() }.toMutableList()
         diffResult.dispatchUpdatesTo(this)
 
         val hasUIncomingRequests = requestList.any { it.relation == "request_incoming" }
-        mapActivity.newRequestIcon.visibility = if (hasUIncomingRequests) View.VISIBLE else { View.INVISIBLE }
-        mapActivity.profileFragment.friendRequestsHeader.visibility = if (requestList.isEmpty()) View.GONE else View.VISIBLE
+        mapActivity.newRequestIcon.visibility = if (hasUIncomingRequests) View.VISIBLE else {
+            View.INVISIBLE
+        }
+        mapActivity.profileFragment.friendRequestsHeader.visibility =
+            if (requestList.isEmpty()) View.GONE else View.VISIBLE
     }
+
     private fun removeItem(position: Int) {
         requestList.removeAt(position)
         notifyItemRemoved(position)
         notifyItemRangeChanged(position, requestList.size)
-        mapActivity.profileFragment.friendRequestsHeader.visibility = if (requestList.isEmpty()) View.GONE else View.VISIBLE
+        mapActivity.profileFragment.friendRequestsHeader.visibility =
+            if (requestList.isEmpty()) View.GONE else View.VISIBLE
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
@@ -449,12 +469,10 @@ class FriendRequestAdapter(
                         .commit()
                 }
                 holder.pictureImageView.setImageDrawable(drawablePlaceholder)
-                if (requestee.userData.profilePictureId != 0) {
-                    incomingHolder.coroutineScope.launch {
-                        val bitmap = viewModel.getPictureData(requestee.userData.profilePictureId)
-                        if (bitmap != null) {
-                            incomingHolder.pictureImageView.setImageBitmap(bitmap)
-                        }
+                incomingHolder.coroutineScope.launch {
+                    val bitmap = viewModel.getPictureData(requestee.userData.userId)
+                    if (bitmap != null) {
+                        incomingHolder.pictureImageView.setImageBitmap(bitmap)
                     }
                 }
 
@@ -485,6 +503,7 @@ class FriendRequestAdapter(
                     }
                 }
             }
+
             VIEW_TYPE_OUTGOING -> {
                 val outgoingHolder = holder as OutgoingFriendRequestViewHolder
                 outgoingHolder.nameTextView.text = requestee.userData.nickname
@@ -497,12 +516,10 @@ class FriendRequestAdapter(
                         .commit()
                 }
                 holder.pictureImageView.setImageDrawable(drawablePlaceholder)
-                if (requestee.userData.profilePictureId != 0) {
-                    outgoingHolder.coroutineScope.launch {
-                        val bitmap = viewModel.getPictureData(requestee.userData.profilePictureId)
-                        if (bitmap != null) {
-                            outgoingHolder.pictureImageView.setImageBitmap(bitmap)
-                        }
+                outgoingHolder.coroutineScope.launch {
+                    val bitmap = viewModel.getPictureData(requestee.userData.userId)
+                    if (bitmap != null) {
+                        outgoingHolder.pictureImageView.setImageBitmap(bitmap)
                     }
                 }
                 outgoingHolder.cancelButton.setOnClickListener { view ->
@@ -524,6 +541,7 @@ class FriendRequestAdapter(
     override fun getItemCount(): Int {
         return requestList.size
     }
+
     override fun getItemViewType(position: Int): Int {
         val friend = requestList[position]
         return if (friend.relation == "request_incoming") {
@@ -532,6 +550,7 @@ class FriendRequestAdapter(
             VIEW_TYPE_OUTGOING
         }
     }
+
     companion object {
         private const val VIEW_TYPE_INCOMING = 0
         private const val VIEW_TYPE_OUTGOING = 1

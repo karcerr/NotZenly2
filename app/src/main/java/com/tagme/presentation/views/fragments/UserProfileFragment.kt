@@ -118,7 +118,7 @@ class UserProfileFragment : Fragment() {
                 val message = JSONObject(result.getString("message"))
                 val relation = message.optString("relation")
                 pfpId = message.optInt("picture_id", 0)
-                nickname = message.getString("nickname")
+                nickname = message.optString("nickname", "Marker")
                 nicknameTextView.text = nickname
                 tagCounter.text = getString(R.string.tag_counter_format, message.optInt("user_score", 0))
                 setPic(pfpId)

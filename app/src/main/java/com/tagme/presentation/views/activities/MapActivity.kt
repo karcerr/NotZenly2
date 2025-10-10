@@ -12,6 +12,7 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.text.method.LinkMovementMethod
 import android.transition.Slide
+import android.util.Log
 import android.view.*
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.Animation
@@ -63,10 +64,10 @@ import java.lang.ref.WeakReference
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewModel.GeoStoryActionListener {
+class MapActivity @Inject constructor() : AppCompatActivity(), MapActivityViewModel.GeoStoryActionListener {
     val viewModel: MapActivityViewModel by viewModels()
 
-    private lateinit var map : MapView
+    private lateinit var map: MapView
     private lateinit var mapController: IMapController
     private lateinit var binding: MapActivityBinding
     private lateinit var centralizeButtonFrame: FrameLayout
@@ -105,13 +106,13 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
     private var _centeredOverlay: CustomIconOverlay? = null
     var centeredOverlay: CustomIconOverlay?
         get() = _centeredOverlay
-    set(value) {
-        if (_centeredOverlay != value) {
-            _centeredOverlay?.setSize(100)
-            _centeredOverlay = value
-            centeredOverlay?.setSize(150)
+        set(value) {
+            if (_centeredOverlay != value) {
+                _centeredOverlay?.setSize(100)
+                _centeredOverlay = value
+                centeredOverlay?.setSize(150)
+            }
         }
-    }
     lateinit var coroutineScope: CoroutineScope
 
     private var scaleFactor = 15.0
@@ -125,10 +126,11 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
     //these are for storing friends and drawing overlays:
     lateinit var friendOverlays: MutableMap<Int, CustomIconOverlay>
     lateinit var geoStoryOverlays: MutableMap<Int, CustomIconOverlay>
-    lateinit var fragmentManager : FragmentManager
+    lateinit var fragmentManager: FragmentManager
     private val handler = Handler(Looper.getMainLooper())
     private var lastBackPressedTime: Long = 0
     private val exitHandler = Handler(Looper.getMainLooper())
+
     companion object {
         private var currentInstance: WeakReference<MapActivity?> = WeakReference(null)
 
@@ -152,6 +154,7 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
             }
         }
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         coroutineScope = CoroutineScope(Dispatchers.Main)
@@ -203,13 +206,15 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
         fragmentManager = supportFragmentManager
         conversationsFragment = fragmentManager.findFragmentById(R.id.conversations_fragment) as ConversationsFragment
         profileFragment = fragmentManager.findFragmentById(R.id.profile_fragment) as ProfileFragment
-        geoStoryCreation = fragmentManager.findFragmentById(R.id.geo_story_creation_fragment) as GeoStoryCreationFragment
+        geoStoryCreation =
+            fragmentManager.findFragmentById(R.id.geo_story_creation_fragment) as GeoStoryCreationFragment
         geoStoryView = fragmentManager.findFragmentById(R.id.geo_story_view_fragment) as GeoStoryViewFragment
         overlappedIconsAdapter = OverlappedIconsAdapter(this, mutableListOf(), viewModel)
         recyclerView = findViewById(R.id.overlapped_icons_recyclerview)
         recyclerView.adapter = overlappedIconsAdapter
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-        copyrightOSV.text = HtmlCompat.fromHtml(getText(R.string.openstreetview).toString(), HtmlCompat.FROM_HTML_MODE_LEGACY)
+        copyrightOSV.text =
+            HtmlCompat.fromHtml(getText(R.string.openstreetview).toString(), HtmlCompat.FROM_HTML_MODE_LEGACY)
         copyrightOSV.movementMethod = (LinkMovementMethod.getInstance())
         val transaction = fragmentManager.beginTransaction()
         transaction.hide(profileFragment)
@@ -237,7 +242,7 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
         gpsMyLocationProvider.locationUpdateMinTime = 1000 // 1 sec
 
 
-        val mLocationOverlay = object:  MyLocationNewOverlay(gpsMyLocationProvider, map) {
+        val mLocationOverlay = object : MyLocationNewOverlay(gpsMyLocationProvider, map) {
             override fun onLocationChanged(location: Location?, source: IMyLocationProvider?) {
                 super.onLocationChanged(location, source)
 
@@ -249,7 +254,14 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
                             viewModel.customOverlaySelf?.setSpeed(location.speed)
                         }
                         if (centeredTargetId == viewModel.getMyId() && isCenteredUser) {
-                            viewModel.customOverlaySelf?.let { centralizeMapAnimated(viewModel.customOverlaySelf!!, centeredTargetId, isCenterTargetUser = true, withZoom = true) }
+                            viewModel.customOverlaySelf?.let {
+                                centralizeMapAnimated(
+                                    viewModel.customOverlaySelf!!,
+                                    centeredTargetId,
+                                    isCenterTargetUser = true,
+                                    withZoom = true
+                                )
+                            }
                         }
                     }
                 }
@@ -279,7 +291,8 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
                     if (currentTime - lastBackPressedTime < 3000) {
                         moveTaskToBack(true)
                     } else {
-                        Toast.makeText(this@MapActivity, getString(R.string.press_back_again), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MapActivity, getString(R.string.press_back_again), Toast.LENGTH_SHORT)
+                            .show()
                         lastBackPressedTime = currentTime
                         exitHandler.postDelayed({ lastBackPressedTime = 0 }, 3000)
                     }
@@ -287,8 +300,15 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
             }
         }
         viewModel.handleIntent(intent)
-        centralizeButtonFrame.setOnClickListener{
-            viewModel.customOverlaySelf?.let { centralizeMapAnimated(viewModel.customOverlaySelf!!, viewModel.getMyId(), isCenterTargetUser = true, withZoom = true) }
+        centralizeButtonFrame.setOnClickListener {
+            viewModel.customOverlaySelf?.let {
+                centralizeMapAnimated(
+                    viewModel.customOverlaySelf!!,
+                    viewModel.getMyId(),
+                    isCenterTargetUser = true,
+                    withZoom = true
+                )
+            }
         }
         profileButtonFrame.setOnClickListener {
             viewModel.updateFriendRequestsAndFriendsWS()
@@ -350,7 +370,8 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
 
         transaction.commit()
         if (fragment is ProfileFragment) {
-            fragment.nestedScrollView.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+            fragment.nestedScrollView.viewTreeObserver.addOnGlobalLayoutListener(object :
+                ViewTreeObserver.OnGlobalLayoutListener {
                 override fun onGlobalLayout() {
                     fragment.nestedScrollView.viewTreeObserver.removeOnGlobalLayoutListener(this)
                     fragment.nestedScrollView.scrollTo(0, 0)
@@ -358,7 +379,8 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
             })
         }
     }
-    private fun showSearchLayout(){
+
+    private fun showSearchLayout() {
         isSearchLayoutVisible = true
         setSoftInputMode(false)
         topButtonsOverlay.visibility = View.GONE
@@ -374,7 +396,8 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
             .setInterpolator(AccelerateDecelerateInterpolator())
             .start()
     }
-    fun hideSearchLayout(){
+
+    fun hideSearchLayout() {
         isSearchLayoutVisible = false
         setSoftInputMode(true)
         hideKeyboard()
@@ -399,14 +422,17 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
 
     private fun searchFriends(query: String) {
         val filteredFriends =
-            viewModel.friendsData.value?.filter { it.userData.nickname.contains(query, ignoreCase = true) }?.take(5) ?: listOf()
+            viewModel.friendsData.value?.filter { it.userData.nickname.contains(query, ignoreCase = true) }?.take(5)
+                ?: listOf()
         updateFriendsListView(filteredFriends)
     }
+
     private fun initializeSearchAdapter() {
         searchAdapter = SearchedFriendsAdapter(this, mutableListOf(), viewModel)
         searchedFriendsListView.adapter = searchAdapter
         searchedFriendsListView.layoutManager = MyLinearLayoutManager(this)
     }
+
     private fun updateFriendsListView(friends: List<FriendData>) {
         searchAdapter.updateData(friends)
     }
@@ -416,8 +442,6 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
         setIntent(intent)
         viewModel.handleIntent(intent)
     }
-
-
 
 
     /* Пытался сделать зум по свайпу, не вышло
@@ -456,13 +480,13 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
         targetId: Int,
         isCenterTargetUser: Boolean,
         withZoom: Boolean,
-    ){
+    ) {
         if (!isAnimating) {
             isAnimating = true
             centeredOverlay = overlay
             val intersectedIds = overlay.getIntersectedIds()
             setCenteredTrue(targetId, isCenterTargetUser, intersectedIds)
-            val zoomLevel = if(withZoom) scaleFactor else map.zoomLevelDouble
+            val zoomLevel = if (withZoom) scaleFactor else map.zoomLevelDouble
             mapController.animateTo(overlay.getLocation(), zoomLevel, 500)
             handler.postDelayed({
                 if (targetId == centeredTargetId && isCenteredUser == isCenterTargetUser) { //check if still centered on the same target after 0.5 sec
@@ -473,14 +497,18 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
         }
     }
 
-    private fun centralizeMapInstant(location: GeoPoint, targetId: Int){
+    private fun centralizeMapInstant(location: GeoPoint, targetId: Int) {
         centeredTargetId = targetId
         isCenteredUser = true
         mapController.setCenter(location)
         mapController.setZoom(scaleFactor)
     }
 
-    private fun setCenteredTrue(targetId: Int, isCenteredOnUser: Boolean, intersectedOverlays: MutableSet<Pair<Int, Int>>) {
+    private fun setCenteredTrue(
+        targetId: Int,
+        isCenteredOnUser: Boolean,
+        intersectedOverlays: MutableSet<Pair<Int, Int>>
+    ) {
         centeredTargetId = targetId
         isCenteredUser = isCenteredOnUser
         if (!isUiHidden) {
@@ -496,12 +524,12 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
             clickedViewsAndTimeLayout.visibility = View.GONE
             clickedGeoStoryViewFrame.visibility = View.GONE
             if (targetId != viewModel.getMyId()) {
-                val clickedFriend = viewModel.friendsData.value?.find{it.userData.userId == targetId}
+                val clickedFriend = viewModel.friendsData.value?.find { it.userData.userId == targetId }
                 if (clickedFriend != null) {
                     clickedIconDistanceAndSpeedLayout.visibility = View.VISIBLE
                     clickedFriendNicknameTextView.text = clickedFriend.userData.nickname
                     if (clickedFriend.location != null) {
-                        val speed =( clickedFriend.location!!.speed * 3.6).toInt()
+                        val speed = (clickedFriend.location!!.speed * 3.6).toInt()
                         clickedFriendSpeedTextView.text = getString(R.string.speed_format, speed)
                         val results = FloatArray(1)
                         Location.distanceBetween(
@@ -524,9 +552,13 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
                     }
                     clickedFriendMessageFrame.visibility = View.VISIBLE
                     clickedFriendMessageFrame.setOnClickListener {
-                        val conversation = viewModel.conversationsData.value?.find {it.userData.userId == clickedFriend.userData.userId}
+                        val conversation =
+                            viewModel.conversationsData.value?.find { it.userData.userId == clickedFriend.userData.userId }
                         if (conversation == null) return@setOnClickListener
-                        val conversationFragment = ConversationFragment.newInstance(conversation.conversationID, conversation.userData.nickname)
+                        val conversationFragment = ConversationFragment.newInstance(
+                            conversation.conversationID,
+                            conversation.userData.nickname
+                        )
                         fragmentManager.beginTransaction()
                             .add(R.id.conversations_fragment, conversationFragment)
                             .addToBackStack(null)
@@ -550,7 +582,8 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
                 }
                 clickedIconDistanceAndSpeedLayout.visibility = View.GONE
                 clickedViewsAndTimeLayout.visibility = View.VISIBLE
-                clickedFriendNicknameTextView.text = getString(R.string.geo_story_by_format, geoStory.creatorData.nickname)
+                clickedFriendNicknameTextView.text =
+                    getString(R.string.geo_story_by_format, geoStory.creatorData.nickname)
                 clickedGeoStoryViewsTextView.text = geoStory.views.toString()
 
                 clickedGeoStoryTimeTextView.text = viewModel.getTimeAgoString(geoStory.timestamp)
@@ -597,7 +630,7 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
         animate.fillAfter = true
 
         animate.setAnimationListener(object : Animation.AnimationListener {
-            override fun onAnimationStart(animation: Animation) { }
+            override fun onAnimationStart(animation: Animation) {}
 
             override fun onAnimationEnd(animation: Animation) {
                 view.clearAnimation()
@@ -613,27 +646,33 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
     }
 
     //Функции ниже "нужны" для my location overlays. Хотя вроде и без них работает
-     override fun onResume() {
-         super.onResume()
-         map.onResume() //needed for compass, my location overlays, v6.0.0 and up
-         viewModel.startActiveUpdates()
-     }
+    override fun onResume() {
+        super.onResume()
+        map.onResume() //needed for compass, my location overlays, v6.0.0 and up
+        viewModel.startActiveUpdates()
+    }
 
-     override fun onPause() {
-         super.onPause()
-         map.onPause()  //needed for compass, my location overlays, v6.0.0 and up
-         viewModel.stopActiveUpdates()
-     }
+    override fun onPause() {
+        super.onPause()
+        map.onPause()  //needed for compass, my location overlays, v6.0.0 and up
+        viewModel.stopActiveUpdates()
+    }
+
     private fun initObservers() {
         viewModel.tagCounter.observe(this) { tagCounter ->
             profileFragment.myTagCounter.text = tagCounter.toString()
         }
-
         viewModel.addOverlayEvent.observe(this) { newOverlay ->
             map.overlays.add(newOverlay)
             newOverlay.apply {
                 mapView = map
+                }
+        viewModel.addOverlaysEvent.observe(this) { overlays ->
+            overlays.forEach { overlay ->
+                map.overlays.add(overlay)
+                overlay.mapView = map
             }
+            Log.d("overlays", "Current overlays: ${map.overlays}")
         }
         viewModel.centerMapAnimatedEvent.observe(this) { quadEvent ->
             centeredOverlay = quadEvent.overlay
@@ -645,6 +684,7 @@ class MapActivity @Inject constructor(): AppCompatActivity(), MapActivityViewMod
             )
         }
         viewModel.removeOverlayEvent.observe(this) { overlay ->
+            Log.d("overlays", "Remove overlay: ${overlay.getUserId()}")
             map.overlays.remove(overlay)
         }
 
@@ -699,11 +739,13 @@ class OverlappedIconsAdapter(
 ) : RecyclerView.Adapter<OverlappedIconsAdapter.OverlappedIconViewHolder>() {
     private var friendData: FriendData? = null
     private var geoStoryData: GeoStoryData? = null
+
     inner class OverlappedIconViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val pictureImageView: ShapeableImageView = itemView.findViewById(R.id.overlapped_picture)
         val pictureBgImageView: ImageView = itemView.findViewById(R.id.overlapped_picture_background)
         val coroutineScope = CoroutineScope(Dispatchers.Main)
     }
+
     fun updateData(newItemList: List<Pair<Int, Int>>) {
         val orderedNewItemList = itemList.mapNotNull { oldItem ->
             newItemList.find { newItem -> newItem == oldItem }
@@ -729,19 +771,24 @@ class OverlappedIconsAdapter(
                     return false
                 }
 
-                val oldFriendData = if (oldItem.first != 0) viewModel.friendsData.value?.find { it.userData.userId == oldItem.first } else null
-                val newFriendData = if (newItem.first != 0) viewModel.friendsData.value?.find { it.userData.userId == newItem.first } else null
+                val oldFriendData =
+                    if (oldItem.first != 0) viewModel.friendsData.value?.find { it.userData.userId == oldItem.first } else null
+                val newFriendData =
+                    if (newItem.first != 0) viewModel.friendsData.value?.find { it.userData.userId == newItem.first } else null
 
-                val oldGeoStoryData = if (oldItem.first == 0) viewModel.geoStoriesData.find { it.geoStoryId == oldItem.second } else null
-                val newGeoStoryData = if (newItem.first == 0) viewModel.geoStoriesData.find { it.geoStoryId == newItem.second } else null
+                val oldGeoStoryData =
+                    if (oldItem.first == 0) viewModel.geoStoriesData.find { it.geoStoryId == oldItem.second } else null
+                val newGeoStoryData =
+                    if (newItem.first == 0) viewModel.geoStoriesData.find { it.geoStoryId == newItem.second } else null
 
                 return (oldFriendData == newFriendData) && (oldGeoStoryData == newGeoStoryData)
             }
         })
 
         diffResult.dispatchUpdatesTo(this)
-        itemList = orderedNewItemList.map {it.copy()}.toMutableList()
+        itemList = orderedNewItemList.map { it.copy() }.toMutableList()
     }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OverlappedIconViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.overlapped_icon_item, parent, false)
         return OverlappedIconViewHolder(view)
@@ -754,17 +801,14 @@ class OverlappedIconsAdapter(
         if (userId != 0)
             friendData = viewModel.friendsData.value?.find { it.userData.userId == userId }
         else
-            geoStoryData = viewModel.geoStoriesData.find {it.geoStoryId == geoStoryId}
-        val picId = if(userId == 0) geoStoryData?.pictureId else {
-            if (userId == viewModel.getMyId()) viewModel.getMyPfpId() else friendData?.userData?.profilePictureId
-        }
-        val shapeAppearanceModelStyle = if(userId == 0) R.style.roundImageViewGeoStoryOverlap else R.style.roundImageViewFriendOverlap
+            geoStoryData = viewModel.geoStoriesData.find { it.geoStoryId == geoStoryId }
+        val shapeAppearanceModelStyle =
+            if (userId == 0) R.style.roundImageViewGeoStoryOverlap else R.style.roundImageViewFriendOverlap
         val pictureBgStyle =
-            if(userId == 0)
+            if (userId == 0)
                 if (geoStoryData?.viewed == true) {
                     R.drawable.overlapped_geostory_viewed_bg
-                }
-                else {
+                } else {
                     R.drawable.overlapped_geostory_new_bg
                 }
             else
@@ -779,47 +823,62 @@ class OverlappedIconsAdapter(
 
         val drawablePlaceholder = ContextCompat.getDrawable(mapActivity, R.drawable.person_placeholder)
         holder.pictureImageView.setImageDrawable(drawablePlaceholder)
-        if (picId != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (userId == 0) {
-                    val blurEffect = RenderEffect.createBlurEffect(5f, 5f, Shader.TileMode.CLAMP)
-                    holder.pictureImageView.setRenderEffect(blurEffect)
-                } else {
-                    holder.pictureImageView.setRenderEffect(null)
-                }
-            }
-            viewModel.viewModelScope.launch {
-                val bitmap = viewModel.getPictureData(picId)
-                if (bitmap != null) {
-                    holder.pictureImageView.setImageBitmap(bitmap)
-                }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (userId == 0) {
+                val blurEffect = RenderEffect.createBlurEffect(5f, 5f, Shader.TileMode.CLAMP)
+                holder.pictureImageView.setRenderEffect(blurEffect)
+            } else {
+                holder.pictureImageView.setRenderEffect(null)
             }
         }
+        viewModel.viewModelScope.launch {
+            val bitmap = viewModel.getPictureData(userId)
+            if (bitmap != null) {
+                holder.pictureImageView.setImageBitmap(bitmap)
+            }
+        }
+
         holder.pictureImageView.setOnClickListener {
             if (item.first == 0) {
                 val geoStoryOverlay = mapActivity.geoStoryOverlays[item.second]
                 if (geoStoryOverlay != null) {
-                    mapActivity.centralizeMapAnimated(geoStoryOverlay, item.second, isCenterTargetUser = false, withZoom = true)
+                    mapActivity.centralizeMapAnimated(
+                        geoStoryOverlay,
+                        item.second,
+                        isCenterTargetUser = false,
+                        withZoom = true
+                    )
                 }
             } else {
                 if (item.first != viewModel.getMyId()) {
                     val friendOverlay = mapActivity.friendOverlays[item.first]
                     if (friendOverlay != null) {
-                        mapActivity.centralizeMapAnimated(friendOverlay, item.first, isCenterTargetUser = true, withZoom = true)
+                        mapActivity.centralizeMapAnimated(
+                            friendOverlay,
+                            item.first,
+                            isCenterTargetUser = true,
+                            withZoom = true
+                        )
                     }
-                }
-                else {
+                } else {
                     viewModel.customOverlaySelf?.let { it1 ->
-                        mapActivity.centralizeMapAnimated(it1, viewModel.getMyId(), isCenterTargetUser = true, withZoom = true)
+                        mapActivity.centralizeMapAnimated(
+                            it1,
+                            viewModel.getMyId(),
+                            isCenterTargetUser = true,
+                            withZoom = true
+                        )
                     }
                 }
             }
         }
 
     }
-    fun getItemList(): MutableList<Pair<Int, Int>>{
+
+    fun getItemList(): MutableList<Pair<Int, Int>> {
         return itemList
     }
+
     override fun getItemCount(): Int {
         return itemList.size
     }

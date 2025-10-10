@@ -77,8 +77,11 @@ class MapActivityViewModel @Inject constructor(
     val friendOverlays: MutableMap<Int, CustomIconOverlay> = mutableMapOf()
     val geoStoryOverlays: MutableMap<Int, CustomIconOverlay> = mutableMapOf()
 
+    private val _addOverlaysEvent = MutableLiveData<List<CustomIconOverlay>>()
+    val addOverlaysEvent: LiveData<List<CustomIconOverlay>> = _addOverlaysEvent
+
     private val _addOverlayEvent = MutableLiveData<CustomIconOverlay>()
-    val addOverlayEvent: LiveData<CustomIconOverlay> get() = _addOverlayEvent
+    val addOverlayEvent: LiveData<CustomIconOverlay> = _addOverlayEvent
 
     private val _removeOverlayEvent = MutableLiveData<CustomIconOverlay>()
     val removeOverlayEvent: LiveData<CustomIconOverlay> get() = _removeOverlayEvent
@@ -221,7 +224,7 @@ class MapActivityViewModel @Inject constructor(
     fun getFriendRequestDataList(): List<FriendRequestData> {
         return api.getFriendRequestDataList()
     }
-    fun getFriendDataList(): MutableList<FriendData> {
+    fun getFriendDataList(): List<FriendData> {
         return api.getFriendsData()
     }
     suspend fun postGeoStory(imageHandler: ImageHandler, privacy: String): JSONObject? {
@@ -375,7 +378,9 @@ class MapActivityViewModel @Inject constructor(
                 _centerMapAnimatedEvent.postValue(CustomIconOverlayEvent(selfOverlay, api.myUserId, isCenterTargetUser = true, withZoom = false))
             }
         )
-        _addOverlayEvent.postValue(customOverlaySelf)
+        customOverlaySelf?.let {
+            _addOverlayEvent.postValue(it)
+        }
         viewModelScope.launch(Dispatchers.Main) {
             if (api.myPfpId != 0) {
                 val bitmap = api.getPictureData(api.myPfpId)
@@ -393,6 +398,7 @@ class MapActivityViewModel @Inject constructor(
             }
         }
 
+        val overlaysToAdd = mutableListOf<CustomIconOverlay>()
         friendsData.forEach { friend ->
             friend.location?.let { location ->
                 val overlay = friendOverlays[friend.userData.userId]
@@ -419,11 +425,10 @@ class MapActivityViewModel @Inject constructor(
                         }
                     )
                     friendOverlays[friend.userData.userId] = newOverlay
-                    _addOverlayEvent.postValue(newOverlay)
+                    overlaysToAdd.add(newOverlay)
 
-                    if (friend.userData.profilePictureId == 0) return@forEach
                     viewModelScope.launch(Dispatchers.Main) {
-                        val bitmap = api.getPictureData(friend.userData.profilePictureId)
+                        val bitmap = api.getPictureData(friend.userData.userId)
                         if (bitmap != null) {
                             newOverlay.updateDrawable(
                                 BitmapDrawable(resources, bitmap)
@@ -433,6 +438,8 @@ class MapActivityViewModel @Inject constructor(
                 }
             }
         }
+
+        _addOverlaysEvent.postValue(overlaysToAdd)
     }
     private fun updateGeoStoryOverlays(geoStoryData: List<GeoStoryData>) {
         val outdatedIds = geoStoryOverlays.keys - geoStoryData.map { it.geoStoryId }.toSet()
@@ -442,6 +449,7 @@ class MapActivityViewModel @Inject constructor(
             }
         }
 
+        val overlaysToAdd = mutableListOf<CustomIconOverlay>()
         geoStoryData.forEach { geoStory ->
             val overlay = geoStoryOverlays[geoStory.geoStoryId]
             val geoStoryLocation = GeoPoint(geoStory.latitude, geoStory.longitude)
@@ -464,7 +472,7 @@ class MapActivityViewModel @Inject constructor(
                 )
 
                 geoStoryOverlays[geoStory.geoStoryId] = newOverlay
-                _addOverlayEvent.postValue(newOverlay)
+                overlaysToAdd.add(newOverlay)
 
                 if (geoStory.pictureId != 0) {
                     viewModelScope.launch(Dispatchers.Main) {
@@ -476,6 +484,7 @@ class MapActivityViewModel @Inject constructor(
                 }
             }
         }
+        _addOverlaysEvent.postValue(overlaysToAdd)
     }
 
     fun getGeoStoryData(geoStoryId: Int): GeoStoryData? {
@@ -491,7 +500,7 @@ class MapActivityViewModel @Inject constructor(
             geoStoryViewFragment.viewCounter.text = geoStoryData.views.toString()
             geoStoryViewFragment.geoStoryId = geoStoryData.geoStoryId
 
-            val bitmapPfp = api.getPictureData(geoStoryData.creatorData.profilePictureId)
+            val bitmapPfp = api.getPictureData(geoStoryData.creatorData.userId)
             if (bitmapPfp != null) {
                 geoStoryViewFragment.userPicture.setImageBitmap(bitmapPfp)
             } else {
@@ -508,8 +517,8 @@ class MapActivityViewModel @Inject constructor(
             geoStoryActionListener.onGeoStoryOpened(geoStoryViewFragment)
         }
     }
-    suspend fun getPictureData(picId: Int): Bitmap? {
-        return api.getPictureData(picId)
+    suspend fun getPictureData(userId: Int): Bitmap? {
+        return api.getPictureData(userId)
     }
     fun setGeoStoryActionListener(listener: GeoStoryActionListener) {
         geoStoryActionListener = listener

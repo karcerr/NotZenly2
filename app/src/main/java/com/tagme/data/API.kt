@@ -1,20 +1,31 @@
 package com.tagme.data
+
 import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
 import android.util.Log
+import androidx.core.content.res.ResourcesCompat
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.tagme.R
+import com.tagme.data.db.AppDatabase
 import com.tagme.domain.models.*
+import com.tagme.domain.models.db.FriendEntity
+import com.tagme.domain.models.db.ImageEntity
+import com.tagme.domain.models.db.toFriendData
+import com.tagme.domain.models.db.toPictureData
 import com.tagme.presentation.services.NotificationManager
 import com.tagme.presentation.views.activities.MapActivity
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import okhttp3.*
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -36,19 +47,28 @@ class API @Inject constructor(
     private val notificationManager: NotificationManager
 ) {
     private val sharedPreferences: SharedPreferences = context.getSharedPreferences("API_PREFS", Context.MODE_PRIVATE)
+    private val isFakeMode = true
+    private val gson = Gson()
+    private val db = AppDatabase.getDatabase(context)
+    val friendDao = db.friendDao()
+    val imageDao = db.friendImageDao()
+    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
     private var lastInsertedPictureDataString = ""
     private val requestIdCounter = AtomicInteger(0)
-    val requestMap: MutableMap<Int, Pair<CompletableFuture<JSONObject?>, String>> = Collections.synchronizedMap(mutableMapOf<Int, Pair<CompletableFuture<JSONObject?>, String>>())
+    val requestMap: MutableMap<Int, Pair<CompletableFuture<JSONObject?>, String>> =
+        Collections.synchronizedMap(mutableMapOf<Int, Pair<CompletableFuture<JSONObject?>, String>>())
     private var leaderBoardList: List<LeaderBoardData>? = null
     private var peopleNearbyList: List<UserNearbyData>? = null
     private val pictureMutex = Mutex()
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
+
     init {
         notificationManager.createNotificationChannels()
     }
+
     var lastInsertedPicId = 0
 
     var myToken: String?
@@ -97,7 +117,6 @@ class API @Inject constructor(
         set(value) {
             sharedPreferences.edit().putString("NICKNAME", value).apply()
         }
-    private val friendsData =  Collections.synchronizedList(mutableListOf<FriendData>())
     private var friendRequestsData: List<FriendRequestData>
         get() {
             val jsonString = sharedPreferences.getString("FRIEND_REQUESTS_DATA", null)
@@ -138,23 +157,14 @@ class API @Inject constructor(
             sharedPreferences.edit().putString("GEOSTORIES_DATA", jsonString).apply()
         }
 
-    private var picsData: List<PictureData>
-        get() {
-            val jsonString = sharedPreferences.getString("PICTURES_DATA", null)
-            return if (jsonString != null) {
-                deserializePicturesData(jsonString)
-            } else {
-                mutableListOf()
-            }
-        }
-        set(value) {
-            val jsonString = serializePicturesData(value)
-            sharedPreferences.edit().putString("PICTURES_DATA", jsonString).apply()
-        }
-
     suspend fun connectToServer(): CompletableFuture<Boolean> {
         val future = CompletableFuture<Boolean>()
         val url = "ws://141.8.193.201:8765"
+
+        if (isFakeMode) {
+            future.complete(true)
+            return future
+        }
 
         val request = Request.Builder()
             .url(url)
@@ -188,42 +198,55 @@ class API @Inject constructor(
                             myToken = answer.getString("message")
                         }
                     }
+
                     "get locations" -> when (answer.getString("status")) {
                         "success" -> parseFriendLocationsData(answer.getString("message"))
                     }
+
                     "get friend requests" -> when (answer.getString("status")) {
                         "success" -> parseFriendRequestData(answer.getString("message"))
                     }
+
                     "get friends" -> when (answer.getString("status")) {
                         "success" -> parseFriendsData(answer.getString("message"))
                     }
+
                     "get conversations" -> when (answer.getString("status")) {
                         "success" -> parseConversationsData(answer.getString("message"))
                     }
+
                     "get picture" -> when (answer.getString("status")) {
                         "success" -> parsePictureData(context, answer.getString("message"))
                     }
+
                     "get messages" -> when (answer.getString("status")) {
                         "success" -> parseMessagesData(answer.getString("message"))
                     }
+
                     "get my data" -> when (answer.getString("status")) {
                         "success" -> parseMyData(JSONObject(answer.getString("message")))
                     }
+
                     "update my data" -> when (answer.getString("status")) {
                         "success" -> parseMyUpdatedData(JSONObject(answer.getString("message")))
                     }
+
                     "insert picture" -> when (answer.getString("status")) {
                         "success" -> parseInsertedPictureId(context, answer.getString("message"))
                     }
+
                     "get geo stories" -> when (answer.getString("status")) {
                         "success" -> parseGeoStoriesNearby(answer.getString("message"))
                     }
+
                     "get leaderboard" -> when (answer.getString("status")) {
                         "success" -> parseLeaderBoard(answer.getString("message"))
                     }
+
                     "get nearby people" -> when (answer.getString("status")) {
                         "success" -> parseNearbyPeople(answer.getString("message"))
                     }
+
                     "update privacy nearby" -> when (answer.getString("status")) {
                         "success" -> privacyNearbyEnabled = !privacyNearbyEnabled
                     }
@@ -235,6 +258,7 @@ class API @Inject constructor(
         client.newWebSocket(request, listener)
         return future
     }
+
     private fun finishMapActivity() {
         MapActivity.finishCurrentInstance()
     }
@@ -247,6 +271,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun authVK(accessToken: String): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "auth vk")
@@ -263,6 +288,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun changeNickname(newNickname: String): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "change nickname")
@@ -271,6 +297,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun loginToken(): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "validate token")
@@ -278,6 +305,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun sendLocationToWS(latitude: String, longitude: String, accuracy: String, speed: String): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "send location")
@@ -289,6 +317,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun getLocationsFromWS(): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "get locations")
@@ -296,6 +325,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun getFriendsFromWS(): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "get friends")
@@ -303,6 +333,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun getLeaderBoardFromWS(): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "get leaderboard")
@@ -310,6 +341,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun getNearbyPeople(): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "get nearby people")
@@ -317,6 +349,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun updatePrivacyNearby(enabled: Boolean): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "update privacy nearby")
@@ -325,6 +358,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun getConversationsFromWS(): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "get conversations")
@@ -332,6 +366,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun sendFriendRequestToWS(username: String): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "add friend")
@@ -340,6 +375,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun blockUserWS(userId: Int): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "block user")
@@ -348,6 +384,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun deleteFriendWS(userId: Int): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "delete friend")
@@ -356,6 +393,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun unblockUserWS(userId: Int): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "unblock user")
@@ -364,6 +402,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun getFriendRequestsFromWS(): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "get friend requests")
@@ -371,6 +410,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun loadProfileFromWS(userId: Int): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "load profile")
@@ -379,6 +419,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun acceptFriendRequest(id: Int): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "accept request")
@@ -387,6 +428,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun denyFriendRequest(id: Int): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "deny request")
@@ -395,6 +437,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun cancelFriendRequest(id: Int): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "cancel request")
@@ -403,6 +446,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     private suspend fun getPictureFromWS(id: Int): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "get picture")
@@ -411,6 +455,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun getMyDataFromWS(): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "get my data")
@@ -418,6 +463,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun updateMyDataWS(): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "update my data")
@@ -434,6 +480,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun getMessagesFromWS(conversationId: Int): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "get messages")
@@ -442,6 +489,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun readConversationWS(conversationId: Int): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "read conversation")
@@ -450,6 +498,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun deleteMessageWS(messageId: Int): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "delete message")
@@ -458,6 +507,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun deleteConversationWS(conversationId: Int): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "delete conversation")
@@ -477,6 +527,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun insertPictureIntoWS(picture: ByteArrayOutputStream): JSONObject? {
         lastInsertedPicId = 0
         val base64ImageData = Base64.getEncoder().encodeToString(picture.toByteArray())
@@ -500,6 +551,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun getGeoStoriesWS(): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "get geo stories")
@@ -507,6 +559,7 @@ class API @Inject constructor(
         }
         return sendRequestToWS(requestData)
     }
+
     suspend fun addViewGeoStory(geoStoryId: Int): JSONObject? {
         val requestData = JSONObject().apply {
             put("action", "add view to geo story")
@@ -516,91 +569,102 @@ class API @Inject constructor(
         return sendRequestToWS(requestData)
     }
 
-    private fun parseFriendsData(jsonString: String){
-        val result = JSONObject(jsonString).getJSONArray("result")
-        val encounteredUserIds = mutableListOf<Int>()
-        for (i in 0 until result.length()) {
-            val friendObject = result.getJSONObject(i)
-            val id = friendObject.getInt("user_id")
-            encounteredUserIds.add(id)
-            val nickname = friendObject.getString("nickname")
-            val pictureId = friendObject.optInt("picture_id", 0)
-            val existingFriend = friendsData.find { it.userData.userId == id }
-            if (existingFriend == null) {
-                friendsData.add(FriendData(UserData(id, nickname, pictureId), null))
-            } else {
-                existingFriend.userData.let {
-                    it.nickname = nickname
-                    it.profilePictureId = pictureId
+    private fun parseFriendsData(jsonString: String) {
+        coroutineScope.launch {
+            val result = JSONObject(jsonString).getJSONArray("result")
+            val encounteredUserIds = mutableListOf<Int>()
+            for (i in 0 until result.length()) {
+                val friendObject = result.getJSONObject(i)
+                val id = friendObject.getInt("user_id")
+                encounteredUserIds.add(id)
+                val nickname = friendObject.getString("nickname")
+                val existingFriend = getFriendsData().find { it.userData.userId == id }
+                if (existingFriend == null) {
+                    addFriend(FriendData(UserData(id, nickname), null))
+                } else {
+                    existingFriend.userData.let {
+                        it.nickname = nickname
+                    }
                 }
             }
+            //syncFriends(encounteredUserIds)
         }
-        friendsData.removeIf { friend -> !encounteredUserIds.contains(friend.userData.userId) }
     }
-    private fun parsePictureData(context: Context, jsonString: String){
-        val result = JSONObject(jsonString).getJSONArray("result")
 
-        for (i in 0 until result.length()) {
-            val picObject = result.getJSONObject(i)
-            val pictureId = picObject.getInt("picture_id")
-            val existingPicture = picsData.find { it.pictureId == pictureId }
-            if (existingPicture == null) {
-                val pictureDataString = picObject.getString("picture")
-                val pictureData: ByteArray = Base64.getDecoder().decode(pictureDataString)
-                val imagePath = saveImageToInternalStorage(context.applicationContext, pictureId.toString(), pictureData)
-                val newPictureData = PictureData(pictureId, imagePath)
-                val updatedPicturesData = picsData.toMutableList().apply {
-                    add(newPictureData)
+    suspend fun syncFriends(encounteredUserIds: List<Int>) {
+        val ids = encounteredUserIds.map { it }
+        friendDao.deleteFriendsNotIn(ids)
+    }
+
+    private fun parsePictureData(context: Context, jsonString: String) {
+        coroutineScope.launch {
+            val result = JSONObject(jsonString).getJSONArray("result")
+
+            for (i in 0 until result.length()) {
+                val picObject = result.getJSONObject(i)
+                val userId = picObject.getInt("user_id")
+                val pictureId = picObject.getInt("picture_id")
+                val existingPicture = getPictureData(pictureId)
+                if (existingPicture == null) {
+                    val pictureDataString = picObject.getString("picture")
+                    val pictureData: ByteArray = Base64.getDecoder().decode(pictureDataString)
+                    val imagePath =
+                        saveImageToInternalStorage(context.applicationContext, pictureId.toString(), pictureData)
+                    addPicture(
+                        friendId = userId,
+                        path = imagePath
+                    )
                 }
-                picsData = updatedPicturesData
             }
         }
     }
-    private fun parseFriendLocationsData(jsonString: String){
-        val result = JSONObject(jsonString).getJSONArray("result")
-        for (i in 0 until result.length()) {
-            val locationObject = result.getJSONObject(i)
-            val id = locationObject.getInt("user_id")
-            val existingFriend = friendsData.find { it.userData.userId == id }
-            if (existingFriend != null) {
+
+    private fun parseFriendLocationsData(jsonString: String) {
+        coroutineScope.launch {
+            val result = JSONObject(jsonString).getJSONArray("result")
+            for (i in 0 until result.length()) {
+                val locationObject = result.getJSONObject(i)
+                val id = locationObject.getInt("user_id")
+                val existingFriend = getFriendsData().find { it.userData.userId == id }
+
                 val latitude = locationObject.getDouble("latitude")
                 val longitude = locationObject.getDouble("longitude")
                 val accuracy = locationObject.getDouble("accuracy")
-                val speed = locationObject.getDouble("speed")
+                val speed = locationObject.getDouble("speed").toFloat()
                 val timestampString = locationObject.getString("timestamp")
                 val timestamp = parseAndConvertTimestamp(timestampString)
-                existingFriend.location?.let { location ->
-                    if (timestamp != location.timestamp) {
-                        location.apply {
-                            this.latitude = latitude
-                            this.longitude = longitude
-                            this.accuracy = accuracy
-                            this.speed = speed.toFloat()
-                            this.timestamp = timestamp
-                        }
-                    }
-                } ?: run {
-                    existingFriend.location = LocationData(latitude, longitude, accuracy, speed.toFloat(), timestamp)
-                }
+
+                if (existingFriend != null)
+                friendDao.upsertFriend(
+                    friend = FriendEntity(
+                        id = id,
+                        nickname = existingFriend.userData.nickname,
+                        latitude = latitude,
+                        longitude = longitude,
+                    )
+                )
             }
-        }
-    }
-    private fun parseInsertedPictureId(context: Context, picId: String){
-        lastInsertedPicId = picId.toInt()
-        val existingPicture = picsData.find { it.pictureId == lastInsertedPicId }
-        if (existingPicture == null) {
-            val pictureData: ByteArray = Base64.getDecoder().decode(lastInsertedPictureDataString)
-            lastInsertedPictureDataString = ""
-            val imagePath = saveImageToInternalStorage(context.applicationContext, lastInsertedPicId.toString(), pictureData)
-            val newPictureData = PictureData(lastInsertedPicId, imagePath)
-            val updatedPicturesData = picsData.toMutableList().apply {
-                add(newPictureData)
-            }
-            picsData = updatedPicturesData
         }
     }
 
-    private fun parseMyData(myData: JSONObject){
+    private fun parseInsertedPictureId(context: Context, picId: String) {
+        coroutineScope.launch {
+            lastInsertedPicId = picId.toInt()
+            val existingPicture = getPictureData(lastInsertedPicId)
+            if (existingPicture == null) {
+                val pictureData: ByteArray = Base64.getDecoder().decode(lastInsertedPictureDataString)
+                lastInsertedPictureDataString = ""
+                val imagePath =
+                    saveImageToInternalStorage(context.applicationContext, lastInsertedPicId.toString(), pictureData)
+                addPicture(
+                    friendId = 0,
+                    path = imagePath
+                )
+            }
+        }
+    }
+
+    private fun parseMyData(myData: JSONObject) {
         val userId = myData.getInt("user_id")
         val picId = myData.optInt("picture_id", 0)
         val nickname = myData.getString("nickname")
@@ -614,12 +678,12 @@ class API @Inject constructor(
         privacyNearbyEnabled = privacyNearby
     }
 
-    private fun parseMyUpdatedData(myData: JSONObject){
+    private fun parseMyUpdatedData(myData: JSONObject) {
         val tags = myData.getInt("user_score")
         myTags = tags
     }
 
-    private fun parseConversationsData(jsonString: String){
+    private fun parseConversationsData(jsonString: String) {
         val result = JSONObject(jsonString).getJSONArray("result")
         val encounteredConversationIds = mutableListOf<Int>()
         val updatedConversationsData = conversationsData.map { it.copy() }.toMutableList()
@@ -630,7 +694,6 @@ class API @Inject constructor(
             encounteredConversationIds.add(conversationId)
 
             val nickname = conversationObject.getString("nickname")
-            val profilePictureId = conversationObject.optInt("profile_picture_id", 0)
             val lastMessagePictureId = conversationObject.optInt("msg_picture_id", 0)
             val lastMessageText = conversationObject.optString("text", "")
             val lastMessageAuthorId = conversationObject.optInt("author_id", 0)
@@ -641,33 +704,49 @@ class API @Inject constructor(
             if (existingConversation == null) {
                 if (lastMessageAuthorId != 0) { //Creating a new conversation with a message
                     updatedConversationsData.add(
-                        ConversationData(conversationId,
-                            UserData(userId, nickname, profilePictureId), mutableListOf(),
-                            MessageData(lastMessageAuthorId, lastMessageAuthorId, lastMessageText, lastMessagePictureId, parseAndConvertTimestamp(timestampString), read),
+                        ConversationData(
+                            conversationId,
+                            UserData(userId, nickname), mutableListOf(),
+                            MessageData(
+                                lastMessageAuthorId,
+                                lastMessageAuthorId,
+                                lastMessageText,
+                                lastMessagePictureId,
+                                parseAndConvertTimestamp(timestampString),
+                                read
+                            ),
                             pinned = false, markedUnread = false
                         )
                     )
                 } else { //Creating a new conversation without a message
                     updatedConversationsData.add(
-                        ConversationData(conversationId,
-                        UserData(userId, nickname, profilePictureId), mutableListOf(),null, pinned = false, markedUnread = false)
+                        ConversationData(
+                            conversationId,
+                            UserData(userId, nickname),
+                            mutableListOf(),
+                            null,
+                            pinned = false,
+                            markedUnread = false
+                        )
                     )
                 }
             } else { //Updating existing conversation
-                existingConversation.userData = UserData(userId, nickname, profilePictureId)
+                existingConversation.userData = UserData(userId, nickname)
                 if (lastMessageId != 0) {
                     val timestamp = parseAndConvertTimestamp(timestampString)
-                    val lastMessageData = MessageData(lastMessageId, lastMessageAuthorId, lastMessageText,
-                        lastMessagePictureId, timestamp, read)
+                    val lastMessageData = MessageData(
+                        lastMessageId, lastMessageAuthorId, lastMessageText,
+                        lastMessagePictureId, timestamp, read
+                    )
                     if (existingConversation.lastMessage == null || existingConversation.lastMessage?.messageId != lastMessageId || existingConversation.lastMessage?.read != read) {
                         existingConversation.lastMessage = lastMessageData
-                        if  (!read && lastMessageAuthorId != myUserId && messagesNotificationsEnabled) {
+                        if (!read && lastMessageAuthorId != myUserId && messagesNotificationsEnabled) {
                             notificationManager.showNewMessageNotification(
                                 nickname,
                                 lastMessageText,
                                 conversationId,
                                 timestamp,
-                                existingConversation.userData.profilePictureId
+                                0
                             )
                         }
                     }
@@ -679,6 +758,7 @@ class API @Inject constructor(
         updatedConversationsData.removeIf { conversation -> !encounteredConversationIds.contains(conversation.conversationID) }
         conversationsData = updatedConversationsData
     }
+
     private fun parseMessagesData(jsonString: String) {
         val message = JSONObject(jsonString)
         val result = message.getJSONArray("result")
@@ -691,7 +771,7 @@ class API @Inject constructor(
             val messageObject = result.getJSONObject(i)
             val messageId = messageObject.getInt("message_id")
             encounteredMessageIds.add(messageId)
-            val existingMessage = existingConversation?.messages?.find{it.messageId == messageId}
+            val existingMessage = existingConversation?.messages?.find { it.messageId == messageId }
             if (existingConversation != null) {
                 val ifRead = messageObject.getBoolean("read")
                 if (existingMessage == null) {
@@ -725,6 +805,7 @@ class API @Inject constructor(
         }
         conversationsData = updatedConversations
     }
+
     private fun parseGeoStoriesNearby(jsonString: String) {
         val result = JSONObject(jsonString).getJSONArray("result")
         val encounteredGeoStoryIds = mutableListOf<Int>()
@@ -744,12 +825,11 @@ class API @Inject constructor(
                 val longitude = geoStoryObject.getDouble("longitude")
                 val creatorId = geoStoryObject.getInt("creator_id")
                 val creatorNickname = geoStoryObject.getString("nickname")
-                val creatorPicId = geoStoryObject.optInt("profile_picture_id", 0)
                 val privacy = geoStoryObject.getString("privacy")
                 updatedGeoStoriesData.add(
                     GeoStoryData(
                         geoStoryId,
-                        UserData(creatorId, creatorNickname, creatorPicId),
+                        UserData(creatorId, creatorNickname),
                         pictureId,
                         privacy,
                         views,
@@ -766,6 +846,7 @@ class API @Inject constructor(
         updatedGeoStoriesData.removeIf { geoStory -> !encounteredGeoStoryIds.contains(geoStory.geoStoryId) }
         geoStoriesData = updatedGeoStoriesData
     }
+
     private fun parseLeaderBoard(jsonString: String) {
         val message = JSONObject(jsonString)
         val result = message.getJSONArray("result")
@@ -775,12 +856,11 @@ class API @Inject constructor(
             val leaderBoardObject = result.getJSONObject(i)
             val userId = leaderBoardObject.getInt("id")
             val nickname = leaderBoardObject.getString("nickname")
-            val picId = leaderBoardObject.optInt("picture_id", 0)
             val place = leaderBoardObject.getInt("place")
             val tags = leaderBoardObject.getInt("tags")
             leaderBoard.add(
                 LeaderBoardData(
-                    UserData(userId, nickname, picId),
+                    UserData(userId, nickname),
                     place,
                     tags
                 )
@@ -788,6 +868,7 @@ class API @Inject constructor(
         }
         leaderBoardList = leaderBoard
     }
+
     private fun parseNearbyPeople(jsonString: String) {
         val message = JSONObject(jsonString)
         val result = message.getJSONArray("result")
@@ -796,11 +877,10 @@ class API @Inject constructor(
             val userNearbyObject = result.getJSONObject(i)
             val userId = userNearbyObject.getInt("user_id")
             val nickname = userNearbyObject.getString("nickname")
-            val picId = userNearbyObject.optInt("picture_id", 0)
             val distance = userNearbyObject.getDouble("distance_meters")
             peopleNearby.add(
                 UserNearbyData(
-                    UserData(userId, nickname, picId),
+                    UserData(userId, nickname),
                     distance.toInt()
                 )
             )
@@ -840,6 +920,7 @@ class API @Inject constructor(
             true
         )
     }
+
     private fun getDateString(timestamp: Timestamp): String {
         val calendar = Calendar.getInstance()
         calendar.time = timestamp
@@ -847,6 +928,7 @@ class API @Inject constructor(
         val year = calendar.get(Calendar.YEAR)
         return "$year-$dayOfYear"
     }
+
     private fun parseFriendRequestData(jsonString: String) {
         val result = JSONObject(jsonString).getJSONArray("result")
         val encounteredUserIds = mutableListOf<Int>()
@@ -856,62 +938,71 @@ class API @Inject constructor(
             val id = requestObject.getInt("user_id")
             val nickname = requestObject.getString("nickname")
             val relation = requestObject.getString("relation")
-            val pictureId = requestObject.optInt("picture_id", 0)
 
             encounteredUserIds.add(id)
             val existingFriendRequest = updatedFriendRequestsData.find { it.userData.userId == id }
             if (existingFriendRequest != null) {
                 existingFriendRequest.userData.nickname = nickname
-                existingFriendRequest.userData.profilePictureId = pictureId
                 existingFriendRequest.relation = relation
             } else {
-                updatedFriendRequestsData.add(FriendRequestData(UserData(id, nickname, pictureId), relation))
+                updatedFriendRequestsData.add(FriendRequestData(UserData(id, nickname), relation))
                 if (relation == "request_incoming" && friendRequestsNotificationsEnabled) {
                     notificationManager.showNewFriendRequestNotification(nickname, id)
                 }
             }
         }
-        updatedFriendRequestsData.removeIf { friendRequest -> !encounteredUserIds.contains(friendRequest.userData.userId)}
+        updatedFriendRequestsData.removeIf { friendRequest -> !encounteredUserIds.contains(friendRequest.userData.userId) }
         friendRequestsData = updatedFriendRequestsData
     }
+
     fun clearNotificationsForConversation(conversationId: Int) {
         notificationManager.clearMessages(conversationId)
     }
 
-    fun getFriendsData(): MutableList<FriendData> {
-        return friendsData
+    fun getFriendsData(): List<FriendData> {
+        return runBlocking {
+            val result = friendDao.getAllFriends()
+                .map { it.toFriendData() }
+
+            //Log.d("Friends", result.toString())
+            result
+        }
     }
+
     fun getGeoStoriesDataList(): List<GeoStoryData> {
         return geoStoriesData
     }
+
     fun getFriendRequestDataList(): List<FriendRequestData> {
         return friendRequestsData
     }
+
     fun getConversationsDataList(): List<ConversationData> {
         return conversationsData
     }
+
     fun getConversationData(id: Int): ConversationData? {
-        return conversationsData.find{it.conversationID == id}
+        return conversationsData.find { it.conversationID == id }
     }
+
     fun getLeaderBoardData(): List<LeaderBoardData>? {
         return leaderBoardList
     }
+
     fun getNearbyPeopleData(): List<UserNearbyData>? {
         return peopleNearbyList
     }
 
-    suspend fun getPictureData(pictureId: Int): Bitmap? {
-        if (pictureId == 0)
-            return null
-        var picture = picsData.find { it.pictureId == pictureId }
-        if (picture?.imagePath == null) {
-            getPictureFromWS(pictureId)
-            picture = picsData.find { it.pictureId == pictureId }
-        }
-        return if (picture != null) {
-            BitmapFactory.decodeFile(picture.imagePath)
-        } else null
+    suspend fun getPictureData(userId: Int): Bitmap? {
+        if (userId == 0) return null
+
+        val picEntity = imageDao.getImagesForUser(userId)
+            .firstOrNull() ?: return null
+
+        return BitmapFactory.decodeFile(picEntity.uri)
     }
+
+    suspend fun getPicturesData(): List<PictureData> = imageDao.getAllImages().map { it.toPictureData() }
 
     fun togglePinnedStatus(conversationId: Int) {
         val updatedConversations = conversationsData.toMutableList()
@@ -919,12 +1010,14 @@ class API @Inject constructor(
         conversation?.pinned = conversation?.pinned?.not() ?: false
         conversationsData = updatedConversations
     }
+
     fun toggleMarkedUnreadStatus(conversationId: Int) {
         val updatedConversations = conversationsData.toMutableList()
         val conversation = updatedConversations.find { it.conversationID == conversationId }
         conversation?.markedUnread = conversation?.markedUnread?.not() ?: false
         conversationsData = updatedConversations
     }
+
     fun disableMarkedUnreadStatus(conversationId: Int) {
         val updatedConversations = conversationsData.toMutableList()
         val conversation = updatedConversations.find { it.conversationID == conversationId }
@@ -933,36 +1026,31 @@ class API @Inject constructor(
     }
 
     private fun serializeGeoStoriesData(geoStoriesData: List<GeoStoryData>): String {
-        val gson = Gson()
         return gson.toJson(geoStoriesData)
     }
 
     private fun deserializeGeoStoriesData(jsonString: String): List<GeoStoryData> {
-        val gson = Gson()
         val type = object : TypeToken<List<GeoStoryData>>() {}.type
         return gson.fromJson(jsonString, type)
     }
+
     private fun serializeConversationsData(conversationsData: List<ConversationData>): String {
-        val gson = Gson()
         return gson.toJson(conversationsData)
     }
 
     private fun deserializeConversationsData(jsonString: String): List<ConversationData> {
-        val gson = Gson()
         val type = object : TypeToken<List<ConversationData>>() {}.type
         return gson.fromJson(jsonString, type)
     }
+
     private fun serializeFriendRequestsData(friendRequestsData: List<FriendRequestData>): String {
-        val gson = Gson()
         return gson.toJson(friendRequestsData)
     }
 
     private fun deserializeFriendRequestsData(jsonString: String): List<FriendRequestData> {
-        val gson = Gson()
         val type = object : TypeToken<List<FriendRequestData>>() {}.type
         return gson.fromJson(jsonString, type)
     }
-
 
 
     fun markGeoStoryViewed(geoStoryId: Int) {
@@ -988,6 +1076,7 @@ class API @Inject constructor(
 
     private fun saveImageToInternalStorage(context: Context, fileName: String, imageBytes: ByteArray): String {
         val file = File(context.filesDir, fileName)
+        if (file.exists()) return file.absolutePath
         FileOutputStream(file).use { outputStream ->
             outputStream.write(imageBytes)
         }
@@ -1015,14 +1104,16 @@ class API @Inject constructor(
     }
 
     fun clearImageInternalStorage(context: Context) {
-        val filesDir = context.filesDir
-        filesDir.listFiles()?.forEach { file ->
-            file.delete()
+        coroutineScope.launch {
+            imageDao.clearImages()
         }
-        picsData = emptyList()
     }
 
     private suspend fun sendRequestToWS(request: JSONObject): JSONObject? {
+        if (isFakeMode) {
+            return simulateFakeResponse(request)
+        }
+
         val action = request.getString("action")
         val requestId = generateRequestId()
         val future = CompletableFuture<JSONObject?>()
@@ -1040,7 +1131,7 @@ class API @Inject constructor(
         val result = if (isGetPictureAction) {
             pictureMutex.withLock {
                 val pictureId = request.getInt("picture_id")
-                val picture = picsData.find { it.pictureId == pictureId }
+                val picture = getPicturesData().find { it.pictureId == pictureId }
                 if (picture?.imagePath == null) {
                     sendRequest(request, requestId, future, action)
                 } else {
@@ -1052,6 +1143,198 @@ class API @Inject constructor(
         }
 
         return result
+    }
+
+    private suspend fun simulateFakeResponse(requestData: JSONObject): JSONObject {
+        delay(300L)
+        val action = requestData.getString("action")
+        val response = JSONObject().apply {
+            put("status", "success")
+            put("action", action)
+            put("request_id", requestData.optInt("request_id", 0))
+        }
+
+
+        when (action) {
+            "login", "register", "auth vk" -> {
+                myNickname = "ромчик:3"
+                response.put("message", "fake_token_12345")
+            }
+
+            "get friends" -> {
+                val friendsJson = simulateGetFriendsResponse()
+                response.put("message", friendsJson.toString())
+            }
+
+            "get locations" -> {
+                val locationsJson = simulateGetLocationsResponse()
+                response.put("message", locationsJson.toString())
+            }
+
+            "insert picture" -> {
+                val newId = (getPicturesData().maxOfOrNull { it.pictureId } ?: 0) + 1
+                lastInsertedPicId = newId
+                response.put("message", newId.toString())
+                parseInsertedPictureId(context, newId.toString())
+            }
+
+            "get picture" -> {
+                val picturesJson = simulateGetPicturesResponse()
+                response.put("message", picturesJson.toString())
+            }
+
+            else -> {
+                response.put("message", "{}")
+            }
+        }
+
+        return response
+    }
+
+    private fun encodeResourceToBase64(resId: Int): String {
+        val drawable = ResourcesCompat.getDrawable(context.resources, resId, null) ?: return ""
+        val bitmap = if (drawable is BitmapDrawable) {
+            drawable.bitmap
+        } else {
+            // Convert VectorDrawable or other drawable types to bitmap
+            val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 100
+            val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 100
+            val bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bmp)
+            drawable.setBounds(0, 0, canvas.width, canvas.height)
+            drawable.draw(canvas)
+            bmp
+        }
+
+        val outputStream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+        return Base64.getEncoder().encodeToString(outputStream.toByteArray())
+    }
+
+
+    private fun simulateGetFriendsResponse(): JSONObject {
+        val friendsJsonArray = JSONArray().apply {
+            put(JSONObject().apply { put("user_id", 1); put("nickname", "Friend")})
+            put(JSONObject().apply { put("user_id", 2); put("nickname", "Enemy")})
+            put(JSONObject().apply { put("user_id", 3); put("nickname", "Enemy 2") })
+            put(JSONObject().apply { put("user_id", 4); put("nickname", "Dimitriy") })
+        }
+
+        val friendsJson = JSONObject().apply { put("result", friendsJsonArray) }
+
+        val response = JSONObject().apply {
+            put("status", "success")
+            put("action", "get friends")
+            put("request_id", generateRequestId())
+            put("message", friendsJson.toString())
+        }
+
+        simulateGetPicturesResponse()
+        parseFriendsData(friendsJson.toString())
+
+        return response
+    }
+
+    private fun simulateGetPicturesResponse() {
+        val picturesJsonArray = JSONArray().apply {
+            put(JSONObject().apply {
+                put("picture_id", 1)
+                put("user_id", 1)
+                put("picture", encodeResourceToBase64(R.drawable.cat1))
+            })
+            put(JSONObject().apply {
+                put("picture_id", 2)
+                put("user_id", 2)
+                put("picture", encodeResourceToBase64(R.drawable.cat2))
+            })
+            put(JSONObject().apply {
+                put("picture_id", 3)
+                put("user_id", 3)
+                put("picture", encodeResourceToBase64(R.drawable.cat3))
+            })
+        }
+
+        val picturesJson = JSONObject().apply {
+            put("result", picturesJsonArray)
+        }
+
+        parsePictureData(context, picturesJson.toString())
+    }
+
+    private fun simulateGetLocationsResponse() {
+        val baseLat = 57.994763
+        val baseLon = 56.203790
+        val now = Timestamp(System.currentTimeMillis())
+
+        val locationsJsonArray = JSONArray().apply {
+            put(JSONObject().apply {
+                put("user_id", 1)
+                put("latitude", baseLat + 0.005)
+                put("longitude", baseLon + 0.005)
+                put("accuracy", 5.0)
+                put("speed", 0.5)
+                put("timestamp", now.toString())
+            })
+            put(JSONObject().apply {
+                put("user_id", 2)
+                put("latitude", baseLat - 0.007)
+                put("longitude", baseLon + 0.003)
+                put("accuracy", 4.0)
+                put("speed", 0.8)
+                put("timestamp", now.toString())
+            })
+            put(JSONObject().apply {
+                put("user_id", 3)
+                put("latitude", baseLat + 0.01)
+                put("longitude", baseLon - 0.004)
+                put("accuracy", 3.5)
+                put("speed", 0.4)
+                put("timestamp", now.toString())
+            })
+            put(JSONObject().apply {
+                put("user_id", 4)
+                put("latitude", baseLat + 0.1)
+                put("longitude", baseLon - 0.04)
+                put("accuracy", 3.5)
+                put("speed", 0.4)
+                put("timestamp", now.toString())
+            })
+        }
+
+        val locationsJson = JSONObject().apply {
+            put("result", locationsJsonArray)
+        }
+
+        parseFriendLocationsData(locationsJson.toString())
+    }
+
+    suspend fun addFriend(friend: FriendData) {
+        friendDao.upsertFriend(
+            FriendEntity(
+                id = friend.userData.userId,
+                nickname = friend.userData.nickname,
+                latitude = friend.location?.latitude ?: 0.0,
+                longitude = friend.location?.longitude ?: 0.0,
+                createdAt = friend.location?.timestamp ?: Date()
+            )
+        )
+    }
+
+    suspend fun deleteFriendById(friendId: Int) {
+        friendDao.deleteFriendById(friendId)
+    }
+
+    suspend fun addPicture(friendId: Int, path: String) {
+        imageDao.addImage(
+            ImageEntity(
+                userId = friendId,
+                uri = path
+            )
+        )
+    }
+
+    suspend fun deletePictureById(imageId: Int) {
+        imageDao.deleteImageById(imageId)
     }
 
     private suspend fun sendRequest(
@@ -1068,7 +1351,7 @@ class API @Inject constructor(
     }
 
     fun parseAndConvertTimestamp(timestampString: String): Timestamp {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault())
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault())
         dateFormat.timeZone = TimeZone.getTimeZone("GMT+3")
         val parsedTimestamp = dateFormat.parse(timestampString)
 
@@ -1092,6 +1375,7 @@ class API @Inject constructor(
     private fun generateRequestId(): Int {
         return requestIdCounter.getAndIncrement()
     }
+
     fun closeWebSocket() {
         Log.d("Tagme_WS", "Closing WebSocket")
         webSocket?.close(1000, "Closing")

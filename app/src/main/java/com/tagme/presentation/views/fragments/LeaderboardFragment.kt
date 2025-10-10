@@ -37,6 +37,7 @@ class LeaderboardFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var progressLayout: ConstraintLayout
     var isSelfLayoutVisible = false
+
     companion object {
         fun newInstance(): LeaderboardFragment {
             val fragment = LeaderboardFragment()
@@ -70,13 +71,13 @@ class LeaderboardFragment : Fragment() {
             mapActivity
         )
 
-        viewModel.myPlace.observe(viewLifecycleOwner) {place ->
+        viewModel.myPlace.observe(viewLifecycleOwner) { place ->
             myPlaceTextView.text = place.toString()
         }
-        viewModel.myNickname.observe(viewLifecycleOwner) {nickname ->
+        viewModel.myNickname.observe(viewLifecycleOwner) { nickname ->
             myNameTextView.text = nickname
         }
-        viewModel.tagCounter.observe(viewLifecycleOwner) {tags ->
+        viewModel.tagCounter.observe(viewLifecycleOwner) { tags ->
             myTagsTextView.text = tags.toString()
         }
 
@@ -84,7 +85,8 @@ class LeaderboardFragment : Fragment() {
         progressLayout.visibility = View.VISIBLE
         CoroutineScope(Dispatchers.Main).launch {
             viewModel.getLeaderBoardFromWS()
-            val leaderboardListSorted = viewModel.getLeaderBoardData()?.sortedBy { it.place }?.toMutableList() ?: mutableListOf()
+            val leaderboardListSorted =
+                viewModel.getLeaderBoardData()?.sortedBy { it.place }?.toMutableList() ?: mutableListOf()
             if (leaderboardListSorted.none { it.userData.userId == viewModel.myUserId }) {
                 isSelfLayoutVisible = true
                 yourPlaceLayout.visibility = View.VISIBLE
@@ -113,7 +115,7 @@ class LeaderboardFragment : Fragment() {
             progressLayout.visibility = View.GONE
         }
 
-        backButton.setOnClickListener{
+        backButton.setOnClickListener {
             requireActivity().onBackPressedDispatcher.onBackPressed()
         }
 
@@ -136,6 +138,7 @@ class LeaderboardAdapter(
         val pictureImageView: ShapeableImageView = itemView.findViewById(R.id.picture_image_view)
         val coroutineScope = CoroutineScope(Dispatchers.Main)
     }
+
     fun updateData(newLeaderboardList: List<LeaderBoardData>) {
         val newLeaderboardListSorted = newLeaderboardList.sortedBy { it.place }
         val diffResult = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
@@ -161,6 +164,7 @@ class LeaderboardAdapter(
         leaderboardList.addAll(newLeaderboardListSorted)
         diffResult.dispatchUpdatesTo(this)
     }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LeaderboardViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.leaderboard_item, parent, false)
         return LeaderboardViewHolder(view)
@@ -184,22 +188,25 @@ class LeaderboardAdapter(
             holder.placeTextView.setTextColor(ContextCompat.getColor(context, R.color.yellow))
             val layoutParams = holder.pictureImageView.layoutParams
             var squareSide = 48f
-            when (leaderboardItem.place){
+            when (leaderboardItem.place) {
                 1 -> {
                     holder.starsImage.setImageResource(R.drawable.star_triple)
                     squareSide = 78f
                 }
+
                 2 -> {
                     holder.starsImage.setImageResource(R.drawable.star_double)
                     squareSide = 68f
                 }
+
                 3 -> {
                     holder.starsImage.setImageResource(R.drawable.star)
                     squareSide = 58f
                 }
             }
             val pixels = TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP, squareSide, context.resources.displayMetrics).toInt()
+                TypedValue.COMPLEX_UNIT_DIP, squareSide, context.resources.displayMetrics
+            ).toInt()
             layoutParams.width = pixels
             layoutParams.height = pixels
             holder.pictureImageView.layoutParams = layoutParams
@@ -208,12 +215,10 @@ class LeaderboardAdapter(
         holder.tagsTextView.text = leaderboardItem.tags.toString()
         val drawablePlaceholder = ContextCompat.getDrawable(context, R.drawable.person_placeholder)
         holder.pictureImageView.setImageDrawable(drawablePlaceholder)
-        if (leaderboardItem.userData.profilePictureId != 0) {
-            holder.coroutineScope.launch {
-                val bitmap = viewModel.getPictureData(leaderboardItem.userData.profilePictureId)
-                if (bitmap != null) {
-                    holder.pictureImageView.setImageBitmap(bitmap)
-                }
+        holder.coroutineScope.launch {
+            val bitmap = viewModel.getPictureData(leaderboardItem.userData.userId)
+            if (bitmap != null) {
+                holder.pictureImageView.setImageBitmap(bitmap)
             }
         }
         holder.leaderboardLinearLayout.setOnClickListener {

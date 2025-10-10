@@ -92,6 +92,11 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
     implementation("com.vk.id:onetap-xml:1.3.2")
     implementation("com.vk.id:vkid:1.3.2")
+
+
+    implementation ("androidx.room:room-runtime:2.6.1")
+    implementation ("androidx.room:room-ktx:2.6.1")
+    kapt ("androidx.room:room-compiler:2.6.1")
 }
 kapt {
     correctErrorTypes = true

@@ -15,12 +15,12 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.imageview.ShapeableImageView
-import com.tagme.presentation.views.CustomNestedScrollView
-import com.tagme.presentation.views.activities.MapActivity
 import com.tagme.R
 import com.tagme.domain.models.UserNearbyData
 import com.tagme.presentation.utils.setupSwipeGesture
 import com.tagme.presentation.viewmodels.MapActivityViewModel
+import com.tagme.presentation.views.CustomNestedScrollView
+import com.tagme.presentation.views.activities.MapActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -34,6 +34,7 @@ class PeopleNearbyFragment : Fragment() {
     private lateinit var mapActivity: MapActivity
     private lateinit var recyclerView: RecyclerView
     private lateinit var progressLayout: ConstraintLayout
+
     companion object {
         fun newInstance(): PeopleNearbyFragment {
             val fragment = PeopleNearbyFragment()
@@ -64,7 +65,8 @@ class PeopleNearbyFragment : Fragment() {
         progressLayout.visibility = View.VISIBLE
         CoroutineScope(Dispatchers.Main).launch {
             viewModel.getNearbyPeople()
-            val nearbyListSorted = viewModel.getNearbyPeopleData()?.sortedBy { it.distance }?.toMutableList() ?: mutableListOf()
+            val nearbyListSorted =
+                viewModel.getNearbyPeopleData()?.sortedBy { it.distance }?.toMutableList() ?: mutableListOf()
 
             peopleNearbyAdapter = PeopleNearbyAdapter(
                 requireContext(),
@@ -77,7 +79,7 @@ class PeopleNearbyFragment : Fragment() {
             progressLayout.visibility = View.GONE
         }
 
-        backButton.setOnClickListener{
+        backButton.setOnClickListener {
             requireActivity().onBackPressedDispatcher.onBackPressed()
         }
 
@@ -108,7 +110,9 @@ class PeopleNearbyAdapter(
         val userNearbyItem = userNearbyList[position]
 
         val userId = userNearbyItem.userData.userId
-        if (viewModel.getFriendRequestDataList().any {it.userData.userId == userId && it.relation == "request_outgoing"}) {
+        if (viewModel.getFriendRequestDataList()
+                .any { it.userData.userId == userId && it.relation == "request_outgoing" }
+        ) {
             holder.addFriendButton.setImageResource(R.drawable.single_check_mark)
             holder.addFriendButton.isClickable = false
         }
@@ -130,12 +134,10 @@ class PeopleNearbyAdapter(
 
         val drawablePlaceholder = ContextCompat.getDrawable(context, R.drawable.person_placeholder)
         holder.pictureImageView.setImageDrawable(drawablePlaceholder)
-        if (userNearbyItem.userData.profilePictureId != 0) {
-            holder.coroutineScope.launch {
-                val bitmap = viewModel.getPictureData(userNearbyItem.userData.profilePictureId)
-                if (bitmap != null) {
-                    holder.pictureImageView.setImageBitmap(bitmap)
-                }
+        holder.coroutineScope.launch {
+            val bitmap = viewModel.getPictureData(userNearbyItem.userData.userId)
+            if (bitmap != null) {
+                holder.pictureImageView.setImageBitmap(bitmap)
             }
         }
         holder.addFriendButton.setOnClickListener {

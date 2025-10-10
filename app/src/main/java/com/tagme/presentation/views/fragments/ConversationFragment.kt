@@ -119,7 +119,7 @@ class ConversationFragment : Fragment(), MessageAdapter.LastMessageIdListener {
                 recyclerView.adapter = adapter
                 recyclerView.scrollToPosition(adapter.itemCount - 1)
                 slideView(scrollDownFrame, true, 0)
-                val bitmap = viewModel.getPictureData(conversation.userData.profilePictureId)
+                val bitmap = viewModel.getPictureData(conversation.userData.userId)
                 if (bitmap != null) {
                     pfp.setImageBitmap(bitmap)
                 }

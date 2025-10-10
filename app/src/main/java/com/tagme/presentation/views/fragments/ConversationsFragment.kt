@@ -48,6 +48,7 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
     private lateinit var darkOverlay: View
     private lateinit var areYouSureLayout: LinearLayout
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -85,12 +86,13 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
         recyclerView.adapter = conversationsAdapter
         recyclerView.layoutManager = MyLinearLayoutManager(requireContext())
 
-        backButton.setOnClickListener{
+        backButton.setOnClickListener {
             requireActivity().onBackPressedDispatcher.onBackPressed()
         }
 
         return view
     }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         conversationUpdateRunnable = Runnable {
@@ -102,6 +104,7 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
         }
         startConversationUpdates()
     }
+
     override fun onDestroyView() {
         Log.d("Tagme_ws_conv", "onDestroyView")
         super.onDestroyView()
@@ -110,9 +113,12 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
 
     private fun startConversationUpdates() {
         conversationUpdateHandler = Handler(Looper.getMainLooper())
-        conversationUpdateRunnable?.let { conversationUpdateHandler?.postDelayed(it,
-            conversationUpdateInterval
-        ) }
+        conversationUpdateRunnable?.let {
+            conversationUpdateHandler?.postDelayed(
+                it,
+                conversationUpdateInterval
+            )
+        }
     }
 
     private fun stopConversationUpdates() {
@@ -123,10 +129,12 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
     override fun onItemLongClick(position: Int) {
         showContextualMenu(position)
     }
+
     private fun showContextualMenu(position: Int) {
         val conversation = conversationsAdapter.conversationList[position]
 
-        val menuView = LayoutInflater.from(context).inflate(R.layout.conversation_contextual_menu, view as ViewGroup, false)
+        val menuView =
+            LayoutInflater.from(context).inflate(R.layout.conversation_contextual_menu, view as ViewGroup, false)
 
         val relativeLayout = view.findViewById<RelativeLayout>(R.id.relative_layout)
         val nameTextView = menuView.findViewById<TextView>(R.id.conversation_name)
@@ -143,7 +151,8 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
         if (lastMessage != null) {
             val lastMessageString = lastMessage.text
             if (lastMessageString != null && lastMessageString.length > 25) {
-                lastMessageText.text = mapActivity.getString(R.string.long_message_format, lastMessageString.substring(0, 25))
+                lastMessageText.text =
+                    mapActivity.getString(R.string.long_message_format, lastMessageString.substring(0, 25))
             } else {
                 lastMessageText.text = lastMessageString
             }
@@ -151,30 +160,29 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
             val timestampText = timestampDateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
             lastMessageTimestamp.visibility = View.VISIBLE
             lastMessageTimestamp.text = timestampText
-            if ((!lastMessage.read && lastMessage.authorId != viewModel.myUserId) || (conversation.markedUnread)){
+            if ((!lastMessage.read && lastMessage.authorId != viewModel.myUserId) || (conversation.markedUnread)) {
                 readIcon.visibility = View.VISIBLE
             } else {
                 readIcon.visibility = View.INVISIBLE
             }
             if (lastMessage.authorId == viewModel.myUserId) {
                 lastMessageCheckMark.visibility = View.VISIBLE
-                lastMessageCheckMark.setImageResource(if(lastMessage.read) R.drawable.double_check_mark else R.drawable.single_check_mark)
+                lastMessageCheckMark.setImageResource(if (lastMessage.read) R.drawable.double_check_mark else R.drawable.single_check_mark)
             }
         } else {
             lastMessageCheckMark.visibility = View.GONE
             readIcon.visibility = if (conversation.markedUnread) View.VISIBLE else View.GONE
         }
 
-        val originalPictureDrawable = (recyclerView.findViewHolderForAdapterPosition(position) as? ConversationsAdapter.ConversationViewHolder)
-            ?.pictureImageView?.drawable
+        val originalPictureDrawable =
+            (recyclerView.findViewHolderForAdapterPosition(position) as? ConversationsAdapter.ConversationViewHolder)
+                ?.pictureImageView?.drawable
 
         pictureImageView.setImageDrawable(originalPictureDrawable)
-        if (conversation.userData.profilePictureId != 0) {
-            CoroutineScope(Dispatchers.Main).launch {
-                val bitmap = viewModel.getPictureData(conversation.userData.profilePictureId)
-                if (bitmap != null) {
-                    pictureImageView.setImageBitmap(bitmap)
-                }
+        CoroutineScope(Dispatchers.Main).launch {
+            val bitmap = viewModel.getPictureData(conversation.userData.userId)
+            if (bitmap != null) {
+                pictureImageView.setImageBitmap(bitmap)
             }
         }
 
@@ -204,7 +212,8 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
         }
 
         menuView.findViewById<ImageView>(R.id.action_delete).setOnClickListener {
-            view.findViewById<TextView>(R.id.are_you_sure_text_format).text = mapActivity.getString(R.string.are_you_sure_delete_conversation_format, conversation.userData.nickname)
+            view.findViewById<TextView>(R.id.are_you_sure_text_format).text =
+                mapActivity.getString(R.string.are_you_sure_delete_conversation_format, conversation.userData.nickname)
             val closeListener = View.OnClickListener {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     relativeLayout.setRenderEffect(null)
@@ -218,7 +227,7 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
             }
             darkOverlay.setOnClickListener(closeListener)
             view.findViewById<Button>(R.id.no_button).setOnClickListener(closeListener)
-            view.findViewById<Button>(R.id.yes_button).setOnClickListener{
+            view.findViewById<Button>(R.id.yes_button).setOnClickListener {
                 viewModel.viewModelScope.launch {
                     viewModel.deleteConversationWS(conversation.conversationID)
                     closeListener.onClick(it)
@@ -282,6 +291,7 @@ class ConversationsFragment : Fragment(), ConversationsAdapter.OnItemLongClickLi
         conversationsAdapter.updateData(conversationList)
         Log.d("Tagme_conversations", conversationList.toString())
     }
+
     private fun setupReadUnreadButton(view: View, conversation: ConversationData, popupWindow: PopupWindow) {
         val readUnreadButton = view.findViewById<ImageButton>(R.id.action_read)
 
@@ -319,9 +329,11 @@ class ConversationsAdapter(
     private val listener: OnItemLongClickListener
 ) : RecyclerView.Adapter<ConversationsAdapter.ConversationViewHolder>() {
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][.SS][.S]")
+
     interface OnItemLongClickListener {
         fun onItemLongClick(position: Int)
     }
+
     inner class ConversationViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTextView: TextView = itemView.findViewById(R.id.conversation_name)
         val lastMessageText: TextView = itemView.findViewById(R.id.last_message_text)
@@ -332,6 +344,7 @@ class ConversationsAdapter(
         val pictureImageView: ImageView = itemView.findViewById(R.id.conversation_picture)
         val conversationLayout: LinearLayout = itemView.findViewById(R.id.conversation_layout)
         val coroutineScope = CoroutineScope(Dispatchers.Main)
+
         init {
             itemView.setOnLongClickListener {
                 listener.onItemLongClick(adapterPosition)
@@ -339,6 +352,7 @@ class ConversationsAdapter(
             }
         }
     }
+
     fun updateData(newConversationList: List<ConversationData>) {
         val newConversationListSorted = newConversationList
             .sortedWith(compareByDescending<ConversationData> { it.pinned }
@@ -370,8 +384,11 @@ class ConversationsAdapter(
             val lastMessage = conversation.lastMessage
             lastMessage != null && !lastMessage.read && lastMessage.authorId != viewModel.myUserId
         }
-        parentActivity.unreadMessageIcon.visibility = if (hasUnreadMessages) View.VISIBLE else { View.INVISIBLE }
+        parentActivity.unreadMessageIcon.visibility = if (hasUnreadMessages) View.VISIBLE else {
+            View.INVISIBLE
+        }
     }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ConversationViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.conversation_item, parent, false)
         return ConversationViewHolder(view)
@@ -392,20 +409,21 @@ class ConversationsAdapter(
             val timestampText = timestampDateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
             val lastMessageText = lastMessage.text
             if (lastMessageText != null && lastMessageText.length > 25) {
-                holder.lastMessageText.text = context.getString(R.string.long_message_format, lastMessageText.substring(0, 25))
+                holder.lastMessageText.text =
+                    context.getString(R.string.long_message_format, lastMessageText.substring(0, 25))
             } else {
                 holder.lastMessageText.text = lastMessageText
             }
             holder.lastMessageTimestamp.visibility = View.VISIBLE
             holder.lastMessageTimestamp.text = timestampText
-            if ((!lastMessage.read && lastMessage.authorId != viewModel.myUserId) || (conversation.markedUnread)){
+            if ((!lastMessage.read && lastMessage.authorId != viewModel.myUserId) || (conversation.markedUnread)) {
                 holder.readIcon.visibility = View.VISIBLE
             } else {
                 holder.readIcon.visibility = View.INVISIBLE
             }
             if (lastMessage.authorId == viewModel.myUserId) {
                 holder.lastMessageCheckMark.visibility = View.VISIBLE
-                holder.lastMessageCheckMark.setImageResource(if(lastMessage.read) R.drawable.double_check_mark else R.drawable.single_check_mark)
+                holder.lastMessageCheckMark.setImageResource(if (lastMessage.read) R.drawable.double_check_mark else R.drawable.single_check_mark)
             } else {
                 holder.lastMessageCheckMark.visibility = View.GONE
             }
@@ -413,16 +431,14 @@ class ConversationsAdapter(
             holder.lastMessageCheckMark.visibility = View.GONE
             holder.lastMessageText.text = context.getString(R.string.last_message_placeholder)
             holder.lastMessageTimestamp.visibility = View.INVISIBLE
-            holder.readIcon.visibility = if(conversation.markedUnread) View.VISIBLE else View.GONE
+            holder.readIcon.visibility = if (conversation.markedUnread) View.VISIBLE else View.GONE
         }
         val drawablePlaceholder = ContextCompat.getDrawable(context, R.drawable.person_placeholder)
         holder.pictureImageView.setImageDrawable(drawablePlaceholder)
-        if (conversation.userData.profilePictureId != 0) {
-            holder.coroutineScope.launch {
-                val bitmap = viewModel.getPictureData(conversation.userData.profilePictureId)
-                if (bitmap != null) {
-                    holder.pictureImageView.setImageBitmap(bitmap)
-                }
+        holder.coroutineScope.launch {
+            val bitmap = viewModel.getPictureData(conversation.userData.userId)
+            if (bitmap != null) {
+                holder.pictureImageView.setImageBitmap(bitmap)
             }
         }
         holder.conversationLayout.setOnClickListener {
