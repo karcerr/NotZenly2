@@ -666,55 +666,55 @@ class MapActivity @Inject constructor() : AppCompatActivity(), MapActivityViewMo
             map.overlays.add(newOverlay)
             newOverlay.apply {
                 mapView = map
+            }
+            viewModel.addOverlaysEvent.observe(this) { overlays ->
+                overlays.forEach { overlay ->
+                    map.overlays.add(overlay)
+                    overlay.mapView = map
                 }
-        viewModel.addOverlaysEvent.observe(this) { overlays ->
-            overlays.forEach { overlay ->
-                map.overlays.add(overlay)
-                overlay.mapView = map
+                Log.d("overlays", "Current overlays: ${map.overlays}")
             }
-            Log.d("overlays", "Current overlays: ${map.overlays}")
-        }
-        viewModel.centerMapAnimatedEvent.observe(this) { quadEvent ->
-            centeredOverlay = quadEvent.overlay
-            centralizeMapAnimated(
-                quadEvent.overlay,
-                quadEvent.id,
-                quadEvent.isCenterTargetUser,
-                quadEvent.withZoom
-            )
-        }
-        viewModel.removeOverlayEvent.observe(this) { overlay ->
-            Log.d("overlays", "Remove overlay: ${overlay.getUserId()}")
-            map.overlays.remove(overlay)
-        }
-
-        viewModel.friendRequestsData.observe(this) { updatedRequests ->
-            profileFragment.friendRequestAdapter.updateData(updatedRequests)
-        }
-
-        viewModel.friendsData.observe(this) { updatedFriends ->
-            profileFragment.friendAdapter.updateData(updatedFriends)
-        }
-
-        viewModel.conversationsData.observe(this) { conversations ->
-            conversationsFragment.conversationsAdapter.updateData(conversations)
-        }
-
-        viewModel.conversationFragmentEvent.observe(this) { event ->
-            event?.let {
-                val conversationFragment = ConversationFragment.newInstance(it.conversationId, it.nickname)
-                fragmentManager.beginTransaction()
-                    .add(R.id.conversations_fragment, conversationFragment)
-                    .addToBackStack(null)
-                    .commit()
+            viewModel.centerMapAnimatedEvent.observe(this) { quadEvent ->
+                centeredOverlay = quadEvent.overlay
+                centralizeMapAnimated(
+                    quadEvent.overlay,
+                    quadEvent.id,
+                    quadEvent.isCenterTargetUser,
+                    quadEvent.withZoom
+                )
             }
-        }
-        viewModel.friendRequestsFragmentEvent.observe(this) {
-            toggleFragmentVisibility(profileFragment)
-            profileFragment.nestedScrollView.fullScroll(View.FOCUS_DOWN)
+            viewModel.removeOverlayEvent.observe(this) { overlay ->
+                Log.d("overlays", "Remove overlay: ${overlay.getUserId()}")
+                map.overlays.remove(overlay)
+            }
+
+            viewModel.friendRequestsData.observe(this) { updatedRequests ->
+                profileFragment.friendRequestAdapter.updateData(updatedRequests)
+            }
+
+            viewModel.friendsData.observe(this) { updatedFriends ->
+                profileFragment.friendAdapter.updateData(updatedFriends)
+            }
+
+            viewModel.conversationsData.observe(this) { conversations ->
+                conversationsFragment.conversationsAdapter.updateData(conversations)
+            }
+
+            viewModel.conversationFragmentEvent.observe(this) { event ->
+                event?.let {
+                    val conversationFragment = ConversationFragment.newInstance(it.conversationId, it.nickname)
+                    fragmentManager.beginTransaction()
+                        .add(R.id.conversations_fragment, conversationFragment)
+                        .addToBackStack(null)
+                        .commit()
+                }
+            }
+            viewModel.friendRequestsFragmentEvent.observe(this) {
+                toggleFragmentVisibility(profileFragment)
+                profileFragment.nestedScrollView.fullScroll(View.FOCUS_DOWN)
+            }
         }
     }
-
 
     override fun onDestroy() {
         super.onDestroy()
