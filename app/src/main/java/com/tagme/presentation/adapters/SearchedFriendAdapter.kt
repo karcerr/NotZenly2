@@ -68,7 +68,7 @@ class SearchedFriendsAdapter(
                 context.hideSearchLayout()
             }
             locateButton.setOnClickListener {
-                val friendOverlay = context.friendOverlays[friend.userData.userId]
+                val friendOverlay = context.viewModel.friendOverlays[friend.userData.userId]
                 if (friendOverlay != null) {
                     context.hideSearchLayout()
                     context.centralizeMapAnimated(

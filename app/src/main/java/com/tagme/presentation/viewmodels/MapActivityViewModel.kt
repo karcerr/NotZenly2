@@ -263,9 +263,10 @@ class MapActivityViewModel @Inject constructor(
     suspend fun updatePfpPic(imageHandler: ImageHandler): Boolean {
         api.insertPictureIntoWS(imageHandler.getOutputStream())
         if (api.lastInsertedPicId != 0) {
-            val message = api.setProfilePictureWS(api.lastInsertedPicId)?.getString("message")
-            if (message == "success") {
-                customOverlaySelf!!.updateDrawable(BitmapDrawable(resources, api.getPictureData(api.myUserId)))
+            api.setProfilePictureWS(api.lastInsertedPicId)?.getString("message")
+            val bitmap = api.getPictureData(api.myUserId)
+            if (bitmap != null) {
+                customOverlaySelf!!.updateDrawable(BitmapDrawable(resources, bitmap))
                 return true
             }
         }

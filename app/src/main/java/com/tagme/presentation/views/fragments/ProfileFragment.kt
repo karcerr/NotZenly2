@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -335,7 +336,9 @@ class FriendAdapter(
                 .commit()
         }
         holder.locateButton.setOnClickListener {
-            val friendOverlay = mapActivity.friendOverlays[friend.userData.userId]
+            val friendOverlay = mapActivity.viewModel.friendOverlays[friend.userData.userId]
+            Log.d("friend", "${friend.userData.userId} - $friendOverlay")
+            Log.d("friend", "${mapActivity.viewModel.friendOverlays}")
             if (friendOverlay != null) {
                 mapActivity.hideSearchLayout()
                 mapActivity.centralizeMapAnimated(

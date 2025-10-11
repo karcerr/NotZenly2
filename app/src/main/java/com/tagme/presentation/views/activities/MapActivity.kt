@@ -124,7 +124,6 @@ class MapActivity @Inject constructor() : AppCompatActivity(), MapActivityViewMo
     //private var lastY = -1f
 
     //these are for storing friends and drawing overlays:
-    lateinit var friendOverlays: MutableMap<Int, CustomIconOverlay>
     lateinit var geoStoryOverlays: MutableMap<Int, CustomIconOverlay>
     lateinit var fragmentManager: FragmentManager
     private val handler = Handler(Looper.getMainLooper())
@@ -174,7 +173,6 @@ class MapActivity @Inject constructor() : AppCompatActivity(), MapActivityViewMo
 
         initObservers()
         viewModel.setGeoStoryActionListener(this)
-        friendOverlays = mutableMapOf()
         geoStoryOverlays = mutableMapOf()
         centralizeButtonFrame = findViewById(R.id.center_button_frame)
         profileButtonFrame = findViewById(R.id.profile_button_frame)
@@ -672,7 +670,6 @@ class MapActivity @Inject constructor() : AppCompatActivity(), MapActivityViewMo
                     map.overlays.add(overlay)
                     overlay.mapView = map
                 }
-                Log.d("overlays", "Current overlays: ${map.overlays}")
             }
             viewModel.centerMapAnimatedEvent.observe(this) { quadEvent ->
                 centeredOverlay = quadEvent.overlay
@@ -719,7 +716,6 @@ class MapActivity @Inject constructor() : AppCompatActivity(), MapActivityViewMo
     override fun onDestroy() {
         super.onDestroy()
         unregisterInstance(this)
-        friendOverlays.clear()
         profileFragment.friendRequestUpdateHandler?.removeCallbacksAndMessages(null)
         profileFragment.friendRequestUpdateHandler = null
         conversationsFragment.conversationUpdateHandler?.removeCallbacksAndMessages(null)
@@ -851,7 +847,7 @@ class OverlappedIconsAdapter(
                 }
             } else {
                 if (item.first != viewModel.getMyId()) {
-                    val friendOverlay = mapActivity.friendOverlays[item.first]
+                    val friendOverlay = viewModel.friendOverlays[item.first]
                     if (friendOverlay != null) {
                         mapActivity.centralizeMapAnimated(
                             friendOverlay,

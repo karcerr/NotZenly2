@@ -468,7 +468,6 @@ class API @Inject constructor(
     }
 
     suspend fun setProfilePictureWS(picId: Int): JSONObject? {
-        if (isFakeMode) return JSONObject("success")
         val requestData = JSONObject().apply {
             put("action", "set profile picture")
             put("token", myToken)
@@ -988,8 +987,9 @@ class API @Inject constructor(
     }
 
     suspend fun getPictureData(userId: Int): Bitmap? {
-        val picEntity = imageDao.getImagesForUser(if (userId == 0) myUserId else userId)
-            .firstOrNull() ?: return null
+        val imagesForUser = imageDao.getImagesForUser(if (userId == 0) myUserId else userId)
+        val picEntity = imagesForUser
+            .lastOrNull() ?: return null
 
         return BitmapFactory.decodeFile(picEntity.uri)
     }

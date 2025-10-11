@@ -167,7 +167,7 @@ class UserProfileFragment : Fragment() {
                         findOnMapLayout.setOnClickListener {
                             val friend = viewModel.getFriendDataList().find{it.userData.userId == userId}
                             if (friend != null) {
-                                val friendOverlay = mapActivity.friendOverlays[friend.userData.userId]
+                                val friendOverlay = mapActivity.viewModel.friendOverlays[friend.userData.userId]
                                 if (friendOverlay != null) {
                                     mapActivity.centralizeMapAnimated(
                                         friendOverlay,
